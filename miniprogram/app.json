@@ -1,12 +1,37 @@
 {
   "pages": [
-    "pages/index/index",
-    "pages/logs/logs"
+    "pages/strategy/strategy",
+    "pages/user/user",
+    "pages/logs/logs",
+    "pages/heroCategory/heroCategory",
+    "pages/createPlan/createPlan",
+    "pages/recommendPlan/recommendPlan",
+    "pages/betaPlan/betaPlan"
   ],
   "window": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "Weixin",
-    "navigationBarBackgroundColor": "#ffffff"
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "王者荣耀觉醒之战小助手",
+    "navigationBarBackgroundColor": "#4A90E2"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4A90E2",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/strategy/strategy",
+        "text": "攻略",
+        "iconPath": "pages/images/strategy.png",
+        "selectedIconPath": "pages/images/strategy_selected.png"
+      },
+      {
+        "pagePath": "pages/user/user",
+        "text": "用户",
+        "iconPath": "pages/images/user.png",
+        "selectedIconPath": "pages/images/user_selected.png"
+      }
+    ]
   },
   "style": "v2",
   "componentFramework": "glass-easel",

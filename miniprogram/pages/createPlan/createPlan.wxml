@@ -1,0 +1,69 @@
+<view class="container">
+  <view class="title">方案创作</view>
+  
+  <view class="step-container">
+    <view class="step-title">第一步：选择英雄</view>
+    <view class="hero-selector">
+      <picker bindchange="onHeroChange" value="{{heroIndex}}" range="{{allHeroes}}">
+        <view class="picker">
+          <view class="picker-text">{{selectedHero || '请选择英雄'}}</view>
+          <view class="picker-arrow">▼</view>
+        </view>
+      </picker>
+    </view>
+  </view>
+  
+  <block wx:if="{{selectedHero}}">
+    <view class="step-container">
+      <view class="step-title">第二步：选择流派核心</view>
+      <view class="core-list">
+        <view class="core-item {{selectedCore === 0 ? 'selected' : ''}}" bindtap="selectCore" data-index="0">
+          <view class="core-name">技能1核心</view>
+        </view>
+        <view class="core-item {{selectedCore === 1 ? 'selected' : ''}}" bindtap="selectCore" data-index="1">
+          <view class="core-name">技能2核心</view>
+        </view>
+        <view class="core-item {{selectedCore === 2 ? 'selected' : ''}}" bindtap="selectCore" data-index="2">
+          <view class="core-name">技能3核心</view>
+        </view>
+      </view>
+    </view>
+  </block>
+  
+  <block wx:if="{{selectedCore !== null}}">
+    <view class="step-container">
+      <view class="step-title">第三步：选择特性天赋（最多选3个）</view>
+      <view class="talent-list">
+        <block wx:for="{{talents}}" wx:key="index">
+          <view class="talent-item {{selectedTalents.includes(index) ? 'selected' : ''}}" bindtap="toggleTalent" data-index="{{index}}">
+            <view class="talent-name">特性{{index + 1}}</view>
+          </view>
+        </block>
+      </view>
+      <view class="talent-count">已选择 {{selectedTalents.length}}/3</view>
+    </view>
+  </block>
+  
+  <block wx:if="{{selectedTalents.length > 0}}">
+    <view class="step-container">
+      <view class="step-title">第四步：出装推荐</view>
+      <textarea class="equipment-input" placeholder="请输入出装推荐..." value="{{equipmentDesc}}" bindinput="onEquipmentInput"></textarea>
+      
+      <view class="equipment-code-title">装备密语（选填）</view>
+      <input class="equipment-code-input" placeholder="请输入装备密语..." value="{{equipmentCode}}" bindinput="onEquipmentCodeInput"></input>
+    </view>
+  </block>
+  
+  <block wx:if="{{equipmentDesc}}">
+    <view class="step-container">
+      <view class="step-title">第五步：方案思路描述</view>
+      <textarea class="plan-desc-input" placeholder="核心是什么?前期还是后期?如何快速发育?具体玩法?" value="{{planDesc}}" bindinput="onPlanDescInput"></textarea>
+    </view>
+  </block>
+  
+  <block wx:if="{{planDesc}}">
+    <view class="btn-container">
+      <button class="generate-btn" bindtap="generatePlan">生成方案</button>
+    </view>
+  </block>
+</view> 

@@ -1,0 +1,28 @@
+<view class="container">
+  <!-- 用户信息区域 -->
+  <view class="user-info">
+    <image class="avatar" src="{{userInfo.avatarUrl || '../images/default-avatar.png'}}"></image>
+    <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
+  </view>
+  
+  <!-- 功能卡片区域 -->
+  <view class="function-container">
+    <!-- 收藏方案 -->
+    <view class="function-card" bindtap="navigateToFavorites">
+      <view class="card-content">
+        <image class="card-icon" src="../images/favorite.png" mode="aspectFit"></image>
+        <text class="card-title">收藏方案</text>
+      </view>
+      <view class="card-arrow">></view>
+    </view>
+    
+    <!-- 创作方案 -->
+    <view class="function-card" bindtap="navigateToCreations">
+      <view class="card-content">
+        <image class="card-icon" src="../images/creation.png" mode="aspectFit"></image>
+        <text class="card-title">创作方案</text>
+      </view>
+      <view class="card-arrow">></view>
+    </view>
+  </view>
+</view> 

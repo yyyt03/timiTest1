@@ -1,0 +1,110 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.category-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 40rpx;
+}
+
+.category-list {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 40rpx;
+}
+
+.category-item {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.category-icon-container {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background-color: #4A90E2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15rpx;
+  box-shadow: 0 4rpx 10rpx rgba(74, 144, 226, 0.3);
+}
+
+.category-icon {
+  width: 70rpx;
+  height: 70rpx;
+}
+
+.category-name {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+/* 英雄列表 */
+.hero-list {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.hero-list-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 30rpx;
+  padding-bottom: 15rpx;
+  border-bottom: 1rpx solid #eaeaea;
+}
+
+.hero-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.hero-item {
+  width: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.hero-avatar-container {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+}
+
+.hero-avatar {
+  width: 90rpx;
+  height: 90rpx;
+}
+
+.hero-name {
+  font-size: 24rpx;
+  color: #333333;
+  text-align: center;
+} 

@@ -1,0 +1,194 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 30rpx;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.step-container {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 30rpx;
+  box-sizing: border-box;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.step-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 1rpx solid #eaeaea;
+}
+
+/* 英雄选择器 */
+.hero-selector {
+  width: 100%;
+}
+
+.picker {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 流派核心 */
+.core-list {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.core-item {
+  width: 30%;
+  height: 100rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10rpx;
+  box-sizing: border-box;
+}
+
+.core-item.selected {
+  background-color: #4A90E2;
+}
+
+.core-item.selected .core-name {
+  color: #ffffff;
+}
+
+.core-name {
+  font-size: 26rpx;
+  color: #333333;
+  text-align: center;
+}
+
+/* 特性天赋 */
+.talent-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.talent-item {
+  width: 23%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15rpx;
+  box-sizing: border-box;
+}
+
+.talent-item.selected {
+  background-color: #4A90E2;
+}
+
+.talent-item.selected .talent-name {
+  color: #ffffff;
+}
+
+.talent-name {
+  font-size: 24rpx;
+  color: #333333;
+  text-align: center;
+}
+
+.talent-count {
+  font-size: 24rpx;
+  color: #999999;
+  text-align: right;
+}
+
+/* 出装推荐 */
+.equipment-input {
+  width: 100%;
+  height: 200rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+}
+
+.equipment-code-title {
+  font-size: 28rpx;
+  color: #333333;
+  margin-bottom: 10rpx;
+}
+
+.equipment-code-input {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+}
+
+/* 方案思路描述 */
+.plan-desc-input {
+  width: 100%;
+  height: 300rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+}
+
+/* 生成按钮 */
+.btn-container {
+  width: 100%;
+  margin-top: 40rpx;
+  margin-bottom: 60rpx;
+}
+
+.generate-btn {
+  width: 100%;
+  height: 90rpx;
+  background-color: #4A90E2;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 45rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} 

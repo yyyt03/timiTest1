@@ -1,0 +1,41 @@
+<view class="container">
+  <!-- 顶部展示区 -->
+  <view class="banner-container">
+    <swiper class="banner" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}">
+      <swiper-item>
+        <view class="banner-text">觉醒之战小助手</view>
+      </swiper-item>
+    </swiper>
+  </view>
+  
+  <!-- 功能区 -->
+  <view class="function-container">
+    <view class="function-row">
+      <!-- 推荐方案 -->
+      <view class="function-card" bindtap="navigateToRecommend">
+        <image class="function-icon" src="../images/recommend.png" mode="aspectFit"></image>
+        <text class="function-title">推荐方案</text>
+      </view>
+      
+      <!-- 英雄分类 -->
+      <view class="function-card" bindtap="navigateToHeroCategory">
+        <image class="function-icon" src="../images/hero.png" mode="aspectFit"></image>
+        <text class="function-title">英雄分类</text>
+      </view>
+    </view>
+    
+    <view class="function-row">
+      <!-- 体验服方案 -->
+      <view class="function-card" bindtap="navigateToBeta">
+        <image class="function-icon" src="../images/beta.png" mode="aspectFit"></image>
+        <text class="function-title">体验服方案</text>
+      </view>
+      
+      <!-- 方案创作 -->
+      <view class="function-card" bindtap="navigateToCreate">
+        <image class="function-icon" src="../images/create.png" mode="aspectFit"></image>
+        <text class="function-title">方案创作</text>
+      </view>
+    </view>
+  </view>
+</view> 

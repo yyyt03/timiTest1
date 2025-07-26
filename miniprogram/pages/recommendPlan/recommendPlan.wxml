@@ -1,0 +1,8 @@
+<view class="container">
+  <view class="title">推荐方案</view>
+  
+  <view class="coming-soon">
+    <image class="coming-soon-icon" src="../images/coming-soon.png" mode="aspectFit"></image>
+    <view class="coming-soon-text">功能开发中，敬请期待...</view>
+  </view>
+</view> 

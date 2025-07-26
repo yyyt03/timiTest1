@@ -1,9 +1,6 @@
 // 英雄分类页面
 Page({
   data: {
-    showHeroList: false,
-    currentCategoryName: '',
-    heroList: [] as string[],
     heroCategories: {
       shooter: {
         name: '射手',
@@ -28,20 +25,6 @@ Page({
     }
   },
 
-  // 显示对应分类的英雄列表
-  showHeroes(e: any) {
-    const type = e.currentTarget.dataset.type;
-    const category = this.data.heroCategories[type as keyof typeof this.data.heroCategories];
-    
-    if (category) {
-      this.setData({
-        showHeroList: true,
-        currentCategoryName: category.name,
-        heroList: category.heroes
-      });
-    }
-  },
-
   // 选择英雄
   selectHero(e: any) {
     const hero = e.currentTarget.dataset.hero;
@@ -51,8 +34,8 @@ Page({
     });
     
     // 可以在这里跳转到英雄详情页或方案创作页
-    // wx.navigateTo({
-    //   url: `../createPlan/createPlan?hero=${hero}`
-    // });
+    wx.navigateTo({
+      url: `../createPlan/createPlan?hero=${hero}`
+    });
   }
 }); 

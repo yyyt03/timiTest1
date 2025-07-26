@@ -12,6 +12,7 @@ Page({
     // 特性天赋
     talents: [0, 1, 2, 3, 4, 5, 6, 7], // 8个特性天赋
     selectedTalents: [] as number[],
+    talentSelected: [false, false, false, false, false, false, false, false], // 每个特性是否被选中
     
     // 出装推荐
     equipmentDesc: '',
@@ -64,7 +65,8 @@ Page({
       selectedHero: this.data.allHeroes[index],
       // 重置后续选择
       selectedCore: null,
-      selectedTalents: []
+      selectedTalents: [],
+      talentSelected: [false, false, false, false, false, false, false, false]
     });
   },
   
@@ -74,7 +76,8 @@ Page({
     this.setData({
       selectedCore: index,
       // 重置后续选择
-      selectedTalents: []
+      selectedTalents: [],
+      talentSelected: [false, false, false, false, false, false, false, false]
     });
   },
   
@@ -82,23 +85,41 @@ Page({
   toggleTalent(e: any) {
     const index = parseInt(e.currentTarget.dataset.index);
     let selectedTalents = [...this.data.selectedTalents];
+    let talentSelected = [...this.data.talentSelected];
+    
+    console.log('当前选择的特性索引:', index);
+    console.log('当前已选特性:', selectedTalents);
+    console.log('当前特性选中状态:', talentSelected);
     
     // 如果已经选择了这个特性，则取消选择
-    if (selectedTalents.includes(index)) {
+    if (talentSelected[index]) {
+      console.log('取消选择特性:', index);
       selectedTalents = selectedTalents.filter(i => i !== index);
+      talentSelected[index] = false;
     } 
     // 如果还没有选满3个，则添加选择
     else if (selectedTalents.length < 3) {
+      console.log('添加选择特性:', index);
       selectedTalents.push(index);
+      talentSelected[index] = true;
     } 
     // 如果已经选满3个，则替换第一个
     else {
-      selectedTalents.shift();
+      console.log('替换第一个特性为:', index);
+      const firstSelected = selectedTalents.shift();
+      if (firstSelected !== undefined) {
+        talentSelected[firstSelected] = false;
+      }
       selectedTalents.push(index);
+      talentSelected[index] = true;
     }
     
+    console.log('更新后的已选特性:', selectedTalents);
+    console.log('更新后的特性选中状态:', talentSelected);
+    
     this.setData({
-      selectedTalents
+      selectedTalents,
+      talentSelected
     });
   },
   
@@ -123,7 +144,7 @@ Page({
     });
   },
   
-  // 生成方案
+  // 生成一图流
   generatePlan() {
     // 检查必填项
     if (!this.data.selectedHero) {
@@ -168,14 +189,14 @@ Page({
     
     // 这里可以生成方案，例如生成图片或者保存到服务器
     wx.showLoading({
-      title: '正在生成方案...'
+      title: '正在生成一图流...'
     });
     
     // 模拟生成过程
     setTimeout(() => {
       wx.hideLoading();
       wx.showToast({
-        title: '方案生成成功',
+        title: '一图流生成成功',
         icon: 'success'
       });
     }, 2000);

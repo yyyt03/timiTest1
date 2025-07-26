@@ -35,7 +35,7 @@
       <view class="step-title">第三步：选择特性天赋（最多选3个）</view>
       <view class="talent-list">
         <block wx:for="{{talents}}" wx:key="index">
-          <view class="talent-item {{selectedTalents.includes(index) ? 'selected' : ''}}" bindtap="toggleTalent" data-index="{{index}}">
+          <view class="talent-item {{talentSelected[index] ? 'selected' : ''}}" bindtap="toggleTalent" data-index="{{index}}">
             <view class="talent-name">特性{{index + 1}}</view>
           </view>
         </block>
@@ -63,7 +63,7 @@
   
   <block wx:if="{{planDesc}}">
     <view class="btn-container">
-      <button class="generate-btn" bindtap="generatePlan">生成方案</button>
+      <button class="generate-btn" bindtap="generatePlan">生成一图流</button>
     </view>
   </block>
 </view> 

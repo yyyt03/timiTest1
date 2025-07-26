@@ -48,6 +48,12 @@
   height: 70rpx;
 }
 
+.category-icon-text {
+  color: #ffffff;
+  font-size: 50rpx;
+  font-weight: bold;
+}
+
 .category-name {
   font-size: 28rpx;
   color: #333333;
@@ -90,7 +96,7 @@
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: #4A90E2;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -101,6 +107,12 @@
 .hero-avatar {
   width: 90rpx;
   height: 90rpx;
+}
+
+.hero-avatar-text {
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: bold;
 }
 
 .hero-name {

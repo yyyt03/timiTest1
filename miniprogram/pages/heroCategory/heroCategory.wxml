@@ -5,7 +5,7 @@
     <!-- 射手 -->
     <view class="category-item" bindtap="showHeroes" data-type="shooter">
       <view class="category-icon-container">
-        <image class="category-icon" src="../images/shooter.png" mode="aspectFit"></image>
+        <image class="category-icon" src="../images/strategy.png" mode="aspectFit"></image>
       </view>
       <text class="category-name">射手</text>
     </view>
@@ -13,7 +13,7 @@
     <!-- 辅助 -->
     <view class="category-item" bindtap="showHeroes" data-type="support">
       <view class="category-icon-container">
-        <image class="category-icon" src="../images/support.png" mode="aspectFit"></image>
+        <image class="category-icon" src="../images/strategy.png" mode="aspectFit"></image>
       </view>
       <text class="category-name">辅助</text>
     </view>
@@ -21,7 +21,7 @@
     <!-- 刺客 -->
     <view class="category-item" bindtap="showHeroes" data-type="assassin">
       <view class="category-icon-container">
-        <image class="category-icon" src="../images/assassin.png" mode="aspectFit"></image>
+        <image class="category-icon" src="../images/strategy.png" mode="aspectFit"></image>
       </view>
       <text class="category-name">刺客</text>
     </view>
@@ -29,7 +29,7 @@
     <!-- 战士 -->
     <view class="category-item" bindtap="showHeroes" data-type="warrior">
       <view class="category-icon-container">
-        <image class="category-icon" src="../images/warrior.png" mode="aspectFit"></image>
+        <image class="category-icon" src="../images/strategy.png" mode="aspectFit"></image>
       </view>
       <text class="category-name">战士</text>
     </view>
@@ -37,7 +37,7 @@
     <!-- 法师 -->
     <view class="category-item" bindtap="showHeroes" data-type="mage">
       <view class="category-icon-container">
-        <image class="category-icon" src="../images/mage.png" mode="aspectFit"></image>
+        <image class="category-icon" src="../images/strategy.png" mode="aspectFit"></image>
       </view>
       <text class="category-name">法师</text>
     </view>
@@ -50,7 +50,7 @@
       <block wx:for="{{heroList}}" wx:key="index">
         <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
           <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/heroes/{{item}}.png" mode="aspectFit"></image>
+            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
           </view>
           <text class="hero-name">{{item}}</text>
         </view>

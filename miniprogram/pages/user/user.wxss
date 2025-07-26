@@ -29,6 +29,21 @@
   margin-bottom: 20rpx;
 }
 
+.avatar-placeholder {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 50%;
+  border: 4rpx solid #ffffff;
+  margin-bottom: 20rpx;
+  background-color: #ffffff;
+  color: #4A90E2;
+  font-size: 40rpx;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .nickname {
   font-size: 32rpx;
   color: #ffffff;
@@ -64,6 +79,20 @@
 .card-icon {
   width: 40rpx;
   height: 40rpx;
+  margin-right: 20rpx;
+}
+
+.card-icon-text {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background-color: #4A90E2;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-right: 20rpx;
 }
 

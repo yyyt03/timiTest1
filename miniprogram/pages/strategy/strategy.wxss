@@ -67,6 +67,20 @@
   margin-bottom: 20rpx;
 }
 
+.function-icon-text {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #4A90E2;
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
 .function-title {
   font-size: 28rpx;
   color: #333333;

@@ -1,7 +1,7 @@
 <view class="container">
   <!-- 用户信息区域 -->
   <view class="user-info">
-    <image class="avatar" src="{{userInfo.avatarUrl || '../images/default-avatar.png'}}"></image>
+    <image class="avatar" src="../images/user.png"></image>
     <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
   </view>
   
@@ -10,7 +10,7 @@
     <!-- 收藏方案 -->
     <view class="function-card" bindtap="navigateToFavorites">
       <view class="card-content">
-        <image class="card-icon" src="../images/favorite.png" mode="aspectFit"></image>
+        <image class="card-icon" src="../images/user.png" mode="aspectFit"></image>
         <text class="card-title">收藏方案</text>
       </view>
       <view class="card-arrow">></view>
@@ -19,7 +19,7 @@
     <!-- 创作方案 -->
     <view class="function-card" bindtap="navigateToCreations">
       <view class="card-content">
-        <image class="card-icon" src="../images/creation.png" mode="aspectFit"></image>
+        <image class="card-icon" src="../images/user.png" mode="aspectFit"></image>
         <text class="card-title">创作方案</text>
       </view>
       <view class="card-arrow">></view>

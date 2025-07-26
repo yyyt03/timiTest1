@@ -29,6 +29,20 @@
   margin-bottom: 30rpx;
 }
 
+.coming-soon-icon-text {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  background-color: #4A90E2;
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
 .coming-soon-text {
   font-size: 32rpx;
   color: #999999;

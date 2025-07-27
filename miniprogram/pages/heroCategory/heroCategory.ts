@@ -22,6 +22,16 @@ Page({
         name: '法师',
         heroes: ['杨玉环', '妲己', '诸葛亮', '安琪拉', '甄姬', '小乔', '武则天', '貂蝉']
       }
+    },
+    source: '' // 来源页面
+  },
+
+  // 生命周期函数--监听页面加载
+  onLoad(options: any) {
+    if (options && options.source) {
+      this.setData({
+        source: options.source
+      });
     }
   },
 
@@ -33,9 +43,17 @@ Page({
       icon: 'none'
     });
     
-    // 可以在这里跳转到英雄详情页或方案创作页
-    wx.navigateTo({
-      url: `../createPlan/createPlan?hero=${hero}`
-    });
+    // 根据来源页面决定跳转目标
+    if (this.data.source === 'createPlan') {
+      // 如果是从方案创作页面进入的，则返回方案创作页面
+      wx.navigateTo({
+        url: `../createPlan/createPlan?hero=${hero}`
+      });
+    } else {
+      // 如果是从攻略页面或其他页面进入的，则跳转到方案查看页面
+      wx.navigateTo({
+        url: `../heroPlan/heroPlan?hero=${hero}`
+      });
+    }
   }
 }); 

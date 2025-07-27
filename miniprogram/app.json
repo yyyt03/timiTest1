@@ -6,18 +6,19 @@
     "pages/createPlan/createPlan",
     "pages/recommendPlan/recommendPlan",
     "pages/betaPlan/betaPlan",
-    "pages/logs/logs"
+    "pages/heroPlan/heroPlan"
   ],
   "window": {
-    "navigationBarTextStyle": "white",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1a1a2e",
     "navigationBarTitleText": "王者荣耀觉醒之战小助手",
-    "navigationBarBackgroundColor": "#4A90E2"
+    "navigationBarTextStyle": "white"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#4A90E2",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "color": "#8a8a8a",
+    "selectedColor": "#ffffff",
+    "backgroundColor": "#1a1a2e",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/strategy/strategy",
@@ -34,6 +35,5 @@
     ]
   },
   "style": "v2",
-  "componentFramework": "glass-easel",
-  "lazyCodeLoading": "requiredComponents"
+  "sitemapLocation": "sitemap.json"
 }

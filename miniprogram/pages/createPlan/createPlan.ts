@@ -29,10 +29,15 @@ Page({
       this.setData({
         selectedHero: options.hero
       });
+      
+      // 获取所有英雄列表
+      this.getAllHeroes();
+    } else {
+      // 如果没有传入英雄参数，则自动跳转到英雄分类页面
+      wx.navigateTo({
+        url: '../heroCategory/heroCategory?source=createPlan'
+      });
     }
-    
-    // 获取所有英雄列表
-    this.getAllHeroes();
   },
   
   // 获取所有英雄列表
@@ -54,6 +59,13 @@ Page({
     
     this.setData({
       allHeroes
+    });
+  },
+  
+  // 跳转到英雄分类页面
+  goToHeroCategory() {
+    wx.navigateTo({
+      url: '../heroCategory/heroCategory?source=createPlan'
     });
   },
   
@@ -166,22 +178,6 @@ Page({
     if (this.data.selectedTalents.length === 0) {
       wx.showToast({
         title: '请至少选择一个特性天赋',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    if (!this.data.equipmentDesc) {
-      wx.showToast({
-        title: '请输入出装推荐',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    if (!this.data.planDesc) {
-      wx.showToast({
-        title: '请输入方案思路描述',
         icon: 'none'
       });
       return;

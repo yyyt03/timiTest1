@@ -1,17 +1,14 @@
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 20rpx;
   box-sizing: border-box;
-  background-color: #f5f5f5;
+  background-color: #1a1a2e;
   min-height: 100vh;
 }
 
 .category-title {
-  font-size: 36rpx;
+  font-size: 40rpx;
   font-weight: bold;
-  color: #333333;
+  color: #ffffff;
   margin: 20rpx 0;
   align-self: flex-start;
   padding-left: 10rpx;
@@ -82,15 +79,16 @@
 
 .hero-category {
   width: 100%;
-  margin-bottom: 20rpx;
+  margin-bottom: 30rpx;
 }
 
 .category-header {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: bold;
-  color: #FF9800;
+  color: #e0e0e0;
   margin: 10rpx 0;
   padding-left: 10rpx;
+  border-left: 8rpx solid #8e2de2;
 }
 
 .hero-grid {
@@ -108,20 +106,21 @@
 }
 
 .hero-avatar-container {
-  width: 100rpx;
-  height: 100rpx;
+  width: 120rpx;
+  height: 120rpx;
   border-radius: 50%;
-  background-color: #4A90E2;
+  background-color: #2c2c54;
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 10rpx;
   overflow: hidden;
+  border: 4rpx solid #4a00e0;
 }
 
 .hero-avatar {
-  width: 90rpx;
-  height: 90rpx;
+  width: 110rpx;
+  height: 110rpx;
 }
 
 .hero-avatar-text {
@@ -132,6 +131,6 @@
 
 .hero-name {
   font-size: 24rpx;
-  color: #333333;
+  color: #e0e0e0;
   text-align: center;
 } 

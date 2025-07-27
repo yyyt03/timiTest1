@@ -3,13 +3,14 @@
   
   <view class="step-container">
     <view class="step-title">第一步：选择英雄</view>
-    <view class="hero-selector">
-      <picker bindchange="onHeroChange" value="{{heroIndex}}" range="{{allHeroes}}">
-        <view class="picker">
-          <view class="picker-text">{{selectedHero || '请选择英雄'}}</view>
-          <view class="picker-arrow">▼</view>
-        </view>
-      </picker>
+    <view class="hero-info" wx:if="{{selectedHero}}">
+      <view class="hero-name">已选择：{{selectedHero}}</view>
+      <view class="hero-category-tip" bindtap="goToHeroCategory">
+        <text>重新选择 ></text>
+      </view>
+    </view>
+    <view class="hero-category-tip" wx:else bindtap="goToHeroCategory">
+      <text>从英雄分类中选择 ></text>
     </view>
   </view>
   
@@ -44,7 +45,7 @@
     </view>
   </block>
   
-  <block wx:if="{{selectedTalents.length > 0}}">
+  <block wx:if="{{selectedTalents.length > 0 || selectedCore !== null}}">
     <view class="step-container">
       <view class="step-title">第四步：出装推荐</view>
       <textarea class="equipment-input" placeholder="请输入出装推荐..." value="{{equipmentDesc}}" bindinput="onEquipmentInput"></textarea>
@@ -54,14 +55,14 @@
     </view>
   </block>
   
-  <block wx:if="{{equipmentDesc}}">
+  <block wx:if="{{selectedTalents.length > 0 || selectedCore !== null}}">
     <view class="step-container">
       <view class="step-title">第五步：方案思路描述</view>
       <textarea class="plan-desc-input" placeholder="核心是什么?前期还是后期?如何快速发育?具体玩法?" value="{{planDesc}}" bindinput="onPlanDescInput"></textarea>
     </view>
   </block>
   
-  <block wx:if="{{planDesc}}">
+  <block wx:if="{{selectedTalents.length > 0 || selectedCore !== null}}">
     <view class="btn-container">
       <button class="generate-btn" bindtap="generatePlan">生成一图流</button>
     </view>

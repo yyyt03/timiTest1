@@ -1,0 +1,69 @@
+<view class="container">
+  <view class="hero-header">
+    <view class="hero-avatar-container">
+      <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
+    </view>
+    <view class="hero-name">{{hero}}</view>
+  </view>
+  
+  <view class="action-bar">
+    <button class="create-btn" bindtap="createNewPlan">创建新方案</button>
+  </view>
+  
+  <view class="plans-container">
+    <!-- 加载中 -->
+    <view class="loading-container" wx:if="{{loading}}">
+      <view class="loading-text">加载中...</view>
+    </view>
+    
+    <!-- 无方案提示 -->
+    <view class="no-plans-container" wx:elif="{{noPlans}}">
+      <view class="no-plans-text">暂无方案</view>
+      <view class="no-plans-tip">点击上方按钮创建新方案</view>
+    </view>
+    
+    <!-- 方案列表 -->
+    <block wx:else>
+      <view class="plan-card" wx:for="{{plans}}" wx:key="id" bindtap="viewPlanDetail" data-id="{{item.id}}">
+        <view class="plan-header">
+          <view class="plan-title">{{item.title}}</view>
+          <view class="plan-likes">
+            <image class="like-icon" src="../images/favorite.png" mode="aspectFit"></image>
+            <text>{{item.likes}}</text>
+          </view>
+        </view>
+        
+        <view class="plan-content">
+          <view class="plan-info">
+            <view class="info-item">
+              <text class="info-label">核心:</text>
+              <text class="info-value">{{item.core}}</text>
+            </view>
+            <view class="info-item">
+              <text class="info-label">特性:</text>
+              <text class="info-value">{{item.talents.join(', ')}}</text>
+            </view>
+            <view class="info-item">
+              <text class="info-label">出装:</text>
+              <text class="info-value">{{item.equipment}}</text>
+            </view>
+            <view class="info-item" wx:if="{{item.equipmentCode}}">
+              <text class="info-label">密语:</text>
+              <text class="info-value">{{item.equipmentCode}}</text>
+            </view>
+          </view>
+          
+          <view class="plan-desc">
+            <text class="desc-label">思路:</text>
+            <text class="desc-content">{{item.description}}</text>
+          </view>
+        </view>
+        
+        <view class="plan-footer">
+          <text class="plan-author">{{item.author}}</text>
+          <text class="plan-time">{{item.createTime}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view> 

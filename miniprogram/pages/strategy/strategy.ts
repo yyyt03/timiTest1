@@ -19,7 +19,7 @@ Page({
   // 导航到英雄分类页面
   navigateToHeroCategory() {
     wx.navigateTo({
-      url: '../heroCategory/heroCategory'
+      url: '../heroCategory/heroCategory?source=strategy'
     });
   },
 

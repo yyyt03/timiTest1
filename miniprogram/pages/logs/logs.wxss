@@ -2,6 +2,7 @@ page {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #ffffff;
 }
 .scrollarea {
   flex: 1;
@@ -10,6 +11,7 @@ page {
 .log-item {
   margin-top: 20rpx;
   text-align: center;
+  color: #333333;
 }
 .log-item:last-child {
   padding-bottom: env(safe-area-inset-bottom);

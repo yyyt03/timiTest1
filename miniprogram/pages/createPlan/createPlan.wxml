@@ -5,13 +5,9 @@
     <view class="step-title">第一步：选择英雄</view>
     <view class="hero-info" wx:if="{{selectedHero}}">
       <view class="hero-name">已选择：{{selectedHero}}</view>
-      <view class="hero-category-tip" bindtap="goToHeroCategory">
-        <text>重新选择 ></text>
-      </view>
+      <button class="hero-select-btn" bindtap="goToHeroCategory">重新选择</button>
     </view>
-    <view class="hero-category-tip" wx:else bindtap="goToHeroCategory">
-      <text>从英雄分类中选择 ></text>
-    </view>
+    <button class="hero-select-btn" wx:else bindtap="goToHeroCategory">从英雄分类中选择</button>
   </view>
   
   <block wx:if="{{selectedHero}}">

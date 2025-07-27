@@ -10,15 +10,15 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTitleText": "王者荣耀觉醒之战小助手",
-    "navigationBarTextStyle": "white"
+    "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#8a8a8a",
-    "selectedColor": "#ffffff",
-    "backgroundColor": "#1a1a2e",
-    "borderStyle": "white",
+    "color": "#999999",
+    "selectedColor": "#000000",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/strategy/strategy",

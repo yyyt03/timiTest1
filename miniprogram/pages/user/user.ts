@@ -1,15 +1,19 @@
+import { CloudService } from '../../utils/cloud'
+
 // 用户页面
 Page({
   data: {
     userInfo: {
       avatarUrl: '',
       nickName: ''
-    }
+    },
+    cloudUserInfo: null
   },
 
   // 生命周期函数--监听页面加载
   onLoad() {
     this.getUserProfile();
+    this.getCloudUserInfo();
   },
 
   // 获取用户信息
@@ -25,9 +29,34 @@ Page({
       },
       fail: () => {
         // 用户拒绝授权，使用默认头像和昵称
-        console.log('获取用户信息失败');
+        console.log('用户拒绝授权获取头像昵称，使用默认信息');
       }
     });
+  },
+
+  // 获取云开发用户信息
+  async getCloudUserInfo() {
+    try {
+      wx.showLoading({
+        title: '获取用户信息中...'
+      });
+      
+      const result: any = await CloudService.getUserInfo();
+      
+      if (result && result.success) {
+        this.setData({
+          cloudUserInfo: result.data
+        });
+        console.log('云开发用户信息:', result.data);
+      } else {
+        console.error('获取云开发用户信息失败:', result?.message || '未知错误');
+      }
+    } catch (error) {
+      console.error('调用云函数失败:', error);
+      // 不显示错误提示，因为云函数调用失败不影响基本功能
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   // 导航到收藏方案页面

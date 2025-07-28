@@ -23,14 +23,14 @@
       {
         "pagePath": "pages/strategy/strategy",
         "text": "攻略",
-        "iconPath": "pages/images/strategy.png",
-        "selectedIconPath": "pages/images/strategy_selected.png"
+        "iconPath": "pages/images/icons/tabbar-strategy.png",
+        "selectedIconPath": "pages/images/icons/tabbar-strategy-selected.png"
       },
       {
         "pagePath": "pages/user/user",
         "text": "用户",
-        "iconPath": "pages/images/user.png",
-        "selectedIconPath": "pages/images/user_selected.png"
+        "iconPath": "pages/images/icons/tabbar-user.png",
+        "selectedIconPath": "pages/images/icons/tabbar-user-selected.png"
       }
     ]
   },

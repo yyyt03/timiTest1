@@ -13,13 +13,13 @@
     <view class="function-row">
       <!-- 推荐方案 -->
       <view class="function-card" bindtap="navigateToRecommend">
-        <image class="function-icon" src="../images/strategy.png" mode="aspectFit"></image>
+        <image class="function-icon" src="../images/icons/recommend-plan.png" mode="aspectFit"></image>
         <text class="function-title">推荐方案</text>
       </view>
       
       <!-- 英雄分类 -->
       <view class="function-card" bindtap="navigateToHeroCategory">
-        <image class="function-icon" src="../images/strategy.png" mode="aspectFit"></image>
+        <image class="function-icon" src="../images/icons/hero-category.png" mode="aspectFit"></image>
         <text class="function-title">英雄分类</text>
       </view>
     </view>
@@ -27,13 +27,13 @@
     <view class="function-row">
       <!-- 体验服方案 -->
       <view class="function-card" bindtap="navigateToBeta">
-        <image class="function-icon" src="../images/strategy.png" mode="aspectFit"></image>
+        <image class="function-icon" src="../images/icons/beta-plan.png" mode="aspectFit"></image>
         <text class="function-title">体验服方案</text>
       </view>
       
       <!-- 方案创作 -->
       <view class="function-card" bindtap="navigateToCreate">
-        <image class="function-icon" src="../images/strategy.png" mode="aspectFit"></image>
+        <image class="function-icon" src="../images/icons/create-plan.png" mode="aspectFit"></image>
         <text class="function-title">方案创作</text>
       </view>
     </view>

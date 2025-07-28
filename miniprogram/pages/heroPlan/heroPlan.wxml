@@ -1,7 +1,7 @@
 <view class="container">
   <view class="hero-header">
     <view class="hero-avatar-container">
-      <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
+      <image class="hero-avatar" src="../images/unused/user.png" mode="aspectFit"></image>
     </view>
     <view class="hero-name">{{hero}}</view>
   </view>
@@ -28,7 +28,7 @@
         <view class="plan-header">
           <view class="plan-title">{{item.title}}</view>
           <view class="plan-likes">
-            <image class="like-icon" src="../images/favorite.png" mode="aspectFit"></image>
+            <image class="like-icon" src="../images/unused/favorite.png" mode="aspectFit"></image>
             <text>{{item.likes}}</text>
           </view>
         </view>

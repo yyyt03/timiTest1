@@ -156,4 +156,17 @@
   color: #333333;
   text-align: center;
   font-weight: 500;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999999;
 } 

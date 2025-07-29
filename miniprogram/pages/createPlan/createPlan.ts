@@ -1,200 +1,161 @@
 // 方案创作页面
 Page({
   data: {
-    // 英雄选择
-    allHeroes: [] as string[],
-    heroIndex: 0,
-    selectedHero: '',
-    
-    // 流派核心
-    selectedCore: null as number | null,
-    
-    // 特性天赋
-    talents: [0, 1, 2, 3, 4, 5, 6, 7], // 8个特性天赋
-    selectedTalents: [] as number[],
-    talentSelected: [false, false, false, false, false, false, false, false], // 每个特性是否被选中
-    
-    // 出装推荐
-    equipmentDesc: '',
-    equipmentCode: '',
-    
-    // 方案思路
-    planDesc: ''
+    hero: '',
+    heroId: '',
+    currentStep: 1, // 当前步骤：1-选择英雄，2-选择核心，3-选择天赋，4-出装推荐，5-方案思路
+    heroCategories: {} as any,
+    selectedCore: -1, // 选中的核心技能索引
+    selectedTalents: [] as number[], // 选中的特性天赋索引数组
+    talentSelected: [] as boolean[], // 天赋是否被选中
+    equipment: '', // 出装推荐
+    equipmentCode: '', // 装备密语
+    planDescription: '', // 方案思路描述
+    loading: true
   },
 
-  // 生命周期函数--监听页面加载
   onLoad(options: any) {
-    // 如果从英雄分类页面跳转过来，可以获取传递的英雄参数
-    if (options && options.hero) {
+    if (options.hero) {
       this.setData({
-        selectedHero: options.hero
+        hero: options.hero,
+        heroId: options.heroId || ''
       });
-      
-      // 获取所有英雄列表
-      this.getAllHeroes();
-    } else {
-      // 如果没有传入英雄参数，则自动跳转到英雄分类页面
-      wx.navigateTo({
-        url: '../heroCategory/heroCategory?source=createPlan'
+      wx.setNavigationBarTitle({
+        title: options.hero + ' - 方案创作'
       });
     }
+    this.loadHeroData();
   },
-  
-  // 获取所有英雄列表
-  getAllHeroes() {
-    // 这里可以从数据源获取英雄列表，现在先使用示例数据
-    const heroCategories = {
-      shooter: ['孙尚香', '马可波罗', '后羿', '狄仁杰', '鲁班七号'],
-      support: ['东皇太一', '钟馗', '明世隐', '瑶'],
-      assassin: ['赵云', '李白', '典韦', '孙悟空'],
-      warrior: ['孙策', '司空震', '铠', '亚瑟', '程咬金', '吕布'],
-      mage: ['杨玉环', '妲己', '诸葛亮', '安琪拉', '甄姬', '小乔', '武则天', '貂蝉']
+
+  // 加载英雄数据
+  loadHeroData() {
+    var that = this;
+    // 模拟英雄分类数据
+    var heroCategories = {
+      '射手': ['孙尚香', '马可波罗', '后羿', '狄仁杰', '鲁班七号'],
+      '辅助': ['东皇太一', '钟馗', '明世隐', '瑶'],
+      '刺客': ['赵云', '李白', '典韦', '孙悟空'],
+      '战士': ['孙策', '司空震', '铠', '亚瑟', '程咬金', '吕布'],
+      '法师': ['杨玉环', '妲己', '诸葛亮', '安琪拉', '甄姬', '小乔', '武则天', '貂蝉']
     };
-    
-    // 合并所有英雄
-    let allHeroes: string[] = [];
-    Object.values(heroCategories).forEach(heroes => {
+
+    // 获取所有英雄列表
+    var allHeroes: string[] = [];
+    Object.values(heroCategories).forEach(function(heroes: string[]) {
       allHeroes = allHeroes.concat(heroes);
     });
-    
-    this.setData({
-      allHeroes
+
+    that.setData({
+      heroCategories: heroCategories,
+      loading: false
     });
   },
-  
-  // 跳转到英雄分类页面
-  goToHeroCategory() {
-    wx.navigateTo({
-      url: '../heroCategory/heroCategory?source=createPlan'
-    });
-  },
-  
-  // 英雄选择变化
-  onHeroChange(e: any) {
-    const index = e.detail.value;
-    this.setData({
-      heroIndex: index,
-      selectedHero: this.data.allHeroes[index],
-      // 重置后续选择
-      selectedCore: null,
-      selectedTalents: [],
-      talentSelected: [false, false, false, false, false, false, false, false]
-    });
-  },
-  
-  // 选择流派核心
+
+  // 选择核心技能
   selectCore(e: any) {
-    const index = parseInt(e.currentTarget.dataset.index);
+    var index = e.detail.value;
     this.setData({
-      selectedCore: index,
-      // 重置后续选择
-      selectedTalents: [],
-      talentSelected: [false, false, false, false, false, false, false, false]
+      selectedCore: index
     });
   },
-  
+
   // 切换特性天赋选择
   toggleTalent(e: any) {
-    const index = parseInt(e.currentTarget.dataset.index);
-    let selectedTalents = [...this.data.selectedTalents];
-    let talentSelected = [...this.data.talentSelected];
+    var index = parseInt(e.currentTarget.dataset.index);
+    var selectedTalents = this.data.selectedTalents.slice();
+    var talentSelected = this.data.talentSelected.slice();
     
-    console.log('当前选择的特性索引:', index);
-    console.log('当前已选特性:', selectedTalents);
-    console.log('当前特性选中状态:', talentSelected);
-    
-    // 如果已经选择了这个特性，则取消选择
     if (talentSelected[index]) {
-      console.log('取消选择特性:', index);
-      selectedTalents = selectedTalents.filter(i => i !== index);
+      // 取消选择
       talentSelected[index] = false;
-    } 
-    // 如果还没有选满3个，则添加选择
-    else if (selectedTalents.length < 3) {
-      console.log('添加选择特性:', index);
-      selectedTalents.push(index);
-      talentSelected[index] = true;
-    } 
-    // 如果已经选满3个，则替换第一个
-    else {
-      console.log('替换第一个特性为:', index);
-      const firstSelected = selectedTalents.shift();
-      if (firstSelected !== undefined) {
-        talentSelected[firstSelected] = false;
+      selectedTalents = selectedTalents.filter(function(i: number) {
+        return i !== index;
+      });
+    } else {
+      // 选择天赋
+      if (selectedTalents.length >= 3) {
+        // 最多只能选择3个天赋，移除第一个
+        var firstSelected = selectedTalents.shift();
+        if (firstSelected !== undefined) {
+          talentSelected[firstSelected] = false;
+        }
       }
-      selectedTalents.push(index);
       talentSelected[index] = true;
+      selectedTalents.push(index);
     }
     
-    console.log('更新后的已选特性:', selectedTalents);
-    console.log('更新后的特性选中状态:', talentSelected);
-    
     this.setData({
-      selectedTalents,
-      talentSelected
+      selectedTalents: selectedTalents,
+      talentSelected: talentSelected
     });
   },
-  
-  // 出装推荐输入
+
+  // 输入出装推荐
   onEquipmentInput(e: any) {
     this.setData({
-      equipmentDesc: e.detail.value
+      equipment: e.detail.value
     });
   },
-  
-  // 装备密语输入
+
+  // 输入装备密语
   onEquipmentCodeInput(e: any) {
     this.setData({
       equipmentCode: e.detail.value
     });
   },
-  
-  // 方案思路描述输入
-  onPlanDescInput(e: any) {
+
+  // 输入方案思路
+  onDescriptionInput(e: any) {
     this.setData({
-      planDesc: e.detail.value
+      planDescription: e.detail.value
     });
   },
-  
-  // 生成一图流
+
+  // 下一步
+  nextStep() {
+    var currentStep = this.data.currentStep;
+    if (currentStep < 5) {
+      this.setData({
+        currentStep: currentStep + 1
+      });
+    }
+  },
+
+  // 上一步
+  prevStep() {
+    var currentStep = this.data.currentStep;
+    if (currentStep > 1) {
+      this.setData({
+        currentStep: currentStep - 1
+      });
+    }
+  },
+
+  // 生成方案
   generatePlan() {
-    // 检查必填项
-    if (!this.data.selectedHero) {
-      wx.showToast({
-        title: '请选择英雄',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    if (this.data.selectedCore === null) {
-      wx.showToast({
-        title: '请选择流派核心',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    if (this.data.selectedTalents.length === 0) {
-      wx.showToast({
-        title: '请至少选择一个特性天赋',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    // 这里可以生成方案，例如生成图片或者保存到服务器
+    var that = this;
     wx.showLoading({
-      title: '正在生成一图流...'
+      title: '生成方案中...'
     });
-    
-    // 模拟生成过程
-    setTimeout(() => {
+
+    setTimeout(function() {
       wx.hideLoading();
       wx.showToast({
-        title: '一图流生成成功',
+        title: '方案生成成功！',
         icon: 'success'
       });
+      
+      // TODO: 跳转到方案详情页面
+      // wx.navigateTo({
+      //   url: '../planDetail/planDetail'
+      // });
     }, 2000);
+  },
+
+  // 从英雄分类中选择
+  selectFromCategory() {
+    wx.navigateTo({
+      url: '../heroCategory/heroCategory?source=createPlan'
+    });
   }
 }); 

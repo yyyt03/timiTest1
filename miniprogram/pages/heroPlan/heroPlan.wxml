@@ -7,7 +7,7 @@
   </view>
   
   <view class="action-bar">
-    <button class="create-btn" bindtap="createNewPlan">创建新方案</button>
+    <button class="create-btn" bindtap="createPlan">创建新方案</button>
   </view>
   
   <view class="plans-container">
@@ -24,7 +24,7 @@
     
     <!-- 方案列表 -->
     <block wx:else>
-      <view class="plan-card" wx:for="{{plans}}" wx:key="id" bindtap="viewPlanDetail" data-id="{{item.id}}">
+      <view class="plan-card" wx:for="{{plans}}" wx:key="id" bindtap="viewPlan" data-id="{{item.id}}">
         <view class="plan-header">
           <view class="plan-title">{{item.title}}</view>
           <view class="plan-likes">

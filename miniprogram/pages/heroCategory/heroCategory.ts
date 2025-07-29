@@ -9,7 +9,7 @@ Page({
   },
 
   // 生命周期函数--监听页面加载
-  onLoad(options: any) {
+  onLoad: function(options: any) {
     if (options && options.source) {
       this.setData({
         source: options.source
@@ -19,77 +19,114 @@ Page({
   },
 
   // 获取英雄列表
-  async getHeroList() {
+  getHeroList: function() {
+    var that = this;
     try {
       this.setData({ loading: true });
       
-      const result: any = await CloudService.callFunction('getHeroList');
+      console.log('开始调用云函数getHeroList...');
       
-      if (result && result.success) {
-        // 批量获取所有英雄头像fileID
-        const allHeroes = Object.values(result.data.categories).flatMap((cat: any) => cat.heroes);
-        const fileIDs = allHeroes.map((hero: any) => hero.avatar).filter(Boolean);
+      CloudService.callFunction('getHeroList').then(function(result: any) {
+        console.log('云函数调用成功，返回结果:', result);
         
-        console.log('需要获取临时URL的fileIDs:', fileIDs);
-        
-        let tempURLs: string[] = [];
-        try {
-          tempURLs = await CloudService.getTempFileURLs(fileIDs);
-          console.log('获取到的临时URLs:', tempURLs);
-        } catch (tempURLError) {
-          console.error('获取临时URL失败:', tempURLError);
-          // 如果获取临时URL失败，使用空数组
-          tempURLs = fileIDs.map(() => '');
-        }
-        
-        // 替换hero.avatar为临时URL，如果失败则使用本地图片
-        let urlIdx = 0;
-        Object.values(result.data.categories).forEach((cat: any) => {
-          cat.heroes.forEach((hero: any) => {
-            if (hero.avatar) {
-              if (tempURLs[urlIdx] && tempURLs[urlIdx].startsWith('http')) {
-                // 使用临时URL
-                hero.avatar = tempURLs[urlIdx];
-                console.log(`英雄 ${hero.name} 使用临时URL:`, hero.avatar);
-              } else {
-                // 临时URL获取失败，使用本地图片作为备选
-                const heroName = hero.name.toLowerCase().replace(/\s+/g, '');
-                hero.avatar = `/pages/images/heroes/${heroName}.jpg`;
-                console.log(`英雄 ${hero.name} 使用本地图片:`, hero.avatar);
-              }
-            }
-            urlIdx++;
+        if (result && result.success && result.data) {
+          // 批量获取所有英雄头像fileID
+          var allHeroes: any[] = [];
+          Object.values(result.data.categories).forEach(function(cat: any) {
+            allHeroes = allHeroes.concat(cat.heroes);
           });
-        });
+          
+          var fileIDs = allHeroes.map(function(hero: any) {
+            return hero.avatar;
+          }).filter(function(avatar: any) {
+            return avatar;
+          });
+          
+          CloudService.getTempFileURLs(fileIDs).then(function(tempURLs: string[]) {
+            
+            // 替换hero.avatar为临时URL，如果失败则使用本地图片
+            var urlIdx = 0;
+            Object.values(result.data.categories).forEach(function(cat: any) {
+              cat.heroes.forEach(function(hero: any) {
+                if (hero.avatar) {
+                  if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
+                    // 使用临时URL
+                    hero.avatar = tempURLs[urlIdx];
+                  } else {
+                    // 临时URL获取失败，使用默认图片
+                    hero.avatar = '/images/default-avatar.png';
+                  }
+                }
+                urlIdx++;
+              });
+            });
+            
+            that.setData({
+              heroCategories: result.data.categories,
+              loading: false
+            });
+          }).catch(function(tempURLError: any) {
+            console.error('获取临时URL失败:', tempURLError);
+            // 如果获取临时URL失败，使用本地图片
+            var urlIdx = 0;
+            Object.values(result.data.categories).forEach(function(cat: any) {
+              cat.heroes.forEach(function(hero: any) {
+                if (hero.avatar) {
+                  hero.avatar = '/images/default-avatar.png';
+                }
+                urlIdx++;
+              });
+            });
+            
+            that.setData({
+              heroCategories: result.data.categories,
+              loading: false
+            });
+          });
+        } else {
+          console.error('获取英雄列表失败，返回结果:', result);
+          console.error('错误信息:', result && result.message ? result.message : '未知错误');
+          
+          wx.showToast({
+            title: '获取英雄列表失败',
+            icon: 'none'
+          });
+          
+          that.setData({
+            loading: false
+          });
+        }
+      }).catch(function(error: any) {
+        console.error('调用云函数失败，详细错误:', error);
         
-        this.setData({
-          heroCategories: result.data.categories,
-          loading: false
-        });
-        console.log('英雄分类数据:', result.data);
-      } else {
-        console.error('获取英雄列表失败:', result?.message || '未知错误');
-        this.setData({ loading: false });
         wx.showToast({
-          title: '获取英雄列表失败',
+          title: '网络连接失败',
           icon: 'none'
         });
-      }
+        
+        that.setData({
+          loading: false
+        });
+      });
     } catch (error) {
-      console.error('调用云函数失败:', error);
-      this.setData({ loading: false });
+      console.error('getHeroList函数执行异常:', error);
+      
       wx.showToast({
-        title: '网络错误，请重试',
+        title: '系统错误',
         icon: 'none'
+      });
+      
+      this.setData({
+        loading: false
       });
     }
   },
 
   // 选择英雄
-  selectHero(e: any) {
-    const hero = e.currentTarget.dataset.hero;
+  selectHero: function(e: any) {
+    var hero = e.currentTarget.dataset.hero;
     wx.showToast({
-      title: `已选择${hero.name}`,
+      title: '已选择' + hero.name,
       icon: 'none'
     });
     
@@ -97,12 +134,12 @@ Page({
     if (this.data.source === 'createPlan') {
       // 如果是从方案创作页面进入的，则返回方案创作页面
       wx.navigateTo({
-        url: `../createPlan/createPlan?hero=${hero.name}&heroId=${hero.id}`
+        url: '../createPlan/createPlan?hero=' + hero.name + '&heroId=' + hero.id
       });
     } else {
       // 如果是从攻略页面或其他页面进入的，则跳转到方案查看页面
       wx.navigateTo({
-        url: `../heroPlan/heroPlan?hero=${hero.name}&heroId=${hero.id}`
+        url: '../heroPlan/heroPlan?hero=' + hero.name + '&heroId=' + hero.id
       });
     }
   }

@@ -1,17 +1,17 @@
 // 云函数入口文件
-const cloud = require('wx-server-sdk')
+var cloud = require('wx-server-sdk')
 
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
+  env: 'cloudbase-1gk9t6w2d1d090af'
 })
 
 // 云函数入口函数
-exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
+exports.main = function(event, context) {
+  var wxContext = cloud.getWXContext()
   
   try {
     // 获取用户信息
-    const userInfo = {
+    var userInfo = {
       openid: wxContext.OPENID,
       appid: wxContext.APPID,
       unionid: wxContext.UNIONID,
@@ -20,31 +20,34 @@ exports.main = async (event, context) => {
     }
     
     // 获取数据库实例
-    const db = cloud.database()
+    var db = cloud.database()
     
     try {
       // 检查用户是否已存在
-      const userResult = await db.collection('users').where({
+      db.collection('users').where({
         openid: userInfo.openid
-      }).get()
-      
-      if (userResult.data.length === 0) {
-        // 新用户，添加到数据库
-        await db.collection('users').add({
-          data: userInfo
-        })
-      } else {
-        // 更新用户信息
-        await db.collection('users').where({
-          openid: userInfo.openid
-        }).update({
-          data: {
-            updateTime: new Date().toISOString()
-          }
-        })
-      }
+      }).get().then(function(userResult) {
+        if (userResult.data.length === 0) {
+          // 新用户，添加到数据库
+          return db.collection('users').add({
+            data: userInfo
+          });
+        } else {
+          // 更新用户信息
+          return db.collection('users').where({
+            openid: userInfo.openid
+          }).update({
+            data: {
+              updateTime: new Date().toISOString()
+            }
+          });
+        }
+      }).catch(function(dbError) {
+        console.error('数据库操作失败:', dbError);
+        // 数据库操作失败时，仍然返回用户信息
+      });
     } catch (dbError) {
-      console.error('数据库操作失败:', dbError)
+      console.error('数据库操作失败:', dbError);
       // 数据库操作失败时，仍然返回用户信息
     }
     

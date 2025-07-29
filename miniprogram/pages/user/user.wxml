@@ -8,7 +8,7 @@
   <!-- 功能卡片区域 -->
   <view class="function-container">
     <!-- 收藏方案 -->
-    <view class="function-card" bindtap="navigateToFavorites">
+    <view class="function-card" bindtap="goToFavorites">
       <view class="card-content">
         <image class="card-icon" src="../images/unused/user.png" mode="aspectFit"></image>
         <text class="card-title">收藏方案</text>
@@ -17,7 +17,7 @@
     </view>
     
     <!-- 创作方案 -->
-    <view class="function-card" bindtap="navigateToCreations">
+    <view class="function-card" bindtap="goToCreatePlan">
       <view class="card-content">
         <image class="card-icon" src="../images/unused/user.png" mode="aspectFit"></image>
         <text class="card-title">创作方案</text>

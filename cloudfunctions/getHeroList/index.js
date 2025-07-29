@@ -1,59 +1,70 @@
 // 云函数入口文件
-const cloud = require('wx-server-sdk')
+var cloud = require('wx-server-sdk')
 
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
+  env: 'cloudbase-1gk9t6w2d1d090af'
 })
 
 // 云函数入口函数
-exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
+exports.main = async function(event, context) {
+  console.log('getHeroList云函数被调用');
   
   try {
-    // 获取数据库实例
-    const db = cloud.database()
+    const db = cloud.database();
     
-    // 获取所有英雄分类
-    const categoriesResult = await db.collection('hero_categories').get()
+    // 从heroes集合中读取所有英雄数据
+    const heroesResult = await db.collection('heroes').get();
     
-    // 获取所有英雄数据
-    const heroesResult = await db.collection('heroes').get()
+    // 分类映射
+    const categoryMap = {
+      'shooter': '射手',
+      'support': '辅助', 
+      'assassin': '刺客',
+      'warrior': '战士',
+      'mage': '法师'
+    };
     
-    // 组织数据结构
-    const heroCategories = {}
+    // 按分类组织数据
+    const categories = {};
+    let totalHeroes = 0;
     
-    // 按分类组织英雄数据
-    categoriesResult.data.forEach(category => {
-      const categoryHeroes = heroesResult.data.filter(hero => 
-        hero.category === category.key
-      )
+    heroesResult.data.forEach((hero, index) => {
+      const chineseCategory = categoryMap[hero.category] || hero.category;
       
-      heroCategories[category.key] = {
-        name: category.name,
-        heroes: categoryHeroes.map(hero => ({
-          id: hero._id,
-          name: hero.name,
-          avatar: hero.avatar, // 云端图片URL
-          category: hero.category
-        }))
+      if (!categories[chineseCategory]) {
+        categories[chineseCategory] = {
+          name: chineseCategory,
+          heroes: []
+        };
       }
-    })
+      
+      categories[chineseCategory].heroes.push({
+        id: (index + 1).toString(),
+        name: hero.name,
+        avatar: hero.avatar, // 这里包含云存储的fileID
+        category: chineseCategory
+      });
+      
+      totalHeroes++;
+    });
     
-    return {
+    const result = {
       success: true,
       data: {
-        categories: heroCategories,
-        totalHeroes: heroesResult.data.length
+        categories: categories,
+        totalHeroes: totalHeroes
       },
       message: '获取英雄列表成功'
-    }
+    };
+    
+    return result;
     
   } catch (error) {
-    console.error('获取英雄列表失败:', error)
+    console.error('获取英雄列表失败:', error);
     return {
       success: false,
-      error: error.message,
-      message: '获取英雄列表失败'
-    }
+      data: null,
+      message: '获取英雄列表失败: ' + error.message
+    };
   }
 } 

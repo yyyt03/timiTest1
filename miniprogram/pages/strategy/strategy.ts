@@ -8,63 +8,63 @@ Page({
     loading: false
   },
 
-  // 生命周期函数--监听页面加载
   onLoad() {
-    this.getUserInfo()
-    this.getPlans()
+    this.getUserInfo();
+    this.getPlans();
   },
 
-  // 导航到推荐方案页面
-  navigateToRecommend() {
+  // 获取用户信息
+  getUserInfo() {
+    var that = this;
+    CloudService.callFunction('getUserInfo').then(function(userInfo: any) {
+      that.setData({
+        userInfo: userInfo
+      });
+    }).catch(function(error) {
+      console.error('获取用户信息失败:', error);
+    });
+  },
+
+  // 获取方案列表
+  getPlans() {
+    var that = this;
+    this.setData({ loading: true });
+    
+    var db = CloudService.getDatabase();
+    db.collection('plans').get().then(function(result: any) {
+      that.setData({
+        plans: result.data,
+        loading: false
+      });
+    }).catch(function(error) {
+      console.error('获取方案列表失败:', error);
+      that.setData({ loading: false });
+    });
+  },
+
+  // 跳转到推荐方案页面
+  goToRecommendPlan() {
     wx.navigateTo({
       url: '../recommendPlan/recommendPlan'
     });
   },
 
-  // 导航到英雄分类页面
-  navigateToHeroCategory() {
+  // 跳转到英雄分类页面
+  goToHeroCategory() {
     wx.navigateTo({
-      url: '../heroCategory/heroCategory?source=strategy'
+      url: '../heroCategory/heroCategory'
     });
   },
 
-  // 导航到体验服方案页面
-  navigateToBeta() {
+  // 跳转到体验服方案页面
+  goToBetaPlan() {
     wx.navigateTo({
       url: '../betaPlan/betaPlan'
     });
   },
 
-  // 获取用户信息
-  async getUserInfo() {
-    try {
-      const userInfo = await CloudService.callFunction('getUserInfo')
-      this.setData({
-        userInfo: userInfo
-      })
-    } catch (error) {
-      console.error('获取用户信息失败:', error)
-    }
-  },
-
-  // 获取方案列表
-  async getPlans() {
-    try {
-      this.setData({ loading: true })
-      const db = CloudService.getDatabase()
-      const result = await db.collection('plans').get()
-      this.setData({
-        plans: result.data,
-        loading: false
-      })
-    } catch (error) {
-      console.error('获取方案列表失败:', error)
-      this.setData({ loading: false })
-    }
-  },
-
-  // 导航到方案创作页面
-  navigateToCreate() {
+  // 跳转到方案创作页面
+  goToCreatePlan() {
     wx.navigateTo({
       url: '../createPlan/createPlan'
     });

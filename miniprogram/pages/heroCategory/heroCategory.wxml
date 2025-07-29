@@ -15,7 +15,7 @@
           <block wx:for="{{item.heroes}}" wx:key="id" wx:for-item="hero">
             <view class="hero-item" bindtap="selectHero" data-hero="{{hero}}">
               <view class="hero-avatar-container">
-                <image class="hero-avatar" src="{{hero.avatar}}" mode="aspectFit"></image>
+                <image class="hero-avatar" src="{{hero.avatar}}" mode="aspectFill"></image>
               </view>
               <text class="hero-name">{{hero.name}}</text>
             </view>

@@ -62,4 +62,23 @@ export class CloudService {
       throw error
     }
   }
+
+  /**
+   * 批量获取云存储临时URL
+   * @param fileList 云存储fileID数组
+   * @returns 临时URL数组，顺序与fileList一致
+   */
+  static async getTempFileURLs(fileList: string[]): Promise<string[]> {
+    if (!fileList || fileList.length === 0) return [];
+    try {
+      const res = await wx.cloud.getTempFileURL({
+        fileList
+      });
+      // 返回临时URL数组，顺序与fileList一致
+      return res.fileList.map(item => item.tempFileURL || '');
+    } catch (error) {
+      console.error('获取临时URL失败:', error);
+      return fileList.map(() => '');
+    }
+  }
 }

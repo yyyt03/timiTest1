@@ -141,8 +141,8 @@
 }
 
 .hero-avatar {
-  width: 110rpx;
-  height: 110rpx;
+  width: 120rpx;
+  height: 120rpx;
 }
 
 .hero-avatar-text {

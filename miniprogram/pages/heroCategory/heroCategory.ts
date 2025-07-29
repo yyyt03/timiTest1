@@ -26,6 +26,42 @@ Page({
       const result: any = await CloudService.callFunction('getHeroList');
       
       if (result && result.success) {
+        // 批量获取所有英雄头像fileID
+        const allHeroes = Object.values(result.data.categories).flatMap((cat: any) => cat.heroes);
+        const fileIDs = allHeroes.map((hero: any) => hero.avatar).filter(Boolean);
+        
+        console.log('需要获取临时URL的fileIDs:', fileIDs);
+        
+        let tempURLs: string[] = [];
+        try {
+          tempURLs = await CloudService.getTempFileURLs(fileIDs);
+          console.log('获取到的临时URLs:', tempURLs);
+        } catch (tempURLError) {
+          console.error('获取临时URL失败:', tempURLError);
+          // 如果获取临时URL失败，使用空数组
+          tempURLs = fileIDs.map(() => '');
+        }
+        
+        // 替换hero.avatar为临时URL，如果失败则使用本地图片
+        let urlIdx = 0;
+        Object.values(result.data.categories).forEach((cat: any) => {
+          cat.heroes.forEach((hero: any) => {
+            if (hero.avatar) {
+              if (tempURLs[urlIdx] && tempURLs[urlIdx].startsWith('http')) {
+                // 使用临时URL
+                hero.avatar = tempURLs[urlIdx];
+                console.log(`英雄 ${hero.name} 使用临时URL:`, hero.avatar);
+              } else {
+                // 临时URL获取失败，使用本地图片作为备选
+                const heroName = hero.name.toLowerCase().replace(/\s+/g, '');
+                hero.avatar = `/pages/images/heroes/${heroName}.jpg`;
+                console.log(`英雄 ${hero.name} 使用本地图片:`, hero.avatar);
+              }
+            }
+            urlIdx++;
+          });
+        });
+        
         this.setData({
           heroCategories: result.data.categories,
           loading: false

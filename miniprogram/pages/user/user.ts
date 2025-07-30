@@ -17,17 +17,21 @@ Page({
   // 获取用户信息
   getUserInfo() {
     var that = this;
-    wx.getUserProfile({
-      desc: '用于完善用户资料',
-      success: function(res) {
+    // 使用云函数获取用户信息，避免wx.getUserProfile的废弃问题
+    CloudService.callFunction('getUserInfo').then(function(result: any) {
+      if (result && result.success) {
         that.setData({
-          userInfo: res.userInfo,
+          userInfo: {
+            avatarUrl: '../images/unused/user.png', // 默认头像
+            nickName: '微信用户'
+          },
           hasUserInfo: true
         });
-      },
-      fail: function() {
+      } else {
         console.log('获取用户信息失败');
       }
+    }).catch(function(error) {
+      console.error('获取用户信息失败:', error);
     });
   },
 

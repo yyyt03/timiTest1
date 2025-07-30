@@ -6,7 +6,7 @@ cloud.init({
 })
 
 // 云函数入口函数
-exports.main = function(event, context) {
+exports.main = async function(event, context) {
   var wxContext = cloud.getWXContext()
   
   try {
@@ -24,28 +24,25 @@ exports.main = function(event, context) {
     
     try {
       // 检查用户是否已存在
-      db.collection('users').where({
+      const userResult = await db.collection('users').where({
         openid: userInfo.openid
-      }).get().then(function(userResult) {
-        if (userResult.data.length === 0) {
-          // 新用户，添加到数据库
-          return db.collection('users').add({
-            data: userInfo
-          });
-        } else {
-          // 更新用户信息
-          return db.collection('users').where({
-            openid: userInfo.openid
-          }).update({
-            data: {
-              updateTime: new Date().toISOString()
-            }
-          });
-        }
-      }).catch(function(dbError) {
-        console.error('数据库操作失败:', dbError);
-        // 数据库操作失败时，仍然返回用户信息
-      });
+      }).get();
+      
+      if (userResult.data.length === 0) {
+        // 新用户，添加到数据库
+        await db.collection('users').add({
+          data: userInfo
+        });
+      } else {
+        // 更新用户信息
+        await db.collection('users').where({
+          openid: userInfo.openid
+        }).update({
+          data: {
+            updateTime: new Date().toISOString()
+          }
+        });
+      }
     } catch (dbError) {
       console.error('数据库操作失败:', dbError);
       // 数据库操作失败时，仍然返回用户信息

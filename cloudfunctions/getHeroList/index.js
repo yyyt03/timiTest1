@@ -39,7 +39,7 @@ exports.main = async function(event, context) {
       }
       
       categories[chineseCategory].heroes.push({
-        id: (index + 1).toString(),
+        id: hero._id, // 使用heroes集合的_id作为heroId
         name: hero.name,
         avatar: hero.avatar, // 这里包含云存储的fileID
         category: chineseCategory

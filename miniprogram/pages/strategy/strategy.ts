@@ -31,7 +31,10 @@ Page({
     this.setData({ loading: true });
     
     var db = CloudService.getDatabase();
-    db.collection('plans').get().then(function(result: any) {
+    // 只获取活跃状态的方案，避免全量查询
+    db.collection('plans').where({
+      status: 'active'
+    }).limit(10).get().then(function(result: any) {
       that.setData({
         plans: result.data,
         loading: false

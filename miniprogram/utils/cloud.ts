@@ -2,19 +2,15 @@
 export class CloudService {
   // 调用云函数
   static callFunction(name: string, data: any = {}) {
-    console.log('CloudService.callFunction 开始调用:', name, '参数:', data);
-    
     return new Promise(function(resolve, reject) {
       wx.cloud.callFunction({
         name: name,
         data: data
       }).then(function(result) {
-        console.log('云函数调用成功:', name, '结果:', result);
         // 如果result.result为null，返回空对象
         resolve(result.result || {});
       }).catch(function(error) {
         console.error('云函数调用失败:', name, '错误:', error);
-        console.error('错误详情:', error.errMsg, error.errCode);
         reject(error);
       });
     });

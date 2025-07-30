@@ -35,6 +35,8 @@
 .hero-avatar {
   width: 140rpx;
   height: 140rpx;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .hero-name {
@@ -149,15 +151,41 @@
   color: #333333;
 }
 
-.plan-likes {
+.plan-actions {
   display: flex;
   align-items: center;
+  gap: 20rpx;
 }
 
-.like-icon {
-  width: 30rpx;
-  height: 30rpx;
-  margin-right: 10rpx;
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 12rpx;
+  border-radius: 20rpx;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.action-item:active {
+  background-color: #e9ecef;
+  transform: scale(0.95);
+}
+
+.action-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 8rpx;
+  transition: all 0.3s ease;
+}
+
+.action-icon.favorited {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+}
+
+.action-count {
+  font-size: 24rpx;
+  color: #666666;
+  font-weight: 500;
 }
 
 /* 方案内容 */
@@ -224,4 +252,29 @@
 .plan-time {
   font-size: 24rpx;
   color: #666666;
+}
+
+/* 加载更多 */
+.load-more {
+  width: 100%;
+  height: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+/* 没有更多数据 */
+.no-more {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.no-more-text {
+  font-size: 26rpx;
+  color: #999999;
 } 

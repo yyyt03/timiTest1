@@ -1,7 +1,7 @@
 <view class="container">
   <view class="hero-header">
     <view class="hero-avatar-container">
-      <image class="hero-avatar" src="../images/unused/user.png" mode="aspectFit"></image>
+      <image class="hero-avatar" src="{{heroAvatar}}" mode="aspectFit"></image>
     </view>
     <view class="hero-name">{{hero}}</view>
   </view>
@@ -24,22 +24,30 @@
     
     <!-- 方案列表 -->
     <block wx:else>
-      <view class="plan-card" wx:for="{{plans}}" wx:key="id" bindtap="viewPlan" data-id="{{item.id}}">
+      <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index">
         <view class="plan-header">
           <view class="plan-title">{{item.title}}</view>
-          <view class="plan-likes">
-            <image class="like-icon" src="../images/unused/favorite.png" mode="aspectFit"></image>
-            <text>{{item.likes}}</text>
+          <view class="plan-actions">
+            <view class="action-item" catchtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
+              <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
+                     src="../images/unused/{{item.isFavorited ? 'favorite.png' : 'favorite.png'}}" 
+                     mode="aspectFit"></image>
+              <text class="action-count">{{item.favorites || 0}}</text>
+            </view>
+            <view class="action-item">
+              <image class="action-icon" src="../images/unused/favorite.png" mode="aspectFit"></image>
+              <text class="action-count">{{item.likes || 0}}</text>
+            </view>
           </view>
         </view>
         
-        <view class="plan-content">
+        <view class="plan-content" bindtap="viewPlan" data-id="{{item._id}}">
           <view class="plan-info">
             <view class="info-item">
               <text class="info-label">核心:</text>
-              <text class="info-value">{{item.core}}</text>
+              <text class="info-value">{{item.coreSkill}}</text>
             </view>
-            <view class="info-item">
+            <view class="info-item" wx:if="{{item.talents && item.talents.length > 0}}">
               <text class="info-label">特性:</text>
               <text class="info-value">{{item.talents.join(', ')}}</text>
             </view>
@@ -53,16 +61,26 @@
             </view>
           </view>
           
-          <view class="plan-desc">
+          <view class="plan-desc" wx:if="{{item.strategy}}">
             <text class="desc-label">思路:</text>
-            <text class="desc-content">{{item.description}}</text>
+            <text class="desc-content">{{item.strategy}}</text>
           </view>
         </view>
         
         <view class="plan-footer">
-          <text class="plan-author">{{item.author}}</text>
+          <text class="plan-author">{{item.creatorName || '匿名用户'}}</text>
           <text class="plan-time">{{item.createTime}}</text>
         </view>
+      </view>
+      
+      <!-- 加载更多 -->
+      <view class="load-more" wx:if="{{loadingMore}}">
+        <view class="loading-text">加载中...</view>
+      </view>
+      
+      <!-- 没有更多数据 -->
+      <view class="no-more" wx:if="{{!hasMore && plans.length > 0}}">
+        <view class="no-more-text">没有更多数据了</view>
       </view>
     </block>
   </view>

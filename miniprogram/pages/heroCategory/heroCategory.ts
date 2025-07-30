@@ -27,7 +27,7 @@ Page({
       console.log('开始调用云函数getHeroList...');
       
       CloudService.callFunction('getHeroList').then(function(result: any) {
-        console.log('云函数调用成功，返回结果:', result);
+  
         
         if (result && result.success && result.data) {
           // 批量获取所有英雄头像fileID

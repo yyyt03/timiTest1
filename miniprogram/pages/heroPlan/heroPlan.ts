@@ -3,8 +3,13 @@ Page({
   data: {
     hero: '',
     heroId: '',
+    heroAvatar: '',
     plans: [] as any[],
-    loading: true
+    loading: true,
+    page: 1,
+    pageSize: 10,
+    hasMore: true,
+    loadingMore: false
   },
 
   onLoad(options: any) {
@@ -16,51 +21,146 @@ Page({
       wx.setNavigationBarTitle({
         title: options.hero + '的方案'
       });
+      // 获取英雄头像
+      this.getHeroAvatarFromCloud(options.hero);
     }
     this.loadPlans();
   },
 
-  // 加载方案数据
-  loadPlans() {
-    var that = this;
-    // 模拟加载延迟
-    setTimeout(function() {
-      that.setData({ loading: false });
-    }, 1000);
+  // 从云存储获取英雄头像
+  async getHeroAvatarFromCloud(heroName: string) {
+    try {
+      // 调用云函数获取英雄列表
+      const result = await wx.cloud.callFunction({
+        name: 'getHeroList',
+        data: {}
+      }) as any;
 
-    // 模拟数据加载完成
-    setTimeout(function() {
-      var demoPlans = [
-        {
-          id: 1,
-          title: that.data.hero + '核心玩法',
-          description: '专注于核心技能的强化，适合新手玩家',
-          difficulty: '简单',
-          winRate: '65%',
-          createTime: '2025-07-27'
-        },
-        {
-          id: 2,
-          title: that.data.hero + '团战流',
-          description: '强化团战能力，适合团队配合',
-          difficulty: '中等',
-          winRate: '72%',
-          createTime: '2025-07-26'
-        },
-        {
-          id: 3,
-          title: that.data.hero + '发育流',
-          description: '注重前期发育，后期carry',
-          difficulty: '困难',
-          winRate: '68%',
-          createTime: '2025-07-25'
+      if (result.result && result.result.success && result.result.data) {
+        // 查找对应英雄
+        let targetHero = null;
+        Object.values(result.result.data.categories).forEach((cat: any) => {
+          cat.heroes.forEach((hero: any) => {
+            if (hero.name === heroName) {
+              targetHero = hero;
+            }
+          });
+        });
+
+        if (targetHero && (targetHero as any).avatar) {
+          // 获取临时URL
+          const tempURLs = await wx.cloud.getTempFileURL({
+            fileList: [(targetHero as any).avatar]
+          });
+
+          if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
+            this.setData({
+              heroAvatar: tempURLs.fileList[0].tempFileURL
+            });
+          } else {
+            // 获取失败，使用默认头像
+            this.setData({
+              heroAvatar: '../images/unused/user.png'
+            });
+          }
+        } else {
+          // 未找到英雄，使用默认头像
+          this.setData({
+            heroAvatar: '../images/unused/user.png'
+          });
         }
-      ];
-
-      that.setData({
-        plans: demoPlans
+      } else {
+        // 云函数调用失败，使用默认头像
+        this.setData({
+          heroAvatar: '../images/unused/user.png'
+        });
+      }
+    } catch (error) {
+      console.error('获取英雄头像失败:', error);
+      // 出错时使用默认头像
+      this.setData({
+        heroAvatar: '../images/unused/user.png'
       });
-    }, 1500);
+    }
+  },
+
+  // 加载方案数据
+  async loadPlans(isLoadMore = false) {
+    const that = this;
+    
+    if (isLoadMore) {
+      if (!this.data.hasMore || this.data.loadingMore) {
+        return;
+      }
+      this.setData({ loadingMore: true });
+    } else {
+      this.setData({ loading: true });
+    }
+
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getHeroPlans',
+        data: {
+          heroId: this.data.heroId,
+          page: isLoadMore ? this.data.page + 1 : 1,
+          pageSize: this.data.pageSize
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const { plans, total, page, hasMore } = result.result.data;
+        
+        // 格式化时间
+        const formattedPlans = plans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+
+        this.setData({
+          plans: isLoadMore ? [...this.data.plans, ...formattedPlans] : formattedPlans,
+          page: page,
+          hasMore: hasMore,
+          loading: false,
+          loadingMore: false
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '加载失败',
+          icon: 'none'
+        });
+        this.setData({
+          loading: false,
+          loadingMore: false
+        });
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+      this.setData({
+        loading: false,
+        loadingMore: false
+      });
+    }
+  },
+
+  // 格式化时间
+  formatTime(timeStr: string) {
+    const date = new Date(timeStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) {
+      return '今天';
+    } else if (days === 1) {
+      return '昨天';
+    } else if (days < 7) {
+      return days + '天前';
+    } else {
+      return date.toLocaleDateString();
+    }
   },
 
   // 查看方案详情
@@ -77,10 +177,63 @@ Page({
     // })
   },
 
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.loadPlans().then(() => {
+      wx.stopPullDownRefresh();
+    });
+  },
+
+  // 上拉加载更多
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loadingMore) {
+      this.loadPlans(true);
+    }
+  },
+
   // 创建新方案
   createPlan() {
     wx.navigateTo({
-      url: '../createPlan/createPlan?hero=' + this.data.hero
+      url: '../createPlan/createPlan?hero=' + this.data.hero + '&heroId=' + this.data.heroId
     });
+  },
+
+
+
+  // 切换收藏状态
+  async toggleFavorite(e: any) {
+    const planId = e.currentTarget.dataset.id;
+    const planIndex = e.currentTarget.dataset.index;
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleFavorite',
+        data: { planId }
+      }) as any;
+
+      if (result.result && result.result.success) {
+        const plans = [...this.data.plans];
+        plans[planIndex].isFavorited = result.result.data.isFavorited;
+        plans[planIndex].favorites += result.result.data.action === 'favorited' ? 1 : -1;
+        
+        this.setData({ plans });
+        
+        wx.showToast({
+          title: result.result.message,
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '操作失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('切换收藏失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
   }
 }); 

@@ -12,8 +12,36 @@ exports.main = async function(event, context) {
   try {
     const db = cloud.database();
     
-    // 从heroes集合中读取所有英雄数据
-    const heroesResult = await db.collection('heroes').get();
+    // 检查是否有缓存参数，避免重复查询
+    const { useCache = true } = event;
+    
+    // 如果使用缓存，先检查是否有最近的数据
+    if (useCache) {
+      const cacheResult = await db.collection('heroes_cache').where({
+        type: 'hero_list',
+        updateTime: db.command.gte(new Date(Date.now() - 5 * 60 * 1000)) // 5分钟内的缓存
+      }).limit(1).get();
+      
+      if (cacheResult.data.length > 0) {
+        console.log('使用缓存的英雄数据');
+        return {
+          success: true,
+          data: cacheResult.data[0].data,
+          message: '获取英雄列表成功（缓存）',
+          fromCache: true
+        };
+      }
+    }
+    
+    // 从heroes集合中读取所有英雄数据，只选择必要字段
+    const heroesResult = await db.collection('heroes')
+      .field({
+        _id: true,
+        name: true,
+        avatar: true,
+        category: true
+      })
+      .get();
     
     // 分类映射
     const categoryMap = {
@@ -28,7 +56,7 @@ exports.main = async function(event, context) {
     const categories = {};
     let totalHeroes = 0;
     
-    heroesResult.data.forEach((hero, index) => {
+    heroesResult.data.forEach((hero) => {
       const chineseCategory = categoryMap[hero.category] || hero.category;
       
       if (!categories[chineseCategory]) {
@@ -39,22 +67,42 @@ exports.main = async function(event, context) {
       }
       
       categories[chineseCategory].heroes.push({
-        id: hero._id, // 使用heroes集合的_id作为heroId
+        id: hero._id,
         name: hero.name,
-        avatar: hero.avatar, // 这里包含云存储的fileID
+        avatar: hero.avatar,
         category: chineseCategory
       });
       
       totalHeroes++;
     });
     
+    const resultData = {
+      categories: categories,
+      totalHeroes: totalHeroes
+    };
+    
+    // 更新缓存
+    try {
+      await db.collection('heroes_cache').where({
+        type: 'hero_list'
+      }).remove();
+      
+      await db.collection('heroes_cache').add({
+        data: {
+          type: 'hero_list',
+          data: resultData,
+          updateTime: new Date()
+        }
+      });
+    } catch (cacheError) {
+      console.log('缓存更新失败，但不影响主功能:', cacheError);
+    }
+    
     const result = {
       success: true,
-      data: {
-        categories: categories,
-        totalHeroes: totalHeroes
-      },
-      message: '获取英雄列表成功'
+      data: resultData,
+      message: '获取英雄列表成功',
+      fromCache: false
     };
     
     return result;

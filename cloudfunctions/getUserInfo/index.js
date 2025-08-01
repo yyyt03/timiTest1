@@ -22,27 +22,68 @@ exports.main = async function(event, context) {
     // 获取数据库实例
     var db = cloud.database()
     
+    // 检查是否需要更新用户信息
+    const { forceUpdate = false } = event;
+    
+    if (!forceUpdate) {
+      // 先尝试获取现有用户信息，避免不必要的更新
+      try {
+        const userResult = await db.collection('users').where({
+          openid: userInfo.openid
+        }).field({
+          openid: true,
+          updateTime: true
+        }).get();
+        
+        if (userResult.data.length > 0) {
+          const lastUpdate = new Date(userResult.data[0].updateTime);
+          const now = new Date();
+          const timeDiff = now - lastUpdate;
+          
+          // 如果距离上次更新不到1小时，直接返回现有信息
+          if (timeDiff < 60 * 60 * 1000) {
+            console.log('用户信息较新，跳过更新');
+            return {
+              success: true,
+              data: userResult.data[0],
+              message: '获取用户信息成功（缓存）',
+              fromCache: true
+            };
+          }
+        }
+      } catch (queryError) {
+        console.log('查询用户信息失败，继续创建/更新:', queryError);
+      }
+    }
+    
+    // 需要创建或更新用户信息
     try {
-      // 检查用户是否已存在
-      const userResult = await db.collection('users').where({
+      // 使用upsert操作，减少数据库查询次数
+      await db.collection('users').where({
+        openid: userInfo.openid
+      }).update({
+        data: {
+          ...userInfo,
+          updateTime: new Date().toISOString()
+        }
+      });
+      
+      // 如果更新失败（用户不存在），则创建新用户
+      const updateResult = await db.collection('users').where({
         openid: userInfo.openid
       }).get();
       
-      if (userResult.data.length === 0) {
-        // 新用户，添加到数据库
+      if (updateResult.data.length === 0) {
         await db.collection('users').add({
-          data: userInfo
-        });
-      } else {
-        // 更新用户信息
-        await db.collection('users').where({
-          openid: userInfo.openid
-        }).update({
           data: {
+            ...userInfo,
             updateTime: new Date().toISOString()
           }
         });
       }
+      
+      console.log('用户信息更新成功');
+      
     } catch (dbError) {
       console.error('数据库操作失败:', dbError);
       // 数据库操作失败时，仍然返回用户信息
@@ -51,7 +92,8 @@ exports.main = async function(event, context) {
     return {
       success: true,
       data: userInfo,
-      message: '获取用户信息成功'
+      message: '获取用户信息成功',
+      fromCache: false
     }
     
   } catch (error) {

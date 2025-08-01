@@ -110,7 +110,8 @@ Page({
         data: {
           heroId: this.data.heroId,
           page: isLoadMore ? this.data.page + 1 : 1,
-          pageSize: this.data.pageSize
+          pageSize: this.data.pageSize,
+          forceRefresh: !isLoadMore // 第一次加载时强制刷新，确保数据最新
         }
       }) as any;
       
@@ -207,6 +208,44 @@ Page({
 
 
 
+  // 切换点赞状态
+  async toggleLike(e: any) {
+    const planId = e.currentTarget.dataset.id;
+    const planIndex = e.currentTarget.dataset.index;
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleLike',
+        data: { planId }
+      }) as any;
+
+      if (result.result && result.result.success) {
+        const plans = [...this.data.plans];
+        plans[planIndex].isLiked = result.result.data.isLiked;
+        // 使用云函数返回的具体数量
+        plans[planIndex].likeCount = result.result.data.likes;
+        
+        this.setData({ plans });
+        
+        wx.showToast({
+          title: result.result.message,
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '操作失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('切换点赞失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
+  },
+
   // 切换收藏状态
   async toggleFavorite(e: any) {
     const planId = e.currentTarget.dataset.id;
@@ -221,7 +260,8 @@ Page({
       if (result.result && result.result.success) {
         const plans = [...this.data.plans];
         plans[planIndex].isFavorited = result.result.data.isFavorited;
-        plans[planIndex].favorites += result.result.data.action === 'favorited' ? 1 : -1;
+        // 使用云函数返回的具体数量
+        plans[planIndex].favoriteCount = result.result.data.favorites;
         
         this.setData({ plans });
         

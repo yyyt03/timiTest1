@@ -28,15 +28,17 @@
         <view class="plan-header">
           <view class="plan-title">{{item.title}}</view>
           <view class="plan-actions">
+            <view class="action-item" catchtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
+              <image class="action-icon {{item.isLiked ? 'liked' : ''}}" 
+                     src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" 
+                     mode="aspectFit"></image>
+              <text class="action-count">{{item.likeCount || 0}}</text>
+            </view>
             <view class="action-item" catchtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
               <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
                      src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
                      mode="aspectFit"></image>
-              <text class="action-count">{{item.favorites || 0}}</text>
-            </view>
-            <view class="action-item">
-              <image class="action-icon" src="{{likeOutlineIcon}}" mode="aspectFit"></image>
-              <text class="action-count">{{item.likes || 0}}</text>
+              <text class="action-count">{{item.favoriteCount || 0}}</text>
             </view>
           </view>
         </view>

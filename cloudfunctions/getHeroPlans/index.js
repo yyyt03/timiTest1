@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { heroId, page = 1, pageSize = 10, useCache = true } = event;
+    const { heroId, page = 1, pageSize = 10, useCache = true, forceRefresh = false } = event;
     
     if (!heroId) {
       return {
@@ -28,12 +28,12 @@ exports.main = async function(event, context) {
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;
     
-    // 检查缓存
-    if (useCache && page === 1) {
+    // 检查缓存（只在非强制刷新时使用）
+    if (useCache && page === 1 && !forceRefresh) {
       const cacheKey = `hero_plans_${heroId}_${currentUserId}`;
       const cacheResult = await db.collection('plans_cache').where({
         key: cacheKey,
-        updateTime: db.command.gte(new Date(Date.now() - 2 * 60 * 1000)) // 2分钟内的缓存
+        updateTime: db.command.gte(new Date(Date.now() - 1 * 60 * 1000)) // 1分钟内的缓存
       }).limit(1).get();
       
       if (cacheResult.data.length > 0) {
@@ -47,6 +47,8 @@ exports.main = async function(event, context) {
       }
     }
     
+    console.log('获取最新方案数据');
+    
     // 并行查询方案列表和总数，减少等待时间
     const [plansResult, countResult] = await Promise.all([
       db.collection('plans')
@@ -57,17 +59,7 @@ exports.main = async function(event, context) {
         .orderBy('createTime', 'desc')
         .skip(skip)
         .limit(pageSize)
-        .field({
-          _id: true,
-          title: true,
-          description: true,
-          heroId: true,
-          createTime: true,
-          authorId: true,
-          likeCount: true,
-          favoriteCount: true
-        })
-        .get(),
+        .get(), // 移除field限制，获取所有字段
       db.collection('plans')
         .where({
           heroId: heroId,
@@ -109,11 +101,48 @@ exports.main = async function(event, context) {
       }
     }
     
-    // 处理方案数据，添加用户交互状态
+    // 获取所有方案的点赞和收藏数量
+    const planIds = plansResult.data.map(plan => plan._id);
+    
+    // 并行查询所有方案的点赞和收藏数量
+    const [likeCounts, favoriteCounts] = await Promise.all([
+      db.collection('likes')
+        .where({
+          planId: db.command.in(planIds)
+        })
+        .field({
+          planId: true
+        })
+        .get(),
+      db.collection('favorites')
+        .where({
+          planId: db.command.in(planIds)
+        })
+        .field({
+          planId: true
+        })
+        .get()
+    ]);
+    
+    // 统计每个方案的点赞和收藏数量
+    const likeCountMap = {};
+    const favoriteCountMap = {};
+    
+    likeCounts.data.forEach(like => {
+      likeCountMap[like.planId] = (likeCountMap[like.planId] || 0) + 1;
+    });
+    
+    favoriteCounts.data.forEach(favorite => {
+      favoriteCountMap[favorite.planId] = (favoriteCountMap[favorite.planId] || 0) + 1;
+    });
+    
+    // 处理方案数据，添加用户交互状态和数量
     const plans = plansResult.data.map(plan => ({
       ...plan,
       isFavorited: favoritePlanIds.includes(plan._id),
-      isLiked: likePlanIds.includes(plan._id)
+      isLiked: likePlanIds.includes(plan._id),
+      likeCount: likeCountMap[plan._id] || 0,
+      favoriteCount: favoriteCountMap[plan._id] || 0
     }));
     
     const resultData = {
@@ -124,8 +153,8 @@ exports.main = async function(event, context) {
       hasMore: skip + plans.length < countResult.total
     };
     
-    // 缓存第一页数据
-    if (page === 1) {
+    // 缓存第一页数据（只在非强制刷新时）
+    if (page === 1 && !forceRefresh) {
       try {
         const cacheKey = `hero_plans_${heroId}_${currentUserId}`;
         await db.collection('plans_cache').where({

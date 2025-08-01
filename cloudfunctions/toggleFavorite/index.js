@@ -40,21 +40,21 @@ exports.main = async function(event, context) {
         })
         .remove();
       
-      // 更新方案收藏数
-      await db.collection('plans')
-        .doc(planId)
-        .update({
-          data: {
-            favorites: db.command.inc(-1),
-            updateTime: new Date().toISOString()
-          }
-        });
+      // 统计更新后的收藏数量
+      const favoriteCountResult = await db.collection('favorites')
+        .where({
+          planId: planId
+        })
+        .count();
+      
+      const updatedFavoriteCount = favoriteCountResult.total;
       
       return {
         success: true,
         data: {
           isFavorited: false,
-          action: 'unfavorited'
+          action: 'unfavorited',
+          favorites: updatedFavoriteCount
         },
         message: '取消收藏成功'
       };
@@ -68,21 +68,21 @@ exports.main = async function(event, context) {
         }
       });
       
-      // 更新方案收藏数
-      await db.collection('plans')
-        .doc(planId)
-        .update({
-          data: {
-            favorites: db.command.inc(1),
-            updateTime: new Date().toISOString()
-          }
-        });
+      // 统计更新后的收藏数量
+      const favoriteCountResult = await db.collection('favorites')
+        .where({
+          planId: planId
+        })
+        .count();
+      
+      const updatedFavoriteCount = favoriteCountResult.total;
       
       return {
         success: true,
         data: {
           isFavorited: true,
-          action: 'favorited'
+          action: 'favorited',
+          favorites: updatedFavoriteCount
         },
         message: '收藏成功'
       };

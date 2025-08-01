@@ -15,25 +15,27 @@
   position: relative;
 }
 
-.banner {
+.banner-text {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
+  color: white;
 }
 
-.banner::before {
+.banner-text::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
-  animation: shimmer 2s infinite;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
@@ -41,10 +43,19 @@
   100% { transform: translateX(100%); }
 }
 
-.banner-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 0;
+.banner-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  position: relative;
+}
+
+.banner-subtitle {
+  font-size: 28rpx;
+  opacity: 0.9;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
   z-index: 1;
   position: relative;
 }

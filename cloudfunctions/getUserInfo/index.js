@@ -19,6 +19,20 @@ exports.main = async function(event, context) {
       createTime: new Date().toISOString()
     }
     
+    // 如果传入了用户信息，则合并
+    if (event.userInfo) {
+      userInfo = {
+        ...userInfo,
+        avatarUrl: event.userInfo.avatarUrl,
+        nickName: event.userInfo.nickName,
+        gender: event.userInfo.gender,
+        country: event.userInfo.country,
+        province: event.userInfo.province,
+        city: event.userInfo.city,
+        language: event.userInfo.language
+      }
+    }
+    
     // 获取数据库实例
     var db = cloud.database()
     

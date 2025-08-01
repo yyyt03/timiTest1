@@ -30,12 +30,12 @@
           <view class="plan-actions">
             <view class="action-item" catchtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
               <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
-                     src="../images/unused/{{item.isFavorited ? 'favorite.png' : 'favorite.png'}}" 
+                     src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
                      mode="aspectFit"></image>
               <text class="action-count">{{item.favorites || 0}}</text>
             </view>
             <view class="action-item">
-              <image class="action-icon" src="../images/unused/favorite.png" mode="aspectFit"></image>
+              <image class="action-icon" src="{{likeOutlineIcon}}" mode="aspectFit"></image>
               <text class="action-count">{{item.likes || 0}}</text>
             </view>
           </view>

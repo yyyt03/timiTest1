@@ -1,3 +1,5 @@
+import { getFavoriteIcon, getLikeIcon } from '../../utils/iconManager';
+
 // 英雄方案页面
 Page({
   data: {
@@ -9,7 +11,12 @@ Page({
     page: 1,
     pageSize: 10,
     hasMore: true,
-    loadingMore: false
+    loadingMore: false,
+    // 图标路径
+    favoriteOutlineIcon: getFavoriteIcon(false),
+    favoriteFilledIcon: getFavoriteIcon(true),
+    likeOutlineIcon: getLikeIcon(false),
+    likeFilledIcon: getLikeIcon(true)
   },
 
   onLoad(options: any) {
@@ -60,26 +67,26 @@ Page({
           } else {
             // 获取失败，使用默认头像
             this.setData({
-              heroAvatar: '../images/unused/user.png'
+              heroAvatar: '../images/unused/default-avatar.png'
             });
           }
         } else {
           // 未找到英雄，使用默认头像
           this.setData({
-            heroAvatar: '../images/unused/user.png'
+            heroAvatar: '../images/unused/default-avatar.png'
           });
         }
       } else {
         // 云函数调用失败，使用默认头像
         this.setData({
-          heroAvatar: '../images/unused/user.png'
+          heroAvatar: '../images/unused/default-avatar.png'
         });
       }
     } catch (error) {
       console.error('获取英雄头像失败:', error);
       // 出错时使用默认头像
       this.setData({
-        heroAvatar: '../images/unused/user.png'
+        heroAvatar: '../images/unused/default-avatar.png'
       });
     }
   },

@@ -1,11 +1,9 @@
 <view class="container">
   <!-- 顶部展示区 -->
   <view class="banner-container">
-    <swiper class="banner" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}">
-      <swiper-item>
-        <image class="banner-image" src="../images/unused/轮播1.png" mode="aspectFill"></image>
-      </swiper-item>
-    </swiper>
+    <view class="banner-text">
+      <text class="banner-title">觉醒天赋助手</text>
+    </view>
   </view>
   
   <!-- 功能区 -->

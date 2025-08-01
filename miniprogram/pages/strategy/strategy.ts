@@ -1,3 +1,5 @@
+import { getRecommendPlanIcon, getHeroCategoryIcon, getBetaPlanIcon, getCreatePlanIcon } from '../../utils/iconManager';
+
 // pages/strategy/strategy.ts
 Page({
   data: {
@@ -5,10 +7,10 @@ Page({
     plans: [] as any[],
     loading: false,
     iconUrls: {
-      recommendPlan: 'https://via.placeholder.com/80x80/4CAF50/FFFFFF?text=推荐',
-      heroCategory: 'https://via.placeholder.com/80x80/2196F3/FFFFFF?text=分类',
-      betaPlan: 'https://via.placeholder.com/80x80/FF9800/FFFFFF?text=体验',
-      createPlan: 'https://via.placeholder.com/80x80/9C27B0/FFFFFF?text=创作'
+      recommendPlan: getRecommendPlanIcon(),
+      heroCategory: getHeroCategoryIcon(),
+      betaPlan: getBetaPlanIcon(),
+      createPlan: getCreatePlanIcon()
     }
   },
 

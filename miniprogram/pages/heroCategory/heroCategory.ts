@@ -54,7 +54,7 @@ Page({
                     hero.avatar = tempURLs[urlIdx];
                   } else {
                     // 临时URL获取失败，使用默认图片
-                    hero.avatar = '/images/default-avatar.png';
+                    hero.avatar = '../images/unused/default-avatar.png';
                   }
                 }
                 urlIdx++;
@@ -72,7 +72,7 @@ Page({
             Object.values(result.data.categories).forEach(function(cat: any) {
               cat.heroes.forEach(function(hero: any) {
                 if (hero.avatar) {
-                  hero.avatar = '/images/default-avatar.png';
+                  hero.avatar = '../images/unused/default-avatar.png';
                 }
                 urlIdx++;
               });

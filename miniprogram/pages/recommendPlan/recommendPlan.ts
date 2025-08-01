@@ -1,7 +1,10 @@
+import { getRecommendPlanIcon } from '../../utils/iconManager';
+
 // 推荐方案页面
 Page({
   data: {
     // 页面数据
+    recommendPlanIcon: getRecommendPlanIcon()
   },
  
   // 生命周期函数--监听页面加载

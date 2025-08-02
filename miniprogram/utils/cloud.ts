@@ -87,4 +87,51 @@ export class CloudService {
   static getDatabase() {
     return wx.cloud.database();
   }
+
+  // 格式化时间
+  static formatTime(dateString: string | Date): string {
+    if (!dateString) return '';
+    
+    let date: Date;
+    if (typeof dateString === 'string') {
+      // 处理MongoDB的日期格式
+      if (dateString.includes('$date')) {
+        try {
+          const dateObj = JSON.parse(dateString);
+          date = new Date(dateObj.$date);
+        } catch (e) {
+          date = new Date(dateString);
+        }
+      } else {
+        date = new Date(dateString);
+      }
+    } else {
+      date = dateString;
+    }
+    
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+    
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diff / (1000 * 60));
+    const diffHours = Math.floor(diff / (1000 * 60 * 60));
+    const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (diffMinutes < 1) {
+      return '刚刚';
+    } else if (diffMinutes < 60) {
+      return `${diffMinutes}分钟前`;
+    } else if (diffHours < 24) {
+      return `${diffHours}小时前`;
+    } else if (diffDays < 7) {
+      return `${diffDays}天前`;
+    } else {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
 }

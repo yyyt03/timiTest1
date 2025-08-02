@@ -20,7 +20,11 @@ Page({
   },
 
   onLoad(options: any) {
-    if (options.hero) {
+    if (options.id) {
+      // 如果传递的是方案ID，则获取方案详情
+      this.loadPlanDetail(options.id);
+    } else if (options.hero) {
+      // 如果传递的是英雄信息，则加载该英雄的方案列表
       this.setData({
         hero: options.hero,
         heroId: options.heroId || ''
@@ -30,8 +34,8 @@ Page({
       });
       // 获取英雄头像
       this.getHeroAvatarFromCloud(options.hero);
+      this.loadPlans();
     }
-    this.loadPlans();
   },
 
   // 从云存储获取英雄头像
@@ -88,6 +92,54 @@ Page({
       this.setData({
         heroAvatar: '../images/unused/default-avatar.png'
       });
+    }
+  },
+
+  // 加载方案详情
+  async loadPlanDetail(planId: string) {
+    this.setData({ loading: true });
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getPlanDetail',
+        data: { planId }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const plan = result.result.data;
+        
+        // 设置页面数据
+        this.setData({
+          hero: plan.heroName,
+          heroId: plan.heroId,
+          plans: [{
+            ...plan,
+            createTime: this.formatTime(plan.createTime)
+          }],
+          loading: false
+        });
+        
+        // 设置导航栏标题
+        wx.setNavigationBarTitle({
+          title: plan.title || plan.heroName + '的方案'
+        });
+        
+        // 获取英雄头像
+        this.getHeroAvatarFromCloud(plan.heroName);
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '加载方案详情失败',
+          icon: 'none'
+        });
+        this.setData({ loading: false });
+      }
+    } catch (error) {
+      console.error('加载方案详情失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+      this.setData({ loading: false });
     }
   },
 

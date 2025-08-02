@@ -3,7 +3,7 @@
   <view class="user-info">
     <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
     <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
-    <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getWechatUserInfo">
+    <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
       <text class="login-text">点击获取微信信息</text>
     </view>
   </view>

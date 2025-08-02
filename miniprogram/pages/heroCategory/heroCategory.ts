@@ -19,20 +19,21 @@ Page({
   },
 
   // 获取英雄列表
-  getHeroList: function() {
-    var that = this;
+  getHeroList() {
+    const that = this;
+    
     try {
       this.setData({ loading: true });
       
-      console.log('开始调用云函数getHeroList...');
-      
-      CloudService.callFunction('getHeroList').then(function(result: any) {
-  
+      wx.cloud.callFunction({
+        name: 'getHeroList'
+      }).then(function(result: any) {
+        console.log('云函数返回结果:', result);
         
-        if (result && result.success && result.data) {
+        if (result && result.result && result.result.success && result.result.data) {
           // 批量获取所有英雄头像fileID
           var allHeroes: any[] = [];
-          Object.values(result.data.categories).forEach(function(cat: any) {
+          Object.values(result.result.data.categories).forEach(function(cat: any) {
             allHeroes = allHeroes.concat(cat.heroes);
           });
           
@@ -46,7 +47,7 @@ Page({
             
             // 替换hero.avatar为临时URL，如果失败则使用本地图片
             var urlIdx = 0;
-            Object.values(result.data.categories).forEach(function(cat: any) {
+            Object.values(result.result.data.categories).forEach(function(cat: any) {
               cat.heroes.forEach(function(hero: any) {
                 if (hero.avatar) {
                   if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
@@ -62,14 +63,14 @@ Page({
             });
             
             that.setData({
-              heroCategories: result.data.categories,
+              heroCategories: result.result.data.categories,
               loading: false
             });
           }).catch(function(tempURLError: any) {
             console.error('获取临时URL失败:', tempURLError);
             // 如果获取临时URL失败，使用本地图片
             var urlIdx = 0;
-            Object.values(result.data.categories).forEach(function(cat: any) {
+            Object.values(result.result.data.categories).forEach(function(cat: any) {
               cat.heroes.forEach(function(hero: any) {
                 if (hero.avatar) {
                   hero.avatar = '../images/unused/default-avatar.png';
@@ -79,13 +80,13 @@ Page({
             });
             
             that.setData({
-              heroCategories: result.data.categories,
+              heroCategories: result.result.data.categories,
               loading: false
             });
           });
         } else {
           console.error('获取英雄列表失败，返回结果:', result);
-          console.error('错误信息:', result && result.message ? result.message : '未知错误');
+          console.error('错误信息:', result && result.result && result.result.message ? result.result.message : '未知错误');
           
           wx.showToast({
             title: '获取英雄列表失败',

@@ -9,19 +9,16 @@ interface IAppOption {
   userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback,
 }
 
-App<IAppOption>({
-  globalData: {},
+App({
   onLaunch() {
     // 初始化云开发
     if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力');
     } else {
-      console.log('开始初始化云开发...');
       wx.cloud.init({
-        env: 'cloudbase-1gk9t6w2d1d090af', // 您的云环境ID
+        env: 'cloudbase-1gk9t6w2d1d090af',
         traceUser: true,
       });
-      console.log('云开发初始化完成');
     }
 
     // 展示本地存储能力
@@ -43,4 +40,20 @@ App<IAppOption>({
     //   hasUserInfo: true,
     // })
   },
-})
+
+  onShow() {
+    // 小程序显示时的逻辑
+  },
+
+  onHide() {
+    // 小程序隐藏时的逻辑
+  },
+
+  onError(msg) {
+    console.error('小程序错误:', msg);
+  },
+
+  onUnhandledRejection(res) {
+    console.error('未处理的Promise拒绝:', res.reason);
+  }
+});

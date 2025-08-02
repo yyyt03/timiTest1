@@ -6,12 +6,13 @@
     "pages/createPlan/createPlan",
     "pages/recommendPlan/recommendPlan",
     "pages/betaPlan/betaPlan",
-    "pages/heroPlan/heroPlan"
+    "pages/heroPlan/heroPlan",
+    "pages/favorites/favorites"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTitleText": "王者荣耀觉醒之战小助手",
+    "navigationBarTitleText": "觉醒天赋推荐",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {

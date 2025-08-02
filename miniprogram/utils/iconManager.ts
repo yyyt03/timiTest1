@@ -100,6 +100,26 @@ export class IconManager {
   }
 
   /**
+   * 获取空状态图标
+   * @param type 空状态类型
+   * @returns 图标URL
+   */
+  static getEmptyIcon(type: 'favorites' | 'search' | 'error'): string {
+    // 使用云端图片路径
+    return `${CLOUD_BASE_PATH}/empty-${type}.png`;
+  }
+
+  /**
+   * 获取本地备用图标（当云端图片加载失败时使用）
+   * @param type 图标类型
+   * @returns 本地图标URL
+   */
+  static getLocalFallbackIcon(type: 'favorites' | 'search' | 'error'): string {
+    // 使用本地default-avatar作为备用图标
+    return '/pages/images/icons/unused/default-avatar.png';
+  }
+
+  /**
    * 获取策略页面Tabbar图标
    * @param isSelected 是否选中
    * @returns 图标URL
@@ -162,5 +182,7 @@ export const getBetaPlanIcon = IconManager.getBetaPlanIcon.bind(IconManager);
 export const getRecommendPlanIcon = IconManager.getRecommendPlanIcon.bind(IconManager);
 export const getCreatePlanIcon = IconManager.getCreatePlanIcon.bind(IconManager);
 export const getFavoritePlanIcon = IconManager.getFavoritePlanIcon.bind(IconManager);
+export const getEmptyIcon = IconManager.getEmptyIcon.bind(IconManager);
+export const getLocalFallbackIcon = IconManager.getLocalFallbackIcon.bind(IconManager);
 export const getStrategyTabIcon = IconManager.getStrategyTabIcon.bind(IconManager);
 export const getUserTabIcon = IconManager.getUserTabIcon.bind(IconManager); 

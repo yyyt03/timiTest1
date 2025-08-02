@@ -66,4 +66,24 @@ page {
 .tag-gray {
   background-color: #f5f5f5;
   color: #666666;
-} 
+}
+
+/* 自定义Tabbar样式优化 */
+.tab-bar-item {
+  transition: all 0.3s ease;
+}
+
+.tab-bar-item.selected {
+  transform: scale(1.05);
+}
+
+/* 增强选中状态的视觉效果 */
+.tab-bar-item.selected .tab-bar-text {
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 图标选中效果 */
+.tab-bar-item.selected .tab-bar-icon {
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
+}

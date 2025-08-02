@@ -1,0 +1,10 @@
+{"_id": "fav_001", "userId": "user_001", "planId": "plan_003", "createTime": {"$date": "2025-07-28T14:30:00.000Z"}}
+{"_id": "fav_002", "userId": "user_001", "planId": "plan_007", "createTime": {"$date": "2025-07-28T15:20:00.000Z"}}
+{"_id": "fav_003", "userId": "user_002", "planId": "plan_001", "createTime": {"$date": "2025-07-27T16:45:00.000Z"}}
+{"_id": "fav_004", "userId": "user_002", "planId": "plan_008", "createTime": {"$date": "2025-07-27T17:10:00.000Z"}}
+{"_id": "fav_005", "userId": "user_003", "planId": "plan_002", "createTime": {"$date": "2025-07-26T09:30:00.000Z"}}
+{"_id": "fav_006", "userId": "user_003", "planId": "plan_005", "createTime": {"$date": "2025-07-26T10:15:00.000Z"}}
+{"_id": "fav_007", "userId": "user_004", "planId": "plan_004", "createTime": {"$date": "2025-07-25T11:20:00.000Z"}}
+{"_id": "fav_008", "userId": "user_004", "planId": "plan_009", "createTime": {"$date": "2025-07-25T12:05:00.000Z"}}
+{"_id": "fav_009", "userId": "user_001", "planId": "plan_006", "createTime": {"$date": "2025-07-24T13:40:00.000Z"}}
+{"_id": "fav_010", "userId": "user_002", "planId": "plan_010", "createTime": {"$date": "2025-07-24T14:25:00.000Z"}} 

@@ -1,7 +1,10 @@
+import { getBetaPlanIcon } from '../../utils/iconManager';
+
 // 体验服方案页面
 Page({
   data: {
     // 页面数据
+    betaPlanIcon: getBetaPlanIcon()
   },
  
   // 生命周期函数--监听页面加载

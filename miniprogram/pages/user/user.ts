@@ -1,45 +1,113 @@
+import { CloudService } from '../../utils/cloud'
+import { getFavoritePlanIcon, getCreatePlanIcon } from '../../utils/iconManager'
+
 // 用户页面
 Page({
   data: {
     userInfo: {
       avatarUrl: '',
       nickName: ''
-    }
+    },
+    hasUserInfo: false,
+    // 图标路径
+    favoritePlanIcon: getFavoritePlanIcon(),
+    createPlanIcon: getCreatePlanIcon()
   },
 
-  // 生命周期函数--监听页面加载
   onLoad() {
-    this.getUserProfile();
+    // 页面加载时显示默认状态，用户需要主动点击获取信息
+    this.setData({
+      userInfo: {
+        avatarUrl: '',
+        nickName: '微信用户'
+      },
+      hasUserInfo: false
+    });
   },
 
   // 获取用户信息
-  getUserProfile() {
-    // 推荐使用wx.getUserProfile获取用户信息，开发者每次通过该接口获取用户个人信息均需用户确认
-    // 开发者妥善保管用户快速填写的头像昵称，避免重复弹窗
-    wx.getUserProfile({
-      desc: '用于完善用户资料',
-      success: (res) => {
-        this.setData({
-          userInfo: res.userInfo
-        });
-      },
-      fail: () => {
-        // 用户拒绝授权，使用默认头像和昵称
-        console.log('获取用户信息失败');
+  getUserInfo() {
+    // 检查是否在开发工具中
+    (wx as any).getSystemInfo({
+      success: (systemInfo: any) => {
+        if (systemInfo.platform === 'devtools') {
+          // 开发工具环境下的处理
+          wx.showModal({
+            title: '开发工具提示',
+            content: '在开发工具中无法获取真实用户信息，请在真机上测试。',
+            showCancel: false,
+            confirmText: '知道了'
+          });
+        } else {
+          // 真机环境，调用getUserProfile
+          wx.getUserProfile({
+            desc: '用于完善用户资料',
+            success: (res) => {
+              this.setData({
+                userInfo: res.userInfo,
+                hasUserInfo: true
+              });
+              
+              // 同步用户信息到云端
+              this.syncUserInfoToCloud(res.userInfo);
+              
+              wx.showToast({
+                title: '获取用户信息成功',
+                icon: 'success'
+              });
+            },
+            fail: (err) => {
+              console.error('获取用户信息失败:', err);
+              wx.showToast({
+                title: '获取用户信息失败',
+                icon: 'none'
+              });
+            }
+          });
+        }
       }
     });
   },
 
-  // 导航到收藏方案页面
-  navigateToFavorites() {
-    wx.showToast({
-      title: '收藏方案功能开发中',
-      icon: 'none'
+  // 同步用户信息到云端
+  syncUserInfoToCloud(userInfo: any) {
+    wx.cloud.callFunction({
+      name: 'getUserInfo',
+      data: {
+        action: 'update',
+        userInfo: userInfo
+      },
+      success: (_res) => {
+        // 用户信息同步成功
+      },
+      fail: (err) => {
+        console.error('同步用户信息失败:', err);
+      }
     });
   },
 
-  // 导航到创作方案页面
-  navigateToCreations() {
+  // 获取云开发用户信息
+  getCloudUserInfo() {
+    var that = this;
+    CloudService.getUserInfo().then(function(result: any) {
+      that.setData({
+        userInfo: result,
+        hasUserInfo: true
+      });
+    }).catch(function(error) {
+      console.error('获取云开发用户信息失败:', error);
+    });
+  },
+
+  // 跳转到收藏方案页面
+  goToFavorites() {
+    wx.navigateTo({
+      url: '../favorites/favorites'
+    });
+  },
+
+  // 跳转到创作方案页面
+  goToCreatePlan() {
     wx.navigateTo({
       url: '../createPlan/createPlan'
     });

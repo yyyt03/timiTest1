@@ -1,25 +1,28 @@
 <view class="container">
   <!-- 用户信息区域 -->
   <view class="user-info">
-    <image class="avatar" src="../images/user.png"></image>
+    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
     <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
+    <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
+      <text class="login-text">点击获取微信信息</text>
+    </view>
   </view>
   
   <!-- 功能卡片区域 -->
   <view class="function-container">
     <!-- 收藏方案 -->
-    <view class="function-card" bindtap="navigateToFavorites">
+    <view class="function-card" bindtap="goToFavorites">
       <view class="card-content">
-        <image class="card-icon" src="../images/user.png" mode="aspectFit"></image>
+        <image class="card-icon" src="{{favoritePlanIcon}}" mode="aspectFit"></image>
         <text class="card-title">收藏方案</text>
       </view>
       <view class="card-arrow">></view>
     </view>
     
     <!-- 创作方案 -->
-    <view class="function-card" bindtap="navigateToCreations">
+    <view class="function-card" bindtap="goToCreatePlan">
       <view class="card-content">
-        <image class="card-icon" src="../images/user.png" mode="aspectFit"></image>
+        <image class="card-icon" src="{{createPlanIcon}}" mode="aspectFit"></image>
         <text class="card-title">创作方案</text>
       </view>
       <view class="card-arrow">></view>

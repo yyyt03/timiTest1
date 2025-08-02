@@ -1,39 +1,83 @@
-// 攻略页面
+import { getRecommendPlanIcon, getHeroCategoryIcon, getBetaPlanIcon, getCreatePlanIcon } from '../../utils/iconManager';
+
+// pages/strategy/strategy.ts
 Page({
   data: {
-    // 页面数据
+    userInfo: null as any,
+    plans: [] as any[],
+    loading: false,
+    iconUrls: {
+      recommendPlan: getRecommendPlanIcon(),
+      heroCategory: getHeroCategoryIcon(),
+      betaPlan: getBetaPlanIcon(),
+      createPlan: getCreatePlanIcon()
+    }
   },
 
-  // 生命周期函数--监听页面加载
   onLoad() {
-    // 页面加载时执行的逻辑
+    this.getUserInfo();
+    this.getPlans();
   },
 
-  // 导航到推荐方案页面
-  navigateToRecommend() {
-    wx.navigateTo({
-      url: '../recommendPlan/recommendPlan'
+  // 获取用户信息
+  getUserInfo() {
+    wx.cloud.callFunction({
+      name: 'getUserInfo',
+      success: (res) => {
+        this.setData({
+          userInfo: res.result.data
+        });
+      },
+      fail: (err) => {
+        console.error('获取用户信息失败:', err);
+      }
     });
   },
 
-  // 导航到英雄分类页面
-  navigateToHeroCategory() {
-    wx.navigateTo({
-      url: '../heroCategory/heroCategory?source=strategy'
+  // 获取方案列表
+  getPlans() {
+    this.setData({ loading: true });
+    wx.cloud.callFunction({
+      name: 'getHeroPlans',
+      data: {
+        limit: 10,
+        status: 'active'
+      },
+      success: (res) => {
+        this.setData({
+          plans: res.result.data || [],
+          loading: false
+        });
+      },
+      fail: (err) => {
+        console.error('获取方案列表失败:', err);
+        this.setData({ loading: false });
+      }
     });
   },
 
-  // 导航到体验服方案页面
-  navigateToBeta() {
+  // 页面跳转函数
+  goToRecommendPlan() {
     wx.navigateTo({
-      url: '../betaPlan/betaPlan'
+      url: '/pages/recommendPlan/recommendPlan'
     });
   },
 
-  // 导航到方案创作页面
-  navigateToCreate() {
+  goToHeroCategory() {
     wx.navigateTo({
-      url: '../createPlan/createPlan'
+      url: '/pages/heroCategory/heroCategory'
+    });
+  },
+
+  goToBetaPlan() {
+    wx.navigateTo({
+      url: '/pages/betaPlan/betaPlan'
+    });
+  },
+
+  goToCreatePlan() {
+    wx.navigateTo({
+      url: '/pages/createPlan/createPlan'
     });
   }
 }); 

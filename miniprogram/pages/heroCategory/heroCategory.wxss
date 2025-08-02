@@ -1,17 +1,18 @@
 .container {
-  padding: 20rpx;
+  padding: 30rpx;
   box-sizing: border-box;
-  background-color: #1a1a2e;
+  background-color: #ffffff;
   min-height: 100vh;
 }
 
 .category-title {
   font-size: 40rpx;
-  font-weight: bold;
-  color: #ffffff;
-  margin: 20rpx 0;
+  font-weight: 600;
+  color: #333333;
+  margin: 20rpx 0 40rpx 0;
   align-self: flex-start;
   padding-left: 10rpx;
+  border-left: 6rpx solid #000000;
 }
 
 .category-list {
@@ -34,12 +35,19 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
-  background-color: #4A90E2;
+  background-color: #f8f9fa;
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 15rpx;
-  box-shadow: 0 4rpx 10rpx rgba(74, 144, 226, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  border: 2rpx solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.category-icon-container:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
 }
 
 .category-icon {
@@ -48,7 +56,7 @@
 }
 
 .category-icon-text {
-  color: #ffffff;
+  color: #333333;
   font-size: 50rpx;
   font-weight: bold;
 }
@@ -56,45 +64,51 @@
 .category-name {
   font-size: 28rpx;
   color: #333333;
+  font-weight: 500;
 }
 
 /* 英雄列表 */
 .hero-list {
   width: 100%;
   background-color: #ffffff;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  border-radius: 16rpx;
+  padding: 30rpx;
   box-sizing: border-box;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  border: 1rpx solid #f0f0f0;
 }
 
 .hero-list-title {
   font-size: 32rpx;
-  font-weight: bold;
+  font-weight: 600;
   color: #333333;
   margin-bottom: 30rpx;
   padding-bottom: 15rpx;
-  border-bottom: 1rpx solid #eaeaea;
+  border-bottom: 2rpx solid #f0f0f0;
 }
 
 .hero-category {
   width: 100%;
-  margin-bottom: 30rpx;
+  margin-bottom: 40rpx;
 }
 
 .category-header {
   font-size: 36rpx;
-  font-weight: bold;
-  color: #e0e0e0;
-  margin: 10rpx 0;
-  padding-left: 10rpx;
-  border-left: 8rpx solid #8e2de2;
+  font-weight: 600;
+  color: #333333;
+  margin: 20rpx 0 15rpx 0;
+  padding-left: 15rpx;
+  border-left: 6rpx solid #000000;
+  background-color: #f8f9fa;
+  padding: 15rpx;
+  border-radius: 8rpx;
 }
 
 .hero-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
+  margin-top: 20rpx;
 }
 
 .hero-item {
@@ -102,35 +116,57 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 30rpx;
 }
 
 .hero-avatar-container {
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
-  background-color: #2c2c54;
+  background-color: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 15rpx;
   overflow: hidden;
-  border: 4rpx solid #4a00e0;
+  border: 2rpx solid #e9ecef;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.hero-avatar-container:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
+  border-color: #000000;
 }
 
 .hero-avatar {
-  width: 110rpx;
-  height: 110rpx;
+  width: 120rpx;
+  height: 120rpx;
 }
 
 .hero-avatar-text {
-  color: #ffffff;
+  color: #333333;
   font-size: 40rpx;
   font-weight: bold;
 }
 
 .hero-name {
   font-size: 24rpx;
-  color: #e0e0e0;
+  color: #333333;
   text-align: center;
+  font-weight: 500;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999999;
 } 

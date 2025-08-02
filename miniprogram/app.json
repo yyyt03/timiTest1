@@ -6,34 +6,36 @@
     "pages/createPlan/createPlan",
     "pages/recommendPlan/recommendPlan",
     "pages/betaPlan/betaPlan",
-    "pages/heroPlan/heroPlan"
+    "pages/heroPlan/heroPlan",
+    "pages/favorites/favorites"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#1a1a2e",
-    "navigationBarTitleText": "王者荣耀觉醒之战小助手",
-    "navigationBarTextStyle": "white"
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "觉醒天赋推荐",
+    "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#8a8a8a",
-    "selectedColor": "#ffffff",
-    "backgroundColor": "#1a1a2e",
-    "borderStyle": "white",
+    "color": "#999999",
+    "selectedColor": "#000000",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/strategy/strategy",
         "text": "攻略",
-        "iconPath": "pages/images/strategy.png",
-        "selectedIconPath": "pages/images/strategy_selected.png"
+        "iconPath": "pages/images/icons/tabbar-strategy.png",
+        "selectedIconPath": "pages/images/icons/tabbar-strategy-selected.png"
       },
       {
         "pagePath": "pages/user/user",
         "text": "用户",
-        "iconPath": "pages/images/user.png",
-        "selectedIconPath": "pages/images/user_selected.png"
+        "iconPath": "pages/images/icons/tabbar-user.png",
+        "selectedIconPath": "pages/images/icons/tabbar-user-selected.png"
       }
     ]
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
 }

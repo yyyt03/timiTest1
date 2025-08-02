@@ -1,78 +1,27 @@
 <view class="container">
   <view class="category-title">选择英雄</view>
   
-  <!-- 射手分类 -->
-  <view class="hero-category">
-    <view class="category-header">射手</view>
-    <view class="hero-grid">
-      <block wx:for="{{heroCategories.shooter.heroes}}" wx:key="index">
-        <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
-          <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
-          </view>
-          <text class="hero-name">{{item}}</text>
-        </view>
-      </block>
-    </view>
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-text">加载中...</view>
   </view>
   
-  <!-- 辅助分类 -->
-  <view class="hero-category">
-    <view class="category-header">辅助</view>
-    <view class="hero-grid">
-      <block wx:for="{{heroCategories.support.heroes}}" wx:key="index">
-        <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
-          <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
-          </view>
-          <text class="hero-name">{{item}}</text>
+  <!-- 英雄分类列表 -->
+  <block wx:else>
+    <block wx:for="{{heroCategories}}" wx:key="categoryKey" wx:for-index="categoryKey">
+      <view class="hero-category">
+        <view class="category-header">{{item.name}}</view>
+        <view class="hero-grid">
+          <block wx:for="{{item.heroes}}" wx:key="id" wx:for-item="hero">
+            <view class="hero-item" bindtap="selectHero" data-hero="{{hero}}">
+              <view class="hero-avatar-container">
+                <image class="hero-avatar" src="{{hero.avatar}}" mode="aspectFill"></image>
+              </view>
+              <text class="hero-name">{{hero.name}}</text>
+            </view>
+          </block>
         </view>
-      </block>
-    </view>
-  </view>
-  
-  <!-- 刺客分类 -->
-  <view class="hero-category">
-    <view class="category-header">刺客</view>
-    <view class="hero-grid">
-      <block wx:for="{{heroCategories.assassin.heroes}}" wx:key="index">
-        <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
-          <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
-          </view>
-          <text class="hero-name">{{item}}</text>
-        </view>
-      </block>
-    </view>
-  </view>
-  
-  <!-- 战士分类 -->
-  <view class="hero-category">
-    <view class="category-header">战士</view>
-    <view class="hero-grid">
-      <block wx:for="{{heroCategories.warrior.heroes}}" wx:key="index">
-        <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
-          <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
-          </view>
-          <text class="hero-name">{{item}}</text>
-        </view>
-      </block>
-    </view>
-  </view>
-  
-  <!-- 法师分类 -->
-  <view class="hero-category">
-    <view class="category-header">法师</view>
-    <view class="hero-grid">
-      <block wx:for="{{heroCategories.mage.heroes}}" wx:key="index">
-        <view class="hero-item" bindtap="selectHero" data-hero="{{item}}">
-          <view class="hero-avatar-container">
-            <image class="hero-avatar" src="../images/user.png" mode="aspectFit"></image>
-          </view>
-          <text class="hero-name">{{item}}</text>
-        </view>
-      </block>
-    </view>
-  </view>
+      </view>
+    </block>
+  </block>
 </view> 

@@ -1,0 +1,5 @@
+{"key": "shooter", "name": "射手", "order": 1, "createTime": {"$date": "2025-07-28T20:25:00.882Z"}, "updateTime": {"$date": "2025-07-28T20:25:00.882Z"}}
+{"key": "support", "name": "辅助", "order": 2, "createTime": {"$date": "2025-07-28T20:25:00.882Z"}, "updateTime": {"$date": "2025-07-28T20:25:00.882Z"}}
+{"key": "assassin", "name": "刺客", "order": 3, "createTime": {"$date": "2025-07-28T20:25:00.882Z"}, "updateTime": {"$date": "2025-07-28T20:25:00.882Z"}}
+{"key": "warrior", "name": "战士", "order": 4, "createTime": {"$date": "2025-07-28T20:25:00.882Z"}, "updateTime": {"$date": "2025-07-28T20:25:00.882Z"}}
+{"key": "mage", "name": "法师", "order": 5, "createTime": {"$date": "2025-07-28T20:25:00.882Z"}, "updateTime": {"$date": "2025-07-28T20:25:00.882Z"}} 

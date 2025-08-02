@@ -1,103 +1,338 @@
-// 英雄方案查看页面
+import { getFavoriteIcon, getLikeIcon } from '../../utils/iconManager';
+
+// 英雄方案页面
 Page({
   data: {
     hero: '',
-    plans: [] as any[], // 存储该英雄的所有方案
+    heroId: '',
+    heroAvatar: '',
+    plans: [] as any[],
     loading: true,
-    noPlans: false
+    page: 1,
+    pageSize: 10,
+    hasMore: true,
+    loadingMore: false,
+    // 图标路径
+    favoriteOutlineIcon: getFavoriteIcon(false),
+    favoriteFilledIcon: getFavoriteIcon(true),
+    likeOutlineIcon: getLikeIcon(false),
+    likeFilledIcon: getLikeIcon(true)
   },
 
-  // 生命周期函数--监听页面加载
   onLoad(options: any) {
-    if (options && options.hero) {
+    if (options.id) {
+      // 如果传递的是方案ID，则获取方案详情
+      this.loadPlanDetail(options.id);
+    } else if (options.hero) {
+      // 如果传递的是英雄信息，则加载该英雄的方案列表
       this.setData({
-        hero: options.hero
+        hero: options.hero,
+        heroId: options.heroId || ''
       });
-      
       wx.setNavigationBarTitle({
-        title: `${options.hero}的方案`
+        title: options.hero + '的方案'
       });
-      
-      // 获取该英雄的方案
-      this.getHeroPlans(options.hero);
-    } else {
-      wx.showToast({
-        title: '未指定英雄',
-        icon: 'error'
-      });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
+      // 获取英雄头像
+      this.getHeroAvatarFromCloud(options.hero);
+      this.loadPlans();
     }
   },
-  
-  // 获取英雄方案
-  getHeroPlans(hero: string) {
-    // 这里应该从服务器或本地存储获取方案
-    // 现在先使用模拟数据
-    setTimeout(() => {
-      // 模拟方案数据
-      const demoPlans = [
-        {
-          id: 1,
-          title: `${hero}核心玩法`,
-          core: '技能1核心',
-          talents: ['特性1', '特性3', '特性5'],
-          equipment: '破军、宗师之力、暗影战斧、反伤刺甲、名刀·司命、抵抗之靴',
-          equipmentCode: '10106',
-          description: '前期发育为主，中期抓单，后期团战切后排。利用一技能的高爆发迅速击杀敌方脆皮。',
-          author: '游戏高手',
-          createTime: '2023-07-26',
-          likes: 128
-        },
-        {
-          id: 2,
-          title: `${hero}团战流`,
-          core: '技能3核心',
-          talents: ['特性2', '特性4', '特性7'],
-          equipment: '破军、无尽战刃、宗师之力、暗影战斧、名刀·司命、抵抗之靴',
-          equipmentCode: '10206',
-          description: '以团战为主，大招可以控制多个敌人，配合队友进行输出。',
-          author: '职业选手',
-          createTime: '2023-07-25',
-          likes: 96
-        }
-      ];
-      
-      // 判断是否有方案
-      if (demoPlans.length > 0) {
-        this.setData({
-          plans: demoPlans,
-          loading: false,
-          noPlans: false
+
+  // 从云存储获取英雄头像
+  async getHeroAvatarFromCloud(heroName: string) {
+    try {
+      // 调用云函数获取英雄列表
+      const result = await wx.cloud.callFunction({
+        name: 'getHeroList',
+        data: {}
+      }) as any;
+
+      if (result.result && result.result.success && result.result.data) {
+        // 查找对应英雄
+        let targetHero = null;
+        Object.values(result.result.data.categories).forEach((cat: any) => {
+          cat.heroes.forEach((hero: any) => {
+            if (hero.name === heroName) {
+              targetHero = hero;
+            }
+          });
         });
+
+        if (targetHero && (targetHero as any).avatar) {
+          // 获取临时URL
+          const tempURLs = await wx.cloud.getTempFileURL({
+            fileList: [(targetHero as any).avatar]
+          });
+
+          if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
+            this.setData({
+              heroAvatar: tempURLs.fileList[0].tempFileURL
+            });
+          } else {
+            // 获取失败，使用默认头像
+            this.setData({
+              heroAvatar: '../images/unused/default-avatar.png'
+            });
+          }
+        } else {
+          // 未找到英雄，使用默认头像
+          this.setData({
+            heroAvatar: '../images/unused/default-avatar.png'
+          });
+        }
       } else {
+        // 云函数调用失败，使用默认头像
         this.setData({
-          loading: false,
-          noPlans: true
+          heroAvatar: '../images/unused/default-avatar.png'
         });
       }
-    }, 1000);
+    } catch (error) {
+      console.error('获取英雄头像失败:', error);
+      // 出错时使用默认头像
+      this.setData({
+        heroAvatar: '../images/unused/default-avatar.png'
+      });
+    }
   },
-  
+
+  // 加载方案详情
+  async loadPlanDetail(planId: string) {
+    this.setData({ loading: true });
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getPlanDetail',
+        data: { planId }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const plan = result.result.data;
+        
+        // 设置页面数据
+        this.setData({
+          hero: plan.heroName,
+          heroId: plan.heroId,
+          plans: [{
+            ...plan,
+            createTime: this.formatTime(plan.createTime)
+          }],
+          loading: false
+        });
+        
+        // 设置导航栏标题
+        wx.setNavigationBarTitle({
+          title: plan.title || plan.heroName + '的方案'
+        });
+        
+        // 获取英雄头像
+        this.getHeroAvatarFromCloud(plan.heroName);
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '加载方案详情失败',
+          icon: 'none'
+        });
+        this.setData({ loading: false });
+      }
+    } catch (error) {
+      console.error('加载方案详情失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+      this.setData({ loading: false });
+    }
+  },
+
+  // 加载方案数据
+  async loadPlans(isLoadMore = false) {
+    const that = this;
+    
+    if (isLoadMore) {
+      if (!this.data.hasMore || this.data.loadingMore) {
+        return;
+      }
+      this.setData({ loadingMore: true });
+    } else {
+      this.setData({ loading: true });
+    }
+
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getHeroPlans',
+        data: {
+          heroId: this.data.heroId,
+          page: isLoadMore ? this.data.page + 1 : 1,
+          pageSize: this.data.pageSize,
+          forceRefresh: !isLoadMore // 第一次加载时强制刷新，确保数据最新
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const { plans, total, page, hasMore } = result.result.data;
+        
+        // 格式化时间
+        const formattedPlans = plans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+
+        this.setData({
+          plans: isLoadMore ? [...this.data.plans, ...formattedPlans] : formattedPlans,
+          page: page,
+          hasMore: hasMore,
+          loading: false,
+          loadingMore: false
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '加载失败',
+          icon: 'none'
+        });
+        this.setData({
+          loading: false,
+          loadingMore: false
+        });
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+      this.setData({
+        loading: false,
+        loadingMore: false
+      });
+    }
+  },
+
+  // 格式化时间
+  formatTime(timeStr: string) {
+    const date = new Date(timeStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) {
+      return '今天';
+    } else if (days === 1) {
+      return '昨天';
+    } else if (days < 7) {
+      return days + '天前';
+    } else {
+      return date.toLocaleDateString();
+    }
+  },
+
   // 查看方案详情
-  viewPlanDetail(e: any) {
-    const planId = e.currentTarget.dataset.id;
-    // 跳转到方案详情页
+  viewPlan(e: any) {
+    var planId = e.currentTarget.dataset.id;
     wx.showToast({
-      title: '功能开发中',
+      title: '方案详情功能开发中',
       icon: 'none'
     });
-    // 实际应该跳转到详情页
+    
+    // TODO: 跳转到方案详情页面
     // wx.navigateTo({
-    //   url: `../planDetail/planDetail?id=${planId}`
-    // });
+    //   url: '../planDetail/planDetail?id=' + planId
+    // })
   },
-  
-  // 创建新方案
-  createNewPlan() {
-    wx.navigateTo({
-      url: `../createPlan/createPlan?hero=${this.data.hero}`
+
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.loadPlans().then(() => {
+      wx.stopPullDownRefresh();
     });
+  },
+
+  // 上拉加载更多
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loadingMore) {
+      this.loadPlans(true);
+    }
+  },
+
+  // 创建新方案
+  createPlan() {
+    wx.navigateTo({
+      url: '../createPlan/createPlan?hero=' + this.data.hero + '&heroId=' + this.data.heroId
+    });
+  },
+
+
+
+  // 切换点赞状态
+  async toggleLike(e: any) {
+    const planId = e.currentTarget.dataset.id;
+    const planIndex = e.currentTarget.dataset.index;
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleLike',
+        data: { planId }
+      }) as any;
+
+      if (result.result && result.result.success) {
+        const plans = [...this.data.plans];
+        plans[planIndex].isLiked = result.result.data.isLiked;
+        // 使用云函数返回的具体数量
+        plans[planIndex].likeCount = result.result.data.likes;
+        
+        this.setData({ plans });
+        
+        wx.showToast({
+          title: result.result.message,
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '操作失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('切换点赞失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 切换收藏状态
+  async toggleFavorite(e: any) {
+    const planId = e.currentTarget.dataset.id;
+    const planIndex = e.currentTarget.dataset.index;
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleFavorite',
+        data: { planId }
+      }) as any;
+
+      if (result.result && result.result.success) {
+        const plans = [...this.data.plans];
+        plans[planIndex].isFavorited = result.result.data.isFavorited;
+        // 使用云函数返回的具体数量
+        plans[planIndex].favoriteCount = result.result.data.favorites;
+        
+        this.setData({ plans });
+        
+        wx.showToast({
+          title: result.result.message,
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '操作失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('切换收藏失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
   }
 }); 

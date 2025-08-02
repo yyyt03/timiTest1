@@ -28,12 +28,13 @@ Page({
       wx.cloud.callFunction({
         name: 'getHeroList'
       }).then(function(result: any) {
-        console.log('云函数返回结果:', result);
-        
         if (result && result.result && result.result.success && result.result.data) {
+          // 深拷贝数据，避免修改原始数据
+          const categoriesData = JSON.parse(JSON.stringify(result.result.data.categories));
+          
           // 批量获取所有英雄头像fileID
           var allHeroes: any[] = [];
-          Object.values(result.result.data.categories).forEach(function(cat: any) {
+          Object.values(categoriesData).forEach(function(cat: any) {
             allHeroes = allHeroes.concat(cat.heroes);
           });
           
@@ -47,7 +48,7 @@ Page({
             
             // 替换hero.avatar为临时URL，如果失败则使用本地图片
             var urlIdx = 0;
-            Object.values(result.result.data.categories).forEach(function(cat: any) {
+            Object.values(categoriesData).forEach(function(cat: any) {
               cat.heroes.forEach(function(hero: any) {
                 if (hero.avatar) {
                   if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
@@ -63,14 +64,14 @@ Page({
             });
             
             that.setData({
-              heroCategories: result.result.data.categories,
+              heroCategories: categoriesData,
               loading: false
             });
           }).catch(function(tempURLError: any) {
             console.error('获取临时URL失败:', tempURLError);
             // 如果获取临时URL失败，使用本地图片
             var urlIdx = 0;
-            Object.values(result.result.data.categories).forEach(function(cat: any) {
+            Object.values(categoriesData).forEach(function(cat: any) {
               cat.heroes.forEach(function(hero: any) {
                 if (hero.avatar) {
                   hero.avatar = '../images/unused/default-avatar.png';
@@ -80,7 +81,7 @@ Page({
             });
             
             that.setData({
-              heroCategories: result.result.data.categories,
+              heroCategories: categoriesData,
               loading: false
             });
           });

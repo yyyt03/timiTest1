@@ -77,7 +77,7 @@ Page({
         action: 'update',
         userInfo: userInfo
       },
-      success: (res) => {
+      success: (_res) => {
         // 用户信息同步成功
       },
       fail: (err) => {

@@ -111,10 +111,10 @@ export class IconManager {
 
   /**
    * 获取本地备用图标（当云端图片加载失败时使用）
-   * @param type 图标类型
+   * @param _type 图标类型
    * @returns 本地图标URL
    */
-  static getLocalFallbackIcon(type: 'favorites' | 'search' | 'error'): string {
+  static getLocalFallbackIcon(_type: 'favorites' | 'search' | 'error'): string {
     // 使用本地default-avatar作为备用图标
     return '/pages/images/icons/unused/default-avatar.png';
   }
@@ -139,9 +139,9 @@ export class IconManager {
 
   /**
    * 设置云环境ID
-   * @param envId 云环境ID
+   * @param _envId 云环境ID
    */
-  static setCloudEnvId(envId: string): void {
+  static setCloudEnvId(_envId: string): void {
     // 这里可以动态设置云环境ID
     // 注意：需要重新计算所有图标路径
   }

@@ -24,7 +24,6 @@ Page({
 
   // 图片加载错误处理
   onImageError() {
-    console.log('云端图片加载失败，使用本地备用图片');
     this.setData({
       emptyIcon: getLocalFallbackIcon('favorites')
     });

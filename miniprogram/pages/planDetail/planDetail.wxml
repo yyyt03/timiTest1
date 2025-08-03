@@ -116,16 +116,17 @@
     </view>
   </view>
 
-  <!-- 装备出装 -->
+  <!-- 装备 -->
   <view class="equipment-section" wx:if="{{plan.equipment}}">
-    <view class="section-title">装备出装</view>
+    <view class="section-title">装备</view>
     <view class="equipment-list">
-             <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
-         <view class="equipment-icon">
-           <text class="equipment-icon-text">{{item.name.charAt(0)}}</text>
-         </view>
-         <text class="equipment-name">{{item.name}}</text>
-       </view>
+      <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
+        <view class="equipment-icon">
+          <image class="equipment-image" src="{{item.imageUrl}}" mode="aspectFit" wx:if="{{item.imageUrl}}"></image>
+          <text class="equipment-icon-text" wx:else>{{item.name.charAt(0)}}</text>
+        </view>
+        <text class="equipment-name">{{item.name}}</text>
+      </view>
     </view>
   </view>
 

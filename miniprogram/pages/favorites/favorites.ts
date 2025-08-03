@@ -1,4 +1,4 @@
-import { CloudService } from '../../utils/cloud'
+import { formatTime } from '../../utils/cloud'
 import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
 
 // 收藏页面
@@ -54,7 +54,7 @@ Page({
           // 格式化时间
           const formattedFavorites = favorites.map((fav: any) => ({
             ...fav,
-            createTime: CloudService.formatTime(fav.createTime)
+            createTime: formatTime(fav.createTime)
           }));
           
           if (refresh) {

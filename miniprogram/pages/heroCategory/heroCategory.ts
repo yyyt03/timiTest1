@@ -1,5 +1,5 @@
 // 英雄分类页面
-import { CloudService } from '../../utils/cloud'
+import { getTempFileURLs } from '../../utils/cloud'
 
 Page({
   data: {
@@ -44,7 +44,7 @@ Page({
             return avatar;
           });
           
-          CloudService.getTempFileURLs(fileIDs).then(function(tempURLs: string[]) {
+          getTempFileURLs(fileIDs).then(function(tempURLs: string[]) {
             
             // 替换hero.avatar为临时URL，如果失败则使用本地图片
             var urlIdx = 0;

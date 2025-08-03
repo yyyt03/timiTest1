@@ -1,4 +1,6 @@
 // 方案详情页面
+import { processEquipmentList } from '../../utils/equipmentMatcher';
+
 Page({
   data: {
     plan: {},
@@ -40,10 +42,23 @@ Page({
         const heroAvatar = await this.getHeroAvatarFromCloud(plan.heroName, plan.heroId);
         console.log('获取到的英雄头像:', heroAvatar);
         
+        // 处理装备列表，添加图片URL
+        let processedEquipment = [];
+        if (plan.equipment && plan.equipment.length > 0) {
+          try {
+            processedEquipment = await processEquipmentList(plan.equipment);
+            console.log('处理后的装备列表:', processedEquipment);
+          } catch (error) {
+            console.error('处理装备列表失败:', error);
+            processedEquipment = plan.equipment;
+          }
+        }
+        
         this.setData({
           plan: {
             ...plan,
-            heroAvatar: heroAvatar
+            heroAvatar: heroAvatar,
+            equipment: processedEquipment
           },
           loading: false
         });

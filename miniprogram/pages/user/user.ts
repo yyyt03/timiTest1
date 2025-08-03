@@ -1,4 +1,4 @@
-import { CloudService } from '../../utils/cloud'
+import { getUserInfo } from '../../utils/cloud'
 import { getFavoritePlanIcon, getCreatePlanIcon } from '../../utils/iconManager'
 
 // 用户页面
@@ -89,7 +89,7 @@ Page({
   // 获取云开发用户信息
   getCloudUserInfo() {
     var that = this;
-    CloudService.getUserInfo().then(function(result: any) {
+    getUserInfo().then(function(result: any) {
       that.setData({
         userInfo: result,
         hasUserInfo: true

@@ -54,12 +54,12 @@ Page({
           }
         }
         
+        const planData = Object.assign({}, plan);
+        planData.heroAvatar = heroAvatar;
+        planData.equipment = processedEquipment;
+        
         this.setData({
-          plan: {
-            ...plan,
-            heroAvatar: heroAvatar,
-            equipment: processedEquipment
-          },
+          plan: planData,
           loading: false
         });
         

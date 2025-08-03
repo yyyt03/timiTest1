@@ -49,13 +49,16 @@ Page({
       success: (res: any) => {
         
         if (res.result.success) {
-          const { favorites, total, hasMore } = res.result.data;
+          const favorites = res.result.data.favorites;
+          const total = res.result.data.total;
+          const hasMore = res.result.data.hasMore;
           
           // 格式化时间
-          const formattedFavorites = favorites.map((fav: any) => ({
-            ...fav,
-            createTime: formatTime(fav.createTime)
-          }));
+          const formattedFavorites = favorites.map((fav: any) => {
+            const newFav = Object.assign({}, fav);
+            newFav.createTime = formatTime(fav.createTime);
+            return newFav;
+          });
           
           if (refresh) {
             // 刷新模式，替换数据
@@ -67,8 +70,9 @@ Page({
             });
           } else {
             // 加载更多模式，追加数据
+            const newFavorites = that.data.favorites.concat(formattedFavorites);
             that.setData({
-              favorites: [...that.data.favorites, ...formattedFavorites],
+              favorites: newFavorites,
               page: page + 1,
               total: total,
               hasMore: hasMore
@@ -111,7 +115,8 @@ Page({
 
   // 取消收藏
   cancelFavorite(e: any) {
-    const { planId, index } = e.currentTarget.dataset;
+    const planId = e.currentTarget.dataset.planId;
+    const index = e.currentTarget.dataset.index;
     
     wx.showModal({
       title: '确认取消收藏',
@@ -137,7 +142,7 @@ Page({
         
         if (res.result.success) {
           // 从列表中移除该收藏
-          const newFavorites = [...that.data.favorites];
+          const newFavorites = that.data.favorites.slice();
           newFavorites.splice(index, 1);
           
           that.setData({
@@ -168,9 +173,9 @@ Page({
 
   // 查看方案详情
   viewPlan(e: any) {
-    const { planId } = e.currentTarget.dataset;
+    const planId = e.currentTarget.dataset.planId;
     wx.navigateTo({
-      url: `../heroPlan/heroPlan?id=${planId}`
+      url: '../heroPlan/heroPlan?id=' + planId
     });
   },
 

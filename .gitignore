@@ -1,1 +1,5 @@
 node_modules
+
+# 装备图片文件
+playground/equipment/
+miniprogram/pages/images/equipment/

@@ -254,7 +254,7 @@
   font-size: 32rpx;
   font-weight: 700;
   color: #2c3e50;
-  margin-bottom: 20rpx;
+  margin-bottom: 25rpx;
   padding-left: 15rpx;
   border-left: 4rpx solid #667eea;
 }
@@ -262,53 +262,62 @@
 .equipment-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8rpx;
+  gap: 0;
   padding: 0;
+  justify-content: space-between;
 }
 
 .equipment-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8rpx 6rpx;
+  padding: 12rpx 8rpx;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   border: 1rpx solid #e9ecef;
   transition: all 0.3s ease;
-  min-height: 80rpx;
+  min-height: 100rpx;
   justify-content: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.equipment-item:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
 }
 
 .equipment-icon {
-  width: 45rpx;
-  height: 45rpx;
-  border-radius: 23rpx;
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 25rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 2rpx solid #667eea;
-  margin-bottom: 6rpx;
-  box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.3);
+  margin-bottom: 8rpx;
+  box-shadow: 0 3rpx 12rpx rgba(102, 126, 234, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .equipment-icon-text {
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
 }
 
 .equipment-name {
-  font-size: 16rpx;
+  font-size: 18rpx;
   color: #34495e;
   text-align: center;
-  line-height: 1.1;
+  line-height: 1.2;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
+  padding: 0 4rpx;
 }
 
 

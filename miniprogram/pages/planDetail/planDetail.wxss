@@ -54,6 +54,20 @@
   border-bottom: 1rpx solid #f0f0f0;
 }
 
+.description-header {
+  margin-bottom: 15rpx;
+}
+
+.description-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333333;
+  background-color: #f0f0f0;
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+  border: 1rpx solid #e0e0e0;
+}
+
 .description-text {
   font-size: 28rpx;
   color: #666666;

@@ -12,6 +12,9 @@
 
   <!-- 方案描述 -->
   <view class="plan-description" wx:if="{{plan.description}}">
+    <view class="description-header">
+      <text class="description-label">玩法</text>
+    </view>
     <text class="description-text">{{plan.description}}</text>
   </view>
 

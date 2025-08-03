@@ -98,6 +98,20 @@
   - **格式规范**: 按照 json-format.md 的要求，使用 JSON Lines 格式（每行一个对象）
   - **时间字段**: 修复为正确的 MongoDB ISODate 格式 `{"$date": "2025-01-27T17:30:00.000Z"}`
   - **数据结构**: 保留完整的新格式数据结构，包含 skillOne、skillTwo、skillThree 等字段
+
+### 🎯 方案详情页优化 (2025-08-02 23:50)
+- ✅ **Git分支开发**: 创建feature/plandetail-optimization分支进行方案详情页优化
+  - **分支管理**: 使用git checkout -b feature/plandetail-optimization创建功能分支
+  - **版本控制**: 遵循规范的commit信息格式，使用feat:前缀
+  - **代码提交**: 提交方案详情页UI优化相关更改
+- ✅ **方案描述标签优化**: 在方案描述部分添加"玩法"标签标明
+  - **UI改进**: 在方案描述区域添加description-header和description-label
+  - **样式设计**: 为"玩法"标签设计醒目的样式，包含背景色、边框和圆角
+  - **用户体验**: 明确标识方案描述内容，提高用户理解度
+  - **代码结构**: 
+    - 修改planDetail.wxml：添加description-header结构
+    - 修改planDetail.wxss：添加description-label样式
+  - **提交记录**: feat: 在方案详情页添加'玩法'标签标明方案描述
   - **测试数据**: 只保留一行测试数据（飞天流小明方案），便于验证导入功能
   - **文件大小**: 从原来的多行数组格式简化为单行对象格式
   - **导入准备**: 文件已准备好导入到微信云开发数据库的 plans 集合

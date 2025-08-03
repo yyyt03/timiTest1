@@ -342,15 +342,4 @@
 .btn-text {
   font-size: 28rpx;
   font-weight: 500;
-}
-
-.points-text {
-  position: absolute;
-  top: -8rpx;
-  right: 15rpx;
-  font-size: 18rpx;
-  background-color: #666666;
-  color: #ffffff;
-  padding: 2rpx 6rpx;
-  border-radius: 8rpx;
 } 

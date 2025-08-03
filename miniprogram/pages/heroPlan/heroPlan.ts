@@ -226,15 +226,9 @@ Page({
   // 查看方案详情
   viewPlan(e: any) {
     var planId = e.currentTarget.dataset.id;
-    wx.showToast({
-      title: '方案详情功能开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '../planDetail/planDetail?id=' + planId
     });
-    
-    // TODO: 跳转到方案详情页面
-    // wx.navigateTo({
-    //   url: '../planDetail/planDetail?id=' + planId
-    // })
   },
 
   // 下拉刷新

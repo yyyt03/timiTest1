@@ -1,0 +1,134 @@
+<view class="container">
+  <!-- 英雄信息头部 -->
+  <view class="hero-header">
+    <view class="hero-info">
+      <image class="hero-avatar" src="{{plan.heroAvatar}}" mode="aspectFit"></image>
+      <view class="hero-details">
+        <text class="hero-name">{{plan.heroName}}</text>
+        <text class="plan-author">作者: {{plan.creatorName}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 方案描述 -->
+  <view class="plan-description" wx:if="{{plan.description}}">
+    <text class="description-text">{{plan.description}}</text>
+  </view>
+
+  <!-- 技能部分 -->
+  <view class="skills-section" wx:if="{{plan.skillOne || plan.skillTwo || plan.skillThree}}">
+    <view class="skills-container">
+      <!-- 一技能 -->
+      <view class="skill-column" wx:if="{{plan.skillOne}}">
+        <view class="skill-title">一技能</view>
+        <view class="skill-content">
+          <!-- 核心技能 -->
+          <view class="skill-core" wx:if="{{plan.skillOne.core}}">
+            <view class="skill-icon skill-icon-core"></view>
+            <view class="skill-info">
+              <text class="skill-name">{{plan.skillOne.core.name}}</text>
+              <text class="skill-desc">{{plan.skillOne.core.description}}</text>
+            </view>
+            <text class="skill-tag skill-tag-top">{{plan.skillOne.core.tag}}</text>
+          </view>
+          <!-- 天赋列表 -->
+          <view class="skill-talents">
+            <view class="talent-item" wx:for="{{plan.skillOne.talents}}" wx:key="index">
+              <view class="skill-icon skill-icon-talent"></view>
+              <view class="talent-info">
+                <text class="talent-name">{{item.name}}</text>
+                <text class="talent-desc">{{item.description}}</text>
+              </view>
+              <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 二技能 -->
+      <view class="skill-column" wx:if="{{plan.skillTwo}}">
+        <view class="skill-title">二技能</view>
+        <view class="skill-content">
+          <!-- 核心技能 -->
+          <view class="skill-core" wx:if="{{plan.skillTwo.core}}">
+            <view class="skill-icon skill-icon-core"></view>
+            <view class="skill-info">
+              <text class="skill-name">{{plan.skillTwo.core.name}}</text>
+              <text class="skill-desc">{{plan.skillTwo.core.description}}</text>
+            </view>
+            <text class="skill-tag skill-tag-top">{{plan.skillTwo.core.tag}}</text>
+          </view>
+          <!-- 天赋列表 -->
+          <view class="skill-talents">
+            <view class="talent-item" wx:for="{{plan.skillTwo.talents}}" wx:key="index">
+              <view class="skill-icon skill-icon-talent"></view>
+              <view class="talent-info">
+                <text class="talent-name">{{item.name}}</text>
+                <text class="talent-desc">{{item.description}}</text>
+              </view>
+              <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 三技能 -->
+      <view class="skill-column" wx:if="{{plan.skillThree}}">
+        <view class="skill-title">三技能</view>
+        <view class="skill-content">
+          <!-- 核心技能 -->
+          <view class="skill-core" wx:if="{{plan.skillThree.core}}">
+            <view class="skill-icon skill-icon-core"></view>
+            <view class="skill-info">
+              <text class="skill-name">{{plan.skillThree.core.name}}</text>
+              <text class="skill-desc">{{plan.skillThree.core.description}}</text>
+            </view>
+            <text class="skill-tag skill-tag-top">{{plan.skillThree.core.tag}}</text>
+          </view>
+          <!-- 天赋列表 -->
+          <view class="skill-talents">
+            <view class="talent-item" wx:for="{{plan.skillThree.talents}}" wx:key="index">
+              <view class="skill-icon skill-icon-talent"></view>
+              <view class="talent-info">
+                <text class="talent-name">{{item.name}}</text>
+                <text class="talent-desc">{{item.description}}</text>
+              </view>
+              <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 装备出装 -->
+  <view class="equipment-section" wx:if="{{plan.equipment}}">
+    <view class="section-title">装备出装</view>
+    <view class="equipment-list">
+      <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
+        <view class="equipment-icon"></view>
+        <text class="equipment-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 召唤师技能 -->
+  <view class="summoner-section" wx:if="{{plan.summonerSkill}}">
+    <view class="section-title">召唤师技能</view>
+    <view class="summoner-skill">
+      <view class="summoner-icon"></view>
+      <text class="summoner-name">{{plan.summonerSkill.name}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="share-btn" bindtap="sharePlan">
+      <text class="btn-text">分享方案</text>
+      <text class="points-text">积分+2</text>
+    </button>
+    <button class="favorite-btn {{plan.isFavorited ? 'favorited' : ''}}" bindtap="toggleFavorite">
+      <text class="btn-text">{{plan.isFavorited ? '取消收藏' : '收藏方案'}}</text>
+    </button>
+  </view>
+</view> 

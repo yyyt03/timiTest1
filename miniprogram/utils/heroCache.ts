@@ -94,6 +94,90 @@ class HeroCache {
   forceRefresh(): void {
     this.clearCache();
   }
+
+  // 根据英雄ID查找英雄信息
+  async getHeroById(heroId: string): Promise<any | null> {
+    try {
+      const cache = this.getCache();
+      if (!cache || !cache.categories) {
+        console.log('缓存中没有英雄数据');
+        return null;
+      }
+
+      // 遍历所有分类查找英雄
+      for (const category of Object.values(cache.categories)) {
+        if (category && typeof category === 'object' && (category as any).heroes && Array.isArray((category as any).heroes)) {
+          const hero = (category as any).heroes.find((h: any) => h.id === heroId);
+          if (hero) {
+            console.log('通过ID找到英雄:', hero);
+            return hero;
+          }
+        }
+      }
+
+      console.log('未找到ID为', heroId, '的英雄');
+      return null;
+    } catch (error) {
+      console.error('通过ID查找英雄失败:', error);
+      return null;
+    }
+  }
+
+  // 根据英雄名称查找英雄信息
+  async getHeroByName(heroName: string): Promise<any | null> {
+    try {
+      const cache = this.getCache();
+      if (!cache || !cache.categories) {
+        console.log('缓存中没有英雄数据');
+        return null;
+      }
+
+      // 遍历所有分类查找英雄
+      for (const category of Object.values(cache.categories)) {
+        if (category && typeof category === 'object' && (category as any).heroes && Array.isArray((category as any).heroes)) {
+          const hero = (category as any).heroes.find((h: any) => h.name === heroName);
+          if (hero) {
+            console.log('通过名称找到英雄:', hero);
+            return hero;
+          }
+        }
+      }
+
+      console.log('未找到名称为', heroName, '的英雄');
+      return null;
+    } catch (error) {
+      console.error('通过名称查找英雄失败:', error);
+      return null;
+    }
+  }
+
+  // 获取英雄头像URL
+  async getHeroAvatar(heroId: string): Promise<string | null> {
+    try {
+      const cache = this.getCache();
+      if (!cache || !cache.avatarURLs) {
+        console.log('缓存中没有头像数据');
+        return null;
+      }
+
+      const avatarURL = cache.avatarURLs[heroId];
+      if (avatarURL) {
+        console.log('获取到英雄头像URL:', avatarURL);
+        return avatarURL;
+      }
+
+      console.log('未找到英雄', heroId, '的头像URL');
+      return null;
+    } catch (error) {
+      console.error('获取英雄头像失败:', error);
+      return null;
+    }
+  }
+
+  // 获取英雄头像URL（兼容方法名）
+  async getAvatarUrl(heroId: string): Promise<string | null> {
+    return this.getHeroAvatar(heroId);
+  }
 }
 
 // 导出单例实例

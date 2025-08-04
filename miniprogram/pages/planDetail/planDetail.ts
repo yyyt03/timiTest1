@@ -122,12 +122,94 @@ Page({
           }
         }
         
+        // 如果heroId也没有，尝试通过英雄名称构建
+        if (heroName) {
+          console.log('尝试通过英雄名称构建头像URL:', heroName);
+          try {
+            // 将中文名称转换为拼音ID
+            const heroIdFromName = this.convertHeroNameToId(heroName);
+            const directAvatarPath = `cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/${heroIdFromName}.jpg`;
+            const tempURLs = await wx.cloud.getTempFileURL({
+              fileList: [directAvatarPath]
+            });
+            
+            if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
+              console.log('通过名称构建头像URL成功:', tempURLs.fileList[0].tempFileURL);
+              return tempURLs.fileList[0].tempFileURL;
+            }
+          } catch (nameError) {
+            console.log('通过名称构建头像URL失败:', nameError);
+          }
+        }
+        
         return '../images/unused/default-avatar.png';
       }
     } catch (error) {
       console.error('获取英雄头像失败:', error);
       return '../images/unused/default-avatar.png';
     }
+  },
+
+  // 将英雄中文名称转换为拼音ID
+  convertHeroNameToId(heroName: string): string {
+    const heroIdMap: { [key: string]: string } = {
+      '妲己': 'daji',
+      '安琪拉': 'anqila',
+      '亚瑟': 'yase',
+      '孙尚香': 'sunshangxiang',
+      '鲁班七号': 'lubanqihao',
+      '王昭君': 'wangzhaojun',
+      '虞姬': 'yuji',
+      '貂蝉': 'diaochan',
+      '小乔': 'xiaoqiao',
+      '大乔': 'daqiao',
+      '甄姬': 'zhenji',
+      '蔡文姬': 'caiwenji',
+      '杨玉环': 'yangyuhuan',
+      '西施': 'xishi',
+      '嫦娥': 'change',
+      '露娜': 'luna',
+      '花木兰': 'huamulan',
+      '阿轲': 'ake',
+      '娜可露露': 'nakelele',
+      '不知火舞': 'buzhihuowu',
+      '橘右京': 'juyoujing',
+      '宫本武藏': 'gongbenwuzang',
+      '李白': 'libai',
+      '韩信': 'hanxin',
+      '赵云': 'zhaoyun',
+      '关羽': 'guanyu',
+      '张飞': 'zhangfei',
+      '马超': 'machao',
+      '吕布': 'lvbu',
+      '典韦': 'dianwei',
+      '许褚': 'xuchu',
+      '夏侯惇': 'xiahoudun',
+      '夏侯渊': 'xiahouyuan',
+      '张辽': 'zhangliao',
+      '徐晃': 'xuhuang',
+      '庞德': 'pangde',
+      '太史慈': 'taishici',
+      '甘宁': 'ganning',
+      '周泰': 'zhoutai',
+      '黄盖': 'huanggai',
+      '程普': 'chengpu',
+      '韩当': 'handang',
+      '凌统': 'lingtong',
+      '蒋钦': 'jiangqin',
+      '周仓': 'zhoucang',
+      '关平': 'guanping',
+      '关兴': 'guanxing',
+      '张苞': 'zhangbao',
+      '关索': 'guansuo',
+      '鲍三娘': 'baosanniang',
+      '王平': 'wangping',
+      '马岱': 'madai',
+      '张翼': 'zhangyi',
+      '廖化': 'liaohua'
+    };
+    
+    return heroIdMap[heroName] || heroName.toLowerCase().replace(/\s+/g, '');
   },
 
   // 处理装备列表

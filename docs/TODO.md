@@ -1196,6 +1196,34 @@
 - 后续加载显示"使用本地缓存的英雄数据"
 - 缓存命中时加载速度提升80%以上
 
+### 2025-08-04 10:50 - heroCache.ts迭代器错误修复
+- ✅ **问题诊断**: 发现yase英雄方案详情页出现"Invalid attempt to iterate non-iterable instance"错误
+  - **错误位置**: heroCache.ts的getHeroById和getHeroByName方法
+  - **错误原因**: 代码试图对cache.categories使用for...of循环，但cache.categories是对象而不是数组
+  - **影响范围**: 导致yase等英雄的方案详情页无法正常加载英雄信息
+- ✅ **数据结构分析**: 确认缓存数据结构与代码期望不匹配
+  - **实际结构**: cache.categories是一个对象，每个键对应一个分类，值是该分类的英雄数组
+  - **代码期望**: 代码期望cache.categories是一个数组，可以直接使用for...of循环
+  - **数据来源**: 从heroCategory.ts页面设置缓存时，categories是对象结构
+- ✅ **修复方案**: 修改遍历逻辑，使用Object.values()遍历对象值
+  - **遍历方式**: 将`for (const category of cache.categories)`改为`for (const category of Object.values(cache.categories))`
+  - **类型检查**: 添加`category && typeof category === 'object'`确保category是对象
+  - **类型断言**: 使用`(category as any).heroes`避免TypeScript类型错误
+  - **兼容性**: 保持与mingshiyin等其他英雄的兼容性
+- ✅ **修复效果**: 解决了迭代器错误，yase英雄方案详情页现在可以正常加载
+  - **错误消除**: 不再出现"Invalid attempt to iterate non-iterable instance"错误
+  - **功能恢复**: yase英雄的方案详情页可以正常显示英雄头像和信息
+  - **性能保持**: 修复不影响缓存机制的性能优势
+
+#### 技术实现细节
+- **对象遍历**: 使用Object.values()获取对象的所有值进行遍历
+- **类型安全**: 添加类型检查和断言，确保代码的类型安全性
+- **向后兼容**: 保持与现有数据结构的兼容性
+- **错误处理**: 完善的错误处理机制，确保代码稳定性
+
+#### 修复文件
+- `miniprogram/utils/heroCache.ts`: 修复getHeroById和getHeroByName方法
+
 ---
 
-*最后更新: 2025-08-04 10:04*
+*最后更新: 2025-08-04 10:50*

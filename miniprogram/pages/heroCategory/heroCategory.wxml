@@ -1,6 +1,8 @@
 <view class="container">
   <view class="category-title">选择英雄</view>
   
+
+  
   <!-- 加载中 -->
   <view class="loading-container" wx:if="{{loading}}">
     <view class="loading-text">加载中...</view>

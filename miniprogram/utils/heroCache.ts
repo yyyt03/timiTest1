@@ -1,176 +1,100 @@
-// 英雄数据缓存工具
-interface Hero {
-  id: string;
-  name: string;
-  avatar: string;
-  category: string;
-}
-
-interface HeroCache {
-  heroes: Hero[];
+// 英雄数据缓存工具类
+interface HeroCacheData {
   categories: any;
-  lastUpdate: number;
-  avatarUrls: Record<string, string>;
+  totalHeroes: number;
+  avatarURLs: { [key: string]: string };
+  timestamp: number;
 }
 
-class HeroCacheManager {
-  private static instance: HeroCacheManager;
-  private cache: HeroCache | null = null;
-  private readonly CACHE_KEY = 'hero_list_cache';
-  private readonly CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
+interface CacheConfig {
+  heroDataExpireTime: number; // 英雄数据缓存时间（毫秒）
+  avatarURLExpireTime: number; // 头像URL缓存时间（毫秒）
+}
 
-  static getInstance(): HeroCacheManager {
-    if (!HeroCacheManager.instance) {
-      HeroCacheManager.instance = new HeroCacheManager();
-    }
-    return HeroCacheManager.instance;
-  }
+class HeroCache {
+  private cacheKey = 'hero_list_cache';
+  private config: CacheConfig = {
+    heroDataExpireTime: 10 * 60 * 1000, // 10分钟
+    avatarURLExpireTime: 2 * 60 * 60 * 1000 // 2小时（临时URL有效期）
+  };
 
-  // 获取英雄列表（优先从缓存）
-  async getHeroList(): Promise<any> {
-    const cached = this.getCachedData();
-    if (cached && this.isCacheValid(cached.lastUpdate)) {
-      console.log('使用缓存的英雄列表');
-      return cached;
-    }
-
-    console.log('从云函数获取英雄列表');
-    const result = await wx.cloud.callFunction({
-      name: 'getHeroList',
-      data: {}
-    }) as any;
-
-    if (result.result && result.result.success) {
-      const heroData = result.result.data;
-      const heroes = this.flattenHeroes(heroData);
-      
-      const cacheData: HeroCache = {
-        heroes,
-        categories: heroData.categories,
-        lastUpdate: Date.now(),
-        avatarUrls: {}
-      };
-
-      this.setCachedData(cacheData);
-      return heroData;
-    }
-
-    throw new Error('获取英雄列表失败');
-  }
-
-  // 根据ID快速查找英雄
-  async getHeroById(heroId: string): Promise<Hero | null> {
-    const cached = this.getCachedData();
-    if (!cached || !this.isCacheValid(cached.lastUpdate)) {
-      await this.getHeroList();
-      return this.getHeroById(heroId);
-    }
-
-    return cached.heroes.find(hero => hero.id === heroId) || null;
-  }
-
-  // 根据名称快速查找英雄
-  async getHeroByName(heroName: string): Promise<Hero | null> {
-    const cached = this.getCachedData();
-    if (!cached || !this.isCacheValid(cached.lastUpdate)) {
-      await this.getHeroList();
-      return this.getHeroByName(heroName);
-    }
-
-    return cached.heroes.find(hero => hero.name === heroName) || null;
-  }
-
-  // 批量获取头像URL
-  async getAvatarUrls(heroIds: string[]): Promise<Record<string, string>> {
-    const cached = this.getCachedData();
-    if (!cached) {
-      await this.getHeroList();
-      return this.getAvatarUrls(heroIds);
-    }
-
-    const uncachedIds = heroIds.filter(id => !cached.avatarUrls[id]);
-    
-    if (uncachedIds.length > 0) {
-      const heroes = uncachedIds.map(id => 
-        cached.heroes.find(hero => hero.id === id)
-      ).filter(Boolean);
-
-      if (heroes.length > 0) {
-        const avatarPaths = heroes.map(hero => hero!.avatar);
-        
-        try {
-          const tempURLs = await wx.cloud.getTempFileURL({
-            fileList: avatarPaths
-          });
-
-          tempURLs.fileList.forEach((file: any, index: number) => {
-            if (file.tempFileURL) {
-              cached.avatarUrls[uncachedIds[index]] = file.tempFileURL;
-            }
-          });
-
-          this.setCachedData(cached);
-        } catch (error) {
-          console.error('批量获取头像URL失败:', error);
-        }
-      }
-    }
-
-    return cached.avatarUrls;
-  }
-
-  // 获取单个头像URL
-  async getAvatarUrl(heroId: string): Promise<string> {
-    const urls = await this.getAvatarUrls([heroId]);
-    return urls[heroId] || '../images/unused/default-avatar.png';
-  }
-
-  // 清除缓存
-  clearCache(): void {
-    this.cache = null;
-    wx.removeStorageSync(this.CACHE_KEY);
-  }
-
-  private flattenHeroes(heroData: any): Hero[] {
-    const heroes: Hero[] = [];
-    Object.values(heroData.categories).forEach((cat: any) => {
-      cat.heroes.forEach((hero: any) => {
-        heroes.push({
-          id: hero.id,
-          name: hero.name,
-          avatar: hero.avatar,
-          category: cat.name
-        });
-      });
-    });
-    return heroes;
-  }
-
-  private getCachedData(): HeroCache | null {
-    if (this.cache) return this.cache;
-    
+  // 获取缓存数据
+  getCache(): HeroCacheData | null {
     try {
-      const data = wx.getStorageSync(this.CACHE_KEY);
-      this.cache = data || null;
-      return this.cache;
+      const cacheStr = wx.getStorageSync(this.cacheKey);
+      if (!cacheStr) return null;
+
+      const cache: HeroCacheData = JSON.parse(cacheStr);
+      const now = Date.now();
+
+      // 检查缓存是否过期
+      if (now - cache.timestamp > this.config.heroDataExpireTime) {
+        this.clearCache();
+        return null;
+      }
+
+      return cache;
     } catch (error) {
       console.error('读取缓存失败:', error);
       return null;
     }
   }
 
-  private setCachedData(data: HeroCache): void {
-    this.cache = data;
+  // 设置缓存数据
+  setCache(data: any, avatarURLs: { [key: string]: string }): void {
     try {
-      wx.setStorageSync(this.CACHE_KEY, data);
+      const cacheData: HeroCacheData = {
+        categories: data.categories,
+        totalHeroes: data.totalHeroes,
+        avatarURLs: avatarURLs,
+        timestamp: Date.now()
+      };
+
+      wx.setStorageSync(this.cacheKey, JSON.stringify(cacheData));
+      console.log('英雄数据缓存已更新');
     } catch (error) {
-      console.error('保存缓存失败:', error);
+      console.error('设置缓存失败:', error);
     }
   }
 
-  private isCacheValid(lastUpdate: number): boolean {
-    return Date.now() - lastUpdate < this.CACHE_DURATION;
+  // 清除缓存
+  clearCache(): void {
+    try {
+      wx.removeStorageSync(this.cacheKey);
+      console.log('英雄数据缓存已清除');
+    } catch (error) {
+      console.error('清除缓存失败:', error);
+    }
+  }
+
+  // 检查缓存是否有效
+  isCacheValid(): boolean {
+    const cache = this.getCache();
+    return cache !== null;
+  }
+
+  // 获取缓存状态信息
+  getCacheInfo(): { hasCache: boolean; age: number; size: number } {
+    const cache = this.getCache();
+    if (!cache) {
+      return { hasCache: false, age: 0, size: 0 };
+    }
+
+    const age = Date.now() - cache.timestamp;
+    const size = JSON.stringify(cache).length;
+
+    return {
+      hasCache: true,
+      age: age,
+      size: size
+    };
+  }
+
+  // 强制刷新缓存
+  forceRefresh(): void {
+    this.clearCache();
   }
 }
 
-export const heroCache = HeroCacheManager.getInstance(); 
+// 导出单例实例
+export const heroCache = new HeroCache(); 

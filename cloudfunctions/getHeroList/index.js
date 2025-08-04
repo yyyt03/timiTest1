@@ -139,14 +139,25 @@ exports.main = async function(event, context) {
         .get();
     });
     
-    // 分类映射
-    const categoryMap = {
-      'shooter': '射手',
-      'support': '辅助', 
-      'assassin': '刺客',
-      'warrior': '战士',
-      'mage': '法师'
-    };
+    // 从hero_categories集合获取分类信息
+    const categoriesResult = await executeWithRetry(async () => {
+      return await db.collection('hero_categories')
+        .field({
+          key: true,
+          name: true,
+          order: true
+        })
+        .orderBy('order', 'asc')
+        .get();
+    });
+    
+    // 构建分类映射
+    const categoryMap = {};
+    categoriesResult.data.forEach((cat) => {
+      categoryMap[cat.key] = cat.name;
+    });
+    
+    console.log('从数据库获取的分类映射:', categoryMap);
     
     // 按分类组织数据
     const categories = {};
@@ -154,6 +165,7 @@ exports.main = async function(event, context) {
     
     heroesResult.data.forEach((hero) => {
       const chineseCategory = categoryMap[hero.category] || hero.category;
+      console.log(`英雄 ${hero.name} 的英文分类: ${hero.category}, 中文分类: ${chineseCategory}`);
       
       if (!categories[chineseCategory]) {
         categories[chineseCategory] = {
@@ -171,6 +183,8 @@ exports.main = async function(event, context) {
       
       totalHeroes++;
     });
+    
+    console.log('最终分类结果:', Object.keys(categories));
     
     const resultData = {
       categories: categories,

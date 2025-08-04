@@ -214,24 +214,33 @@ export async function getEquipmentImageUrl(equipmentName: string): Promise<strin
   return '../images/unused/default-avatar.png';
 }
 
+import { equipmentCache } from './equipmentCache';
+
 // 批量处理装备列表
 export async function processEquipmentList(equipmentList: any[]): Promise<any[]> {
+  if (!equipmentList || equipmentList.length === 0) {
+    return [];
+  }
+
+  // 批量获取所有装备的图片URL
+  const equipmentNames = equipmentList.map(equipment => equipment.name);
+  const imageUrls = await equipmentCache.getEquipmentImageUrls(equipmentNames);
+  
   const processedList = [];
   
   for (const equipment of equipmentList) {
-    try {
-      const imageUrl = await getEquipmentImageUrl(equipment.name);
-      processedList.push({
-        ...equipment,
-        imageUrl: imageUrl
-      });
-    } catch (error) {
-      console.error(`处理装备 ${equipment.name} 失败:`, error);
-      processedList.push({
-        ...equipment,
-        imageUrl: '../images/unused/default-avatar.png'
-      });
+    const processedEquipment = { ...equipment };
+    
+    // 查找装备信息
+    const foundEquipment = findEquipmentByName(equipment.name);
+    if (foundEquipment) {
+      processedEquipment.equipmentInfo = foundEquipment;
     }
+    
+    // 使用缓存的图片URL
+    processedEquipment.imageUrl = imageUrls[equipment.name] || '../images/unused/default-avatar.png';
+    
+    processedList.push(processedEquipment);
   }
   
   return processedList;

@@ -1,5 +1,6 @@
 // 方案详情页面
 import { processEquipmentList } from '../../utils/equipmentMatcher';
+import { heroCache } from '../../utils/heroCache';
 
 Page({
   data: {
@@ -38,21 +39,14 @@ Page({
       if (result.result && result.result.success) {
         const plan = result.result.data;
         
-        // 获取英雄头像
-        const heroAvatar = await this.getHeroAvatarFromCloud(plan.heroName, plan.heroId);
-        console.log('获取到的英雄头像:', heroAvatar);
+        // 并行处理英雄头像和装备列表
+        const [heroAvatar, processedEquipment] = await Promise.all([
+          this.getHeroAvatarFromCache(plan.heroName, plan.heroId),
+          this.processEquipmentList(plan.equipment)
+        ]);
         
-        // 处理装备列表，添加图片URL
-        let processedEquipment = [];
-        if (plan.equipment && plan.equipment.length > 0) {
-          try {
-            processedEquipment = await processEquipmentList(plan.equipment);
-            console.log('处理后的装备列表:', processedEquipment);
-          } catch (error) {
-            console.error('处理装备列表失败:', error);
-            processedEquipment = plan.equipment;
-          }
-        }
+        console.log('获取到的英雄头像:', heroAvatar);
+        console.log('处理后的装备列表:', processedEquipment);
         
         const planData = Object.assign({}, plan);
         planData.heroAvatar = heroAvatar;
@@ -85,87 +79,68 @@ Page({
     }
   },
 
-  // 从云存储获取英雄头像
-  async getHeroAvatarFromCloud(heroName: string, heroId?: string) {
+  // 从缓存获取英雄头像
+  async getHeroAvatarFromCache(heroName: string, heroId?: string) {
     try {
-      // 调用云函数获取英雄列表
-      const result = await wx.cloud.callFunction({
-        name: 'getHeroList',
-        data: {}
-      }) as any;
-
-      if (result.result && result.result.success && result.result.data) {
-        console.log('英雄列表数据结构:', result.result.data);
-        // 查找对应英雄
-        let targetHero = null;
-        
-        // 优先使用heroId查找
-        if (heroId) {
-          console.log('使用heroId查找:', heroId);
-          Object.values(result.result.data.categories).forEach((cat: any) => {
-            cat.heroes.forEach((hero: any) => {
-              if (hero.id === heroId) {
-                targetHero = hero;
-                console.log('通过heroId找到英雄:', hero);
-              }
-            });
-          });
+      let targetHero = null;
+      
+      // 优先使用heroId查找
+      if (heroId) {
+        console.log('使用heroId查找:', heroId);
+        targetHero = await heroCache.getHeroById(heroId);
+        if (targetHero) {
+          console.log('通过heroId找到英雄:', targetHero);
         }
-        
-        // 如果通过heroId没找到，再通过英雄名称查找
-        if (!targetHero && heroName) {
-          Object.values(result.result.data.categories).forEach((cat: any) => {
-            cat.heroes.forEach((hero: any) => {
-              if (hero.name === heroName) {
-                targetHero = hero;
-              }
-            });
-          });
-        }
+      }
+      
+      // 如果通过heroId没找到，再通过英雄名称查找
+      if (!targetHero && heroName) {
+        targetHero = await heroCache.getHeroByName(heroName);
+      }
 
-        console.log('找到的英雄信息:', targetHero);
+      console.log('找到的英雄信息:', targetHero);
 
-        if (targetHero && (targetHero as any).avatar) {
-          // 获取临时URL
-          const tempURLs = await wx.cloud.getTempFileURL({
-            fileList: [(targetHero as any).avatar]
-          });
-
-          if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
-            return tempURLs.fileList[0].tempFileURL;
-          } else {
-            // 获取失败，使用默认头像
-            return '../images/unused/default-avatar.png';
-          }
-        } else {
-          // 未找到英雄，尝试直接使用heroId构建头像URL
-          if (heroId) {
-            console.log('尝试直接构建头像URL:', heroId);
-            try {
-              const directAvatarPath = `cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/${heroId}.jpg`;
-              const tempURLs = await wx.cloud.getTempFileURL({
-                fileList: [directAvatarPath]
-              });
-              
-              if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
-                console.log('直接构建头像URL成功:', tempURLs.fileList[0].tempFileURL);
-                return tempURLs.fileList[0].tempFileURL;
-              }
-            } catch (directError) {
-              console.log('直接构建头像URL失败:', directError);
-            }
-          }
-          // 使用默认头像
-          return '../images/unused/default-avatar.png';
-        }
+      if (targetHero) {
+        // 使用缓存获取头像URL
+        return await heroCache.getAvatarUrl(targetHero.id);
       } else {
-        // 云函数调用失败，使用默认头像
+        // 未找到英雄，尝试直接使用heroId构建头像URL
+        if (heroId) {
+          console.log('尝试直接构建头像URL:', heroId);
+          try {
+            const directAvatarPath = `cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/${heroId}.jpg`;
+            const tempURLs = await wx.cloud.getTempFileURL({
+              fileList: [directAvatarPath]
+            });
+            
+            if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
+              console.log('直接构建头像URL成功:', tempURLs.fileList[0].tempFileURL);
+              return tempURLs.fileList[0].tempFileURL;
+            }
+          } catch (directError) {
+            console.log('直接构建头像URL失败:', directError);
+          }
+        }
+        
         return '../images/unused/default-avatar.png';
       }
     } catch (error) {
       console.error('获取英雄头像失败:', error);
-      // 出错时使用默认头像
       return '../images/unused/default-avatar.png';
+    }
+  },
+
+  // 处理装备列表
+  async processEquipmentList(equipmentList: any[]) {
+    if (!equipmentList || equipmentList.length === 0) {
+      return [];
+    }
+    
+    try {
+      return await processEquipmentList(equipmentList);
+    } catch (error) {
+      console.error('处理装备列表失败:', error);
+      return equipmentList;
     }
   },
 

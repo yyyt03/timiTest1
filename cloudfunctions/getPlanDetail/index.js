@@ -5,8 +5,70 @@ cloud.init({
   env: 'cloudbase-1gk9t6w2d1d090af'
 })
 
+// 内存缓存 - 在云函数实例生命周期内有效
+const planCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 1000; // 1秒重试延迟
+
+// 性能监控
+const performanceMetrics = {
+  totalCalls: 0,
+  cacheHits: 0,
+  cacheMisses: 0,
+  averageResponseTime: 0
+};
+
+// 工具函数：延迟执行
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 工具函数：带重试的数据库操作
+async function executeWithRetry(operation, maxAttempts = MAX_RETRY_ATTEMPTS) {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      console.warn(`操作失败，第${attempt}次尝试:`, error.message);
+      
+      if (attempt < maxAttempts) {
+        await delay(RETRY_DELAY * attempt); // 指数退避
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// 工具函数：获取缓存键
+function getCacheKey(planId, userId) {
+  return `${planId}_${userId}`;
+}
+
+// 工具函数：检查缓存是否有效
+function isCacheValid(timestamp) {
+  return Date.now() - timestamp < CACHE_DURATION;
+}
+
+// 工具函数：清理过期缓存
+function cleanExpiredCache() {
+  const now = Date.now();
+  for (const [key, value] of planCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      planCache.delete(key);
+    }
+  }
+}
+
 // 云函数入口函数
 exports.main = async function(event, context) {
+  const startTime = Date.now();
+  performanceMetrics.totalCalls++;
+  
   console.log('getPlanDetail云函数被调用', event);
   
   try {
@@ -25,10 +87,42 @@ exports.main = async function(event, context) {
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;
     
-    // 从数据库获取方案详情
-    const planResult = await db.collection('plans')
-      .doc(planId)
-      .get();
+    // 检查缓存
+    const cacheKey = getCacheKey(planId, currentUserId);
+    const cachedData = planCache.get(cacheKey);
+    
+    if (cachedData && isCacheValid(cachedData.timestamp)) {
+      performanceMetrics.cacheHits++;
+      console.log('从缓存获取方案详情:', planId);
+      
+      const responseTime = Date.now() - startTime;
+      performanceMetrics.averageResponseTime = 
+        (performanceMetrics.averageResponseTime * (performanceMetrics.totalCalls - 1) + responseTime) / performanceMetrics.totalCalls;
+      
+      return {
+        success: true,
+        data: cachedData.data,
+        message: '从缓存获取方案详情成功',
+        fromCache: true,
+        performance: {
+          responseTime,
+          cacheHit: true
+        }
+      };
+    }
+    
+    performanceMetrics.cacheMisses++;
+    console.log('缓存未命中，从数据库获取方案详情:', planId);
+    
+    // 清理过期缓存
+    cleanExpiredCache();
+    
+    // 从数据库获取方案详情（带重试）
+    const planResult = await executeWithRetry(async () => {
+      return await db.collection('plans')
+        .doc(planId)
+        .get();
+    });
     
     if (!planResult.data) {
       return {
@@ -40,57 +134,108 @@ exports.main = async function(event, context) {
     
     const plan = planResult.data;
     
-    // 并行查询用户的收藏和点赞状态
-    const [favoriteResult, likeResult] = await Promise.all([
-      db.collection('favorites')
-        .where({
-          userId: currentUserId,
-          planId: planId
-        })
-        .count(),
-      db.collection('likes')
-        .where({
-          userId: currentUserId,
-          planId: planId
-        })
-        .count()
+    // 使用聚合查询优化：一次性获取用户状态和总数
+    const [userStatusResult, countsResult] = await Promise.all([
+      // 获取用户收藏和点赞状态
+      executeWithRetry(async () => {
+        return await db.collection('favorites')
+          .aggregate()
+          .match({
+            userId: currentUserId,
+            planId: planId
+          })
+          .count('favoriteCount')
+          .end()
+          .then(result => {
+            const favoriteCount = result.list[0]?.favoriteCount || 0;
+            return { isFavorited: favoriteCount > 0 };
+          });
+      }),
+      
+      // 获取收藏和点赞总数
+      executeWithRetry(async () => {
+        const [favoriteCountResult, likeCountResult] = await Promise.all([
+          db.collection('favorites')
+            .where({ planId: planId })
+            .count(),
+          db.collection('likes')
+            .where({ planId: planId })
+            .count()
+        ]);
+        
+        return {
+          favoriteCount: favoriteCountResult.total,
+          likeCount: likeCountResult.total
+        };
+      })
     ]);
     
-    // 并行查询方案的收藏和点赞总数
-    const [favoriteCountResult, likeCountResult] = await Promise.all([
-      db.collection('favorites')
+    // 获取用户点赞状态
+    const likeStatusResult = await executeWithRetry(async () => {
+      return await db.collection('likes')
         .where({
+          userId: currentUserId,
           planId: planId
         })
-        .count(),
-      db.collection('likes')
-        .where({
-          planId: planId
-        })
-        .count()
-    ]);
+        .count();
+    });
     
     // 构建返回数据
     const planDetail = {
       ...plan,
-      isFavorited: favoriteResult.total > 0,
-      isLiked: likeResult.total > 0,
-      favoriteCount: favoriteCountResult.total,
-      likeCount: likeCountResult.total
+      isFavorited: userStatusResult.isFavorited,
+      isLiked: likeStatusResult.total > 0,
+      favoriteCount: countsResult.favoriteCount,
+      likeCount: countsResult.likeCount
     };
+    
+    // 缓存结果
+    planCache.set(cacheKey, {
+      data: planDetail,
+      timestamp: Date.now()
+    });
+    
+    const responseTime = Date.now() - startTime;
+    performanceMetrics.averageResponseTime = 
+      (performanceMetrics.averageResponseTime * (performanceMetrics.totalCalls - 1) + responseTime) / performanceMetrics.totalCalls;
+    
+    console.log('性能指标:', {
+      totalCalls: performanceMetrics.totalCalls,
+      cacheHits: performanceMetrics.cacheHits,
+      cacheMisses: performanceMetrics.cacheMisses,
+      cacheHitRate: (performanceMetrics.cacheHits / performanceMetrics.totalCalls * 100).toFixed(2) + '%',
+      averageResponseTime: performanceMetrics.averageResponseTime.toFixed(2) + 'ms',
+      currentResponseTime: responseTime + 'ms'
+    });
     
     return {
       success: true,
       data: planDetail,
-      message: '获取方案详情成功'
+      message: '获取方案详情成功',
+      fromCache: false,
+      performance: {
+        responseTime,
+        cacheHit: false,
+        metrics: {
+          totalCalls: performanceMetrics.totalCalls,
+          cacheHitRate: (performanceMetrics.cacheHits / performanceMetrics.totalCalls * 100).toFixed(2) + '%',
+          averageResponseTime: performanceMetrics.averageResponseTime.toFixed(2) + 'ms'
+        }
+      }
     };
     
   } catch (error) {
     console.error('获取方案详情失败:', error);
+    const responseTime = Date.now() - startTime;
+    
     return {
       success: false,
       data: null,
-      message: '获取方案详情失败: ' + error.message
+      message: '获取方案详情失败: ' + error.message,
+      performance: {
+        responseTime,
+        error: true
+      }
     };
   }
 } 

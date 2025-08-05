@@ -1,8 +1,8 @@
 .container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
   padding: 30rpx;
   box-sizing: border-box;
-  background-color: #ffffff;
-  min-height: 100vh;
 }
 
 /* 英雄头部 */
@@ -13,9 +13,11 @@
   align-items: center;
   padding: 30rpx 0;
   margin-bottom: 30rpx;
-  background-color: #f8f9fa;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .hero-avatar-container {
@@ -28,8 +30,8 @@
   align-items: center;
   margin-bottom: 20rpx;
   overflow: hidden;
-  border: 3rpx solid #e9ecef;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
 }
 
 .hero-avatar {
@@ -41,8 +43,9 @@
 
 .hero-name {
   font-size: 36rpx;
-  font-weight: 600;
-  color: #333333;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
 }
 
 /* 操作栏 */
@@ -56,21 +59,23 @@
 .create-btn {
   width: 80%;
   height: 80rpx;
-  background-color: #000000;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 40rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+  border: none;
 }
 
 .create-btn:active {
-  background-color: #333333;
-  transform: translateY(2rpx);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(4rpx);
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.4);
 }
 
 /* 方案容器 */
@@ -120,86 +125,97 @@
 /* 方案卡片 */
 .plan-card {
   width: 100%;
-  background-color: #ffffff;
-  border-radius: 16rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
   margin-bottom: 30rpx;
-  padding: 30rpx;
+  padding: 0;
   box-sizing: border-box;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-  border: 1rpx solid #f0f0f0;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .plan-card:active {
-  transform: translateY(2rpx);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
+  transform: translateY(4rpx);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
 }
 
-/* 方案头部 */
-.plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-  padding-bottom: 15rpx;
-  border-bottom: 2rpx solid #f0f0f0;
+/* 方案标题区域 */
+.plan-title-area {
+  padding: 30rpx 30rpx 20rpx 30rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1rpx solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.plan-title-area:active {
+  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+  transform: scale(0.98);
 }
 
 .plan-title {
   font-size: 32rpx;
-  font-weight: 600;
-  color: #333333;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.4;
+  display: block;
 }
 
-.plan-actions {
+/* 操作按钮区域 */
+.plan-actions-area {
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  justify-content: flex-end;
+  gap: 16rpx;
+  padding: 20rpx 30rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-bottom: 1rpx solid #e9ecef;
 }
 
 .action-item {
   display: flex;
   align-items: center;
-  padding: 8rpx 12rpx;
-  border-radius: 20rpx;
-  background-color: #f8f9fa;
-  transition: all 0.3s ease;
+  padding: 12rpx 16rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1rpx solid #e9ecef;
+  transition: all 0.2s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 10;
 }
 
 .action-item:active {
-  background-color: #e9ecef;
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
   transform: scale(0.95);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
 }
 
 .action-icon {
-  width: 28rpx;
-  height: 28rpx;
+  width: 32rpx;
+  height: 32rpx;
   margin-right: 8rpx;
   transition: all 0.3s ease;
 }
 
 .action-icon.favorited {
-  /* 移除filter，使用原始图标颜色 */
+  filter: drop-shadow(0 2rpx 4rpx rgba(255, 193, 7, 0.3));
 }
 
 .action-icon.liked {
-  /* 移除filter，使用原始图标颜色 */
+  filter: drop-shadow(0 2rpx 4rpx rgba(220, 53, 69, 0.3));
 }
 
 .action-count {
-  font-size: 24rpx;
-  color: #666666;
-  font-weight: 500;
+  font-size: 26rpx;
+  color: #495057;
+  font-weight: 600;
+  min-width: 20rpx;
+  text-align: center;
 }
 
-/* 方案内容 */
-.plan-content {
-  margin-bottom: 20rpx;
-}
-
-.plan-info {
-  margin-bottom: 20rpx;
-}
+/* 方案内容 - 已移除，不再需要 */
 
 .info-item {
   display: flex;
@@ -244,18 +260,37 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 15rpx;
-  border-top: 1rpx solid #f0f0f0;
+  padding: 20rpx 30rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-top: 1rpx solid #e9ecef;
 }
 
 .plan-author {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.plan-author::before {
+  content: '👤';
+  margin-right: 8rpx;
   font-size: 24rpx;
-  color: #666666;
 }
 
 .plan-time {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.plan-time::before {
+  content: '🕒';
+  margin-right: 8rpx;
   font-size: 24rpx;
-  color: #666666;
 }
 
 /* 加载更多 */

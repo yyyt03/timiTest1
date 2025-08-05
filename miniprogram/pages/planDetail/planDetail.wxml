@@ -132,7 +132,7 @@
 
       <!-- 底部信息 -->
       <view class="footer">
-        <text class="footer-text">微信小程序-王者天赋推荐</text>
+        <text class="footer-text">微信小程序-觉醒天赋推荐</text>
       </view>
     </view>
   </view>

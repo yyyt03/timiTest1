@@ -24,56 +24,33 @@
     
     <!-- 方案列表 -->
     <block wx:else>
-      <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index">
-        <view class="plan-header">
-          <view class="plan-title">{{item.title}}</view>
-          <view class="plan-actions">
-            <view class="action-item" catchtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
-              <image class="action-icon {{item.isLiked ? 'liked' : ''}}" 
-                     src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" 
-                     mode="aspectFit"></image>
-              <text class="action-count">{{item.likeCount || 0}}</text>
-            </view>
-            <view class="action-item" catchtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
-              <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
-                     src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
-                     mode="aspectFit"></image>
-              <text class="action-count">{{item.favoriteCount || 0}}</text>
-            </view>
-          </view>
-        </view>
-        
-        <view class="plan-content" bindtap="viewPlan" data-id="{{item._id}}">
-          <view class="plan-info">
-            <view class="info-item">
-              <text class="info-label">核心:</text>
-              <text class="info-value">{{item.coreSkill}}</text>
-            </view>
-            <view class="info-item" wx:if="{{item.talents && item.talents.length > 0}}">
-              <text class="info-label">特性:</text>
-              <text class="info-value">{{item.talents.join(', ')}}</text>
-            </view>
-            <view class="info-item">
-              <text class="info-label">出装:</text>
-              <text class="info-value">{{item.equipment}}</text>
-            </view>
-            <view class="info-item" wx:if="{{item.equipmentCode}}">
-              <text class="info-label">密语:</text>
-              <text class="info-value">{{item.equipmentCode}}</text>
-            </view>
-          </view>
-          
-          <view class="plan-desc" wx:if="{{item.strategy}}">
-            <text class="desc-label">思路:</text>
-            <text class="desc-content">{{item.strategy}}</text>
-          </view>
-        </view>
-        
-        <view class="plan-footer">
-          <text class="plan-author">{{item.creatorName || '匿名用户'}}</text>
-          <text class="plan-time">{{item.createTime}}</text>
-        </view>
-      </view>
+             <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index">
+         <!-- 方案标题区域 - 可点击跳转 -->
+         <view class="plan-title-area" bindtap="viewPlan" data-id="{{item._id}}">
+           <text class="plan-title">{{item.title}}</text>
+         </view>
+         
+         <!-- 操作按钮区域 - 独立处理 -->
+         <view class="plan-actions-area">
+           <view class="action-item" bindtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
+             <image class="action-icon {{item.isLiked ? 'liked' : ''}}" 
+                    src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" 
+                    mode="aspectFit"></image>
+             <text class="action-count">{{item.likeCount || 0}}</text>
+           </view>
+           <view class="action-item" bindtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
+             <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
+                    src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
+                    mode="aspectFit"></image>
+             <text class="action-count">{{item.favoriteCount || 0}}</text>
+           </view>
+         </view>
+         
+         <view class="plan-footer">
+           <text class="plan-author">{{item.creatorName || '匿名用户'}}</text>
+           <text class="plan-time">{{item.createTime}}</text>
+         </view>
+       </view>
       
       <!-- 加载更多 -->
       <view class="load-more" wx:if="{{loadingMore}}">

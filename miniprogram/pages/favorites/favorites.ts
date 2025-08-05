@@ -175,7 +175,7 @@ Page({
   viewPlan(e: any) {
     const planId = e.currentTarget.dataset.planId;
     wx.navigateTo({
-      url: '../heroPlan/heroPlan?id=' + planId
+      url: '../planDetail/planDetail?id=' + planId
     });
   },
 

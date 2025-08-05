@@ -12,29 +12,25 @@
         <!-- 方案信息 -->
         <view class="plan-info">
           <view class="plan-header">
-            <text class="hero-name">{{item.plan.heroName}}</text>
-            <text class="plan-title">{{item.plan.title}}</text>
-          </view>
-          
-          <view class="plan-description">
-            <text class="description-text">{{item.plan.description}}</text>
+            <text class="hero-name">{{item.plan.heroName || '未知英雄'}}</text>
+            <text class="plan-title">{{item.plan.title || item.plan.heroName + '方案'}}</text>
           </view>
           
           <view class="plan-stats">
             <view class="stat-item">
-              <text class="stat-label">核心技能:</text>
-              <text class="stat-value">{{item.plan.coreSkill}}</text>
+              <text class="stat-label">点赞:</text>
+              <text class="stat-value">{{item.plan.likes || 0}}</text>
             </view>
             <view class="stat-item">
-              <text class="stat-label">天赋:</text>
-              <text class="stat-value">{{item.plan.talents.join(', ')}}</text>
+              <text class="stat-label">收藏:</text>
+              <text class="stat-value">{{item.plan.favorites || 0}}</text>
             </view>
           </view>
           
           <view class="plan-meta">
             <view class="meta-item">
               <text class="meta-label">作者:</text>
-              <text class="meta-value">{{item.plan.creatorName}}</text>
+              <text class="meta-value">{{item.plan.creatorName || '匿名用户'}}</text>
             </view>
             <view class="meta-item">
               <text class="meta-label">收藏时间:</text>

@@ -1,4 +1,6 @@
 // 方案创作页面
+import { findEquipmentByName, getEquipmentImageUrl } from '../../utils/equipmentMatcher';
+
 Page({
   data: {
     hero: '',
@@ -22,8 +24,16 @@ Page({
       skillTwo: [] as boolean[],
       skillThree: [] as boolean[]
     }, // 天赋是否被选中
-    equipment: '', // 出装推荐
-    equipmentCode: '', // 装备密语
+    equipment: '', // 出装推荐（保留兼容性）
+    equipmentList: [
+      { name: '', imageUrl: '', matched: false, suggestions: [] },
+      { name: '', imageUrl: '', matched: false, suggestions: [] },
+      { name: '', imageUrl: '', matched: false, suggestions: [] },
+      { name: '', imageUrl: '', matched: false, suggestions: [] },
+      { name: '', imageUrl: '', matched: false, suggestions: [] },
+      { name: '', imageUrl: '', matched: false, suggestions: [] }
+    ], // 新的装备列表数据结构
+
     planDescription: '', // 方案思路描述
     loading: true,
     skillsLoading: false
@@ -428,18 +438,155 @@ Page({
   },
 
   // 输入出装推荐
+  // 装备输入处理
   onEquipmentInput(e: any) {
+    const index = e.currentTarget.dataset.index;
+    const value = e.detail.value;
+    
+    // 更新装备名称
+    const equipmentList = [...this.data.equipmentList];
+    equipmentList[index].name = value;
+    
+    // 如果输入为空，清空相关数据
+    if (!value.trim()) {
+      equipmentList[index].imageUrl = '';
+      equipmentList[index].matched = false;
+      equipmentList[index].suggestions = [];
+    } else {
+      // 实时匹配装备
+      this.matchEquipment(index, value);
+    }
+    
     this.setData({
-      equipment: e.detail.value
+      equipmentList: equipmentList
+    });
+    
+    // 保持兼容性
+    this.setData({
+      equipment: this.getEquipmentText()
     });
   },
 
-  // 输入装备密语
-  onEquipmentCodeInput(e: any) {
+  // 装备失焦处理
+  onEquipmentBlur(e: any) {
+    const index = e.currentTarget.dataset.index;
+    const value = e.detail.value;
+    
+    if (value.trim()) {
+      // 失焦时进行最终匹配
+      this.finalizeEquipmentMatch(index, value);
+    }
+  },
+
+  // 实时装备匹配
+  async matchEquipment(index: number, equipmentName: string) {
+    if (!equipmentName.trim()) return;
+    
+    try {
+      // 查找匹配的装备
+      const matchedEquipment = findEquipmentByName(equipmentName);
+      
+      const equipmentList = [...this.data.equipmentList];
+      
+      if (matchedEquipment) {
+        // 找到匹配的装备
+        equipmentList[index].matched = true;
+        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
+        equipmentList[index].suggestions = [];
+      } else {
+        // 未找到匹配，生成建议
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = this.generateEquipmentSuggestions(equipmentName);
+      }
+      
+      this.setData({
+        equipmentList: equipmentList
+      });
+    } catch (error) {
+      console.error('装备匹配失败:', error);
+    }
+  },
+
+  // 最终装备匹配
+  async finalizeEquipmentMatch(index: number, equipmentName: string) {
+    if (!equipmentName.trim()) return;
+    
+    try {
+      const matchedEquipment = findEquipmentByName(equipmentName);
+      
+      const equipmentList = [...this.data.equipmentList];
+      
+      if (matchedEquipment) {
+        equipmentList[index].matched = true;
+        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
+        equipmentList[index].suggestions = [];
+      } else {
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = [];
+      }
+      
+      this.setData({
+        equipmentList: equipmentList
+      });
+    } catch (error) {
+      console.error('最终装备匹配失败:', error);
+    }
+  },
+
+  // 生成装备建议
+  generateEquipmentSuggestions(input: string): any[] {
+    // 这里可以基于输入生成装备建议
+    // 暂时返回空数组，后续可以扩展
+    return [];
+  },
+
+  // 选择装备建议
+  selectEquipmentSuggestion(e: any) {
+    const mainIndex = e.currentTarget.dataset.mainIndex;
+    const suggestionName = e.currentTarget.dataset.suggestionName;
+    
+    const equipmentList = [...this.data.equipmentList];
+    equipmentList[mainIndex].name = suggestionName;
+    equipmentList[mainIndex].matched = true;
+    equipmentList[mainIndex].suggestions = [];
+    
+    // 获取装备图片
+    getEquipmentImageUrl(suggestionName).then(imageUrl => {
+      equipmentList[mainIndex].imageUrl = imageUrl;
+      this.setData({
+        equipmentList: equipmentList
+      });
+    });
+    
     this.setData({
-      equipmentCode: e.detail.value
+      equipmentList: equipmentList
+    });
+    
+    // 保持兼容性
+    this.setData({
+      equipment: this.getEquipmentText()
     });
   },
+
+  // 获取装备文本（兼容性）
+  getEquipmentText(): string {
+    return this.data.equipmentList
+      .map(item => item.name)
+      .filter(name => name.trim())
+      .join('、');
+  },
+
+  // 输入装备密语
+             showEquipmentHint() {
+             wx.showModal({
+               title: '装备匹配规则',
+               content: '1. 输入装备名称即可自动匹配\n\n2. 输入至少3个字符\n\n3. 匹配成功会显示装备图标\n\n4. 每个装备最多输入10个字符',
+               showCancel: false,
+               confirmText: '知道了'
+             });
+           },
 
   // 输入方案思路
   onDescriptionInput(e: any) {
@@ -495,95 +642,80 @@ Page({
 
   // 生成方案
   async generatePlan() {
-    // 验证技能选择
-    if (!this.validateSkillSelection()) {
-      return;
-    }
-    
-    // 验证必填字段
-    if (!this.data.equipment.trim()) {
-      wx.showToast({
-        title: '请输入出装推荐',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    if (!this.data.planDescription.trim()) {
-      wx.showToast({
-        title: '请输入方案思路',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    wx.showLoading({
-      title: '生成方案中...'
-    });
-
     try {
-      // 准备方案数据
-      const { selectedCores, selectedTalents, heroSkills } = this.data;
+      // 验证技能选择
+      if (!this.validateSkillSelection()) {
+        return;
+      }
+
+      // 获取核心技能名称
+      const coreNames = this.data.selectedCores.map(core => core.name);
       
-      // 获取选中的核心和天赋名称
-      const coreNames = {
-        skillOne: heroSkills.skillOne.cores[selectedCores.skillOne]?.name || '',
-        skillTwo: heroSkills.skillTwo.cores[selectedCores.skillTwo]?.name || '',
-        skillThree: heroSkills.skillThree.cores[selectedCores.skillThree]?.name || ''
-      };
+      // 获取天赋名称
+      const talentNames = this.data.selectedTalents.map(talent => talent.name);
       
-      const talentNames = {
-        skillOne: selectedTalents.skillOne.map(index => heroSkills.skillOne.talents[index]?.name || ''),
-        skillTwo: selectedTalents.skillTwo.map(index => heroSkills.skillTwo.talents[index]?.name || ''),
-        skillThree: selectedTalents.skillThree.map(index => heroSkills.skillThree.talents[index]?.name || '')
-      };
-      
+      // 获取装备数据
+      const equipmentData = this.data.equipmentList.map(item => ({
+        name: item.name,
+        imageUrl: item.imageUrl
+      }));
+
+      // 调试输出：输出所有数据
+      console.log('=== 生成方案调试数据 ===');
+      console.log('heroId:', this.data.heroId);
+      console.log('heroName:', this.data.hero);
+      console.log('title:', this.data.hero + ' - 技能流派方案');
+      console.log('description:', this.data.planDescription);
+      console.log('cores:', coreNames);
+      console.log('talents:', talentNames);
+      console.log('equipment:', equipmentData);
+      console.log('equipmentText:', this.getEquipmentText());
+      console.log('strategy:', this.data.planDescription);
+      console.log('=== 调试数据结束 ===');
+
       const planData = {
         heroId: this.data.heroId,
         heroName: this.data.hero,
         title: this.data.hero + ' - 技能流派方案',
         description: this.data.planDescription,
-        cores: coreNames,
+        cores: coreNames, // Frontend sends 'cores'
         talents: talentNames,
-        equipment: this.data.equipment,
-        equipmentCode: this.data.equipmentCode,
+        equipment: equipmentData,
+        equipmentText: this.getEquipmentText(),
         strategy: this.data.planDescription
       };
-      
+
+      console.log('发送到云函数的数据:', planData);
+
       const result = await wx.cloud.callFunction({
         name: 'createPlan',
         data: planData
       }) as any;
 
-      wx.hideLoading();
-      
+      console.log('云函数返回结果:', result);
+
       if (result.result && result.result.success) {
         wx.showToast({
-          title: '方案创建成功！',
+          title: '方案创建成功',
           icon: 'success'
         });
         
-        // 返回上一页并刷新
-        setTimeout(() => {
-          const pages = getCurrentPages();
-          const prevPage = pages[pages.length - 2];
-          if (prevPage && prevPage.loadPlans) {
-            prevPage.loadPlans();
-          }
-          wx.navigateBack();
-        }, 1500);
+        // 跳转到方案详情页
+        wx.navigateTo({
+          url: `/pages/planDetail/planDetail?id=${result.result.data._id}`
+        });
       } else {
+        console.error('云函数返回错误:', result.result);
         wx.showToast({
-          title: (result.result && result.result.message) || '创建失败',
-          icon: 'none'
+          title: result.result?.message || '创建失败',
+          icon: 'error'
         });
       }
     } catch (error) {
-      console.error('创建方案失败:', error);
-      wx.hideLoading();
+      console.error('生成方案错误:', error);
       wx.showToast({
-        title: '网络错误，请重试',
-        icon: 'none'
+        title: '创建失败',
+        icon: 'error'
       });
     }
   },

@@ -144,20 +144,70 @@
     </view>
   </block>
   
-  <block wx:if="{{selectedHero}}">
-    <view class="step-container">
-      <view class="step-title">第三步：出装推荐</view>
-      <textarea class="equipment-input" placeholder="请输入出装推荐..." value="{{equipment}}" bindinput="onEquipmentInput"></textarea>
+          <block wx:if="{{selectedHero}}">
+          <view class="step-container">
+            <view class="step-title-container">
+              <text class="step-title">第三步：出装推荐（6件装备）</text>
+              <view class="hint-button" bindtap="showEquipmentHint">
+                <text class="hint-icon">?</text>
+              </view>
+            </view>
+            
+            <!-- 装备输入区域 -->
+            <view class="equipment-input-container">
+              <view class="equipment-grid">
+                                 <view class="equipment-item" wx:for="{{equipmentList}}" wx:key="index">
+                   <view class="equipment-input-row">
+                     <view class="equipment-icon-container">
+                       <image 
+                         class="equipment-icon" 
+                         src="{{item.imageUrl || '../images/unused/default-avatar.png'}}" 
+                         mode="aspectFit">
+                       </image>
+                       <view class="equipment-index">{{index + 1}}</view>
+                     </view>
+                     <view class="equipment-input-wrapper">
+                       <input 
+                         class="equipment-input" 
+                         placeholder="输入装备名称..." 
+                         value="{{item.name}}" 
+                         bindinput="onEquipmentInput" 
+                         data-index="{{index}}"
+                         bindblur="onEquipmentBlur"
+                         data-index="{{index}}"
+                         maxlength="10">
+                       </input>
+                       <view class="equipment-match-status" wx:if="{{item.name}}">
+                         <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
+                           {{item.matched ? '✓' : '?'}}
+                         </text>
+                       </view>
+                     </view>
+                   </view>
+                  <view class="equipment-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
+                    <view 
+                      class="suggestion-item" 
+                      wx:for="{{item.suggestions}}" 
+                      wx:for-item="suggestion" 
+                      wx:key="suggestion.name"
+                      bindtap="selectEquipmentSuggestion" 
+                      data-main-index="{{index}}" 
+                      data-suggestion-name="{{suggestion.name}}">
+                      <image class="suggestion-icon" src="{{suggestion.imageUrl}}" mode="aspectFit"></image>
+                      <text class="suggestion-name">{{suggestion.name}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
       
-      <view class="equipment-code-title">装备密语（选填）</view>
-      <input class="equipment-code-input" placeholder="请输入装备密语..." value="{{equipmentCode}}" bindinput="onEquipmentCodeInput"></input>
-    </view>
+      </view>
   </block>
   
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
       <view class="step-title">第四步：方案思路描述</view>
-      <textarea class="plan-desc-input" placeholder="核心是什么?前期还是后期?如何快速发育?具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput"></textarea>
+      <textarea class="plan-desc-input" placeholder="推荐3个必点核心? 强势期是前期还是后期? 如何快速发育? 具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput"></textarea>
     </view>
   </block>
   

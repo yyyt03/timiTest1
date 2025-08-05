@@ -10,17 +10,14 @@
     </view>
   </view>
 
-  <!-- 方案描述 -->
-  <view class="plan-description" wx:if="{{plan.description}}">
-    <view class="description-header">
-      <text class="description-label">玩法</text>
-    </view>
-    <text class="description-text">{{plan.description}}</text>
-  </view>
-
-  <!-- 技能部分 -->
+  <!-- 技能、装备和玩法部分 -->
   <view class="skills-section" wx:if="{{plan.skillOne || plan.skillTwo || plan.skillThree}}">
     <view class="skills-container">
+      <!-- 天赋加点小标题 -->
+      <view class="section-title">
+        <text class="title-text">天赋加点</text>
+      </view>
+      
       <!-- 一技能 -->
       <view class="skill-column" wx:if="{{plan.skillOne}}">
         <view class="skill-layout">
@@ -113,24 +110,32 @@
           </view>
         </view>
       </view>
-    </view>
-  </view>
 
-  <!-- 装备 -->
-  <view class="equipment-section" wx:if="{{plan.equipment}}">
-    <view class="section-title">装备</view>
-    <view class="equipment-list">
-      <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
-        <view class="equipment-icon">
-          <image class="equipment-image" src="{{item.imageUrl}}" mode="aspectFit" wx:if="{{item.imageUrl}}"></image>
-          <text class="equipment-icon-text" wx:else>{{item.name.charAt(0)}}</text>
+      <!-- 装备部分 -->
+      <view class="equipment-section" wx:if="{{plan.equipment}}">
+        <view class="section-title">出装推荐</view>
+        <view class="equipment-grid">
+          <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
+            <image class="equipment-icon" src="{{item.imageUrl}}" mode="aspectFit" wx:if="{{item.imageUrl}}"></image>
+            <text class="equipment-name">{{item.name}}</text>
+          </view>
         </view>
-        <text class="equipment-name">{{item.name}}</text>
+      </view>
+
+      <!-- 玩法说明 -->
+      <view class="strategy-section" wx:if="{{plan.description}}">
+        <view class="section-title">玩法说明</view>
+        <view class="strategy-content">
+          <text class="strategy-text">{{plan.description}}</text>
+        </view>
+      </view>
+
+      <!-- 底部信息 -->
+      <view class="footer">
+        <text class="footer-text">微信小程序-王者天赋推荐</text>
       </view>
     </view>
   </view>
-
-
 
   <!-- 操作按钮 -->
   <view class="action-buttons">

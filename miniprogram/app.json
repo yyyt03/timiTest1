@@ -8,7 +8,8 @@
     "pages/betaPlan/betaPlan",
     "pages/heroPlan/heroPlan",
     "pages/favorites/favorites",
-    "pages/planDetail/planDetail"
+    "pages/planDetail/planDetail",
+    "pages/generateImage/generateImage"
   ],
   "window": {
     "backgroundTextStyle": "light",

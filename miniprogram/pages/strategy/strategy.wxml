@@ -36,5 +36,19 @@
         <text class="function-title">方案创作</text>
       </view>
     </view>
+    
+    <!-- 测试功能行 -->
+    <view class="function-row">
+      <!-- 生成一图流测试 -->
+      <view class="function-card test-card" bindtap="testGenerateImage">
+        <image class="function-icon" src="{{iconUrls.favoritePlan}}" mode="aspectFit"></image>
+        <text class="function-title">一图流测试</text>
+      </view>
+      
+      <!-- 占位卡片 -->
+      <view class="function-card placeholder-card">
+        <view class="placeholder-content"></view>
+      </view>
+    </view>
   </view>
 </view> 

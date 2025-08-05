@@ -617,7 +617,7 @@ Page({
 
   // 验证技能选择
   validateSkillSelection() {
-    const { selectedCores, selectedTalents } = this.data;
+    const { selectedCores, selectedTalents, equipmentList, planDescription } = this.data;
     
     // 检查是否每个技能都选择了核心
     if (selectedCores.skillOne === -1 || selectedCores.skillTwo === -1 || selectedCores.skillThree === -1) {
@@ -637,6 +637,38 @@ Page({
       return false;
     }
     
+    // 检查装备是否填写
+    const equipmentNames = equipmentList
+      .map(item => item.name)
+      .filter(name => name.trim());
+    
+    if (equipmentNames.length === 0) {
+      wx.showToast({
+        title: '请输入出装推荐',
+        icon: 'none'
+      });
+      return false;
+    }
+    
+    // 检查装备名称是否有效（不能都是相同的简单字符）
+    const uniqueNames = Array.from(new Set(equipmentNames)) as string[];
+    if (uniqueNames.length === 1 && uniqueNames[0].length <= 2) {
+      wx.showToast({
+        title: '请输入有效的装备名称',
+        icon: 'none'
+      });
+      return false;
+    }
+    
+    // 检查方案思路是否填写
+    if (!planDescription.trim()) {
+      wx.showToast({
+        title: '请输入方案思路',
+        icon: 'none'
+      });
+      return false;
+    }
+    
     return true;
   },
 
@@ -649,10 +681,18 @@ Page({
       }
 
       // 获取核心技能名称
-      const coreNames = this.data.selectedCores.map(core => core.name);
+      const coreNames = {
+        skillOne: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne]?.name || '',
+        skillTwo: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo]?.name || '',
+        skillThree: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree]?.name || ''
+      };
       
       // 获取天赋名称
-      const talentNames = this.data.selectedTalents.map(talent => talent.name);
+      const talentNames = {
+        skillOne: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index]?.name || ''),
+        skillTwo: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index]?.name || ''),
+        skillThree: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]?.name || '')
+      };
       
       // 获取装备数据
       const equipmentData = this.data.equipmentList.map(item => ({
@@ -700,9 +740,30 @@ Page({
           icon: 'success'
         });
         
-        // 跳转到方案详情页
+        // 准备跳转到生成一图流页面的数据
+        const imageData = {
+          heroName: this.data.hero,
+          heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
+          title: this.data.hero + ' - 技能流派方案',
+          skillOne: {
+            core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
+            talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
+          },
+          skillTwo: {
+            core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
+            talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
+          },
+          skillThree: {
+            core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
+            talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
+          },
+          equipment: equipmentData,
+          strategy: this.data.planDescription
+        };
+        
+        // 跳转到生成一图流页面
         wx.navigateTo({
-          url: `/pages/planDetail/planDetail?id=${result.result.data._id}`
+          url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
         });
       } else {
         console.error('云函数返回错误:', result.result);

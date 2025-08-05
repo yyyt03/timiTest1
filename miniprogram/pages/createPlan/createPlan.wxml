@@ -12,38 +12,147 @@
   
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
-      <view class="step-title">第二步：选择流派核心</view>
-      <view class="core-list">
-        <view class="core-item {{selectedCore === 0 ? 'selected' : ''}}" bindtap="selectCore" data-index="0">
-          <view class="core-name">技能1核心</view>
-        </view>
-        <view class="core-item {{selectedCore === 1 ? 'selected' : ''}}" bindtap="selectCore" data-index="1">
-          <view class="core-name">技能2核心</view>
-        </view>
-        <view class="core-item {{selectedCore === 2 ? 'selected' : ''}}" bindtap="selectCore" data-index="2">
-          <view class="core-name">技能3核心</view>
-        </view>
+      <view class="step-title">第二步：选择技能流派和天赋</view>
+      
+      <!-- 加载状态 -->
+      <view class="loading-container" wx:if="{{skillsLoading}}">
+        <view class="loading-text">正在加载技能数据...</view>
       </view>
-    </view>
-  </block>
-  
-  <block wx:if="{{selectedHero}}">
-    <view class="step-container">
-      <view class="step-title">第三步：选择特性天赋（最多选3个）</view>
-      <view class="talent-list">
-        <block wx:for="{{[0,1,2,3,4,5,6,7]}}" wx:key="index">
-          <view class="talent-item {{talentSelected[index] ? 'selected' : ''}}" bindtap="toggleTalent" data-index="{{index}}">
-            <view class="talent-name">特性{{index + 1}}</view>
+      
+      <!-- 技能选择区域 -->
+      <block wx:if="{{!skillsLoading && heroSkills}}">
+        <!-- 技能一 -->
+        <view class="skill-section">
+          <view class="skill-title">技能一</view>
+          
+          <!-- 流派选择 -->
+          <view class="core-section">
+            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-list">
+              <view 
+                class="core-item {{selectedCores.skillOne === index ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillOne.cores}}" 
+                wx:key="index"
+                bindtap="selectCore" 
+                data-skill-type="skillOne" 
+                data-index="{{index}}">
+                <view class="core-name">{{item.name}}</view>
+                <view class="core-tag">{{item.tag}}</view>
+                <view class="core-desc">{{item.description}}</view>
+              </view>
+            </view>
           </view>
-        </block>
-      </view>
-      <view class="talent-count">已选择 {{selectedTalents.length}}/3</view>
+          
+          <!-- 天赋选择 -->
+          <view class="talent-section" wx:if="{{selectedCores.skillOne !== -1}}">
+            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-list">
+              <view 
+                class="talent-item {{talentSelected.skillOne[index] ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillOne.talents}}" 
+                wx:key="index"
+                bindtap="toggleTalent" 
+                data-skill-type="skillOne" 
+                data-index="{{index}}">
+                <view class="talent-name">{{item.name}}</view>
+                <view class="talent-tag">{{item.tag}}</view>
+                <view class="talent-desc">{{item.description}}</view>
+              </view>
+            </view>
+            <view class="talent-count">已选择 {{selectedTalents.skillOne.length}}/3</view>
+          </view>
+        </view>
+
+        <!-- 技能二 -->
+        <view class="skill-section">
+          <view class="skill-title">技能二</view>
+          
+          <!-- 流派选择 -->
+          <view class="core-section">
+            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-list">
+              <view 
+                class="core-item {{selectedCores.skillTwo === index ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillTwo.cores}}" 
+                wx:key="index"
+                bindtap="selectCore" 
+                data-skill-type="skillTwo" 
+                data-index="{{index}}">
+                <view class="core-name">{{item.name}}</view>
+                <view class="core-tag">{{item.tag}}</view>
+                <view class="core-desc">{{item.description}}</view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 天赋选择 -->
+          <view class="talent-section" wx:if="{{selectedCores.skillTwo !== -1}}">
+            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-list">
+              <view 
+                class="talent-item {{talentSelected.skillTwo[index] ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillTwo.talents}}" 
+                wx:key="index"
+                bindtap="toggleTalent" 
+                data-skill-type="skillTwo" 
+                data-index="{{index}}">
+                <view class="talent-name">{{item.name}}</view>
+                <view class="talent-tag">{{item.tag}}</view>
+                <view class="talent-desc">{{item.description}}</view>
+              </view>
+            </view>
+            <view class="talent-count">已选择 {{selectedTalents.skillTwo.length}}/3</view>
+          </view>
+        </view>
+
+        <!-- 技能三 -->
+        <view class="skill-section">
+          <view class="skill-title">技能三</view>
+          
+          <!-- 流派选择 -->
+          <view class="core-section">
+            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-list">
+              <view 
+                class="core-item {{selectedCores.skillThree === index ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillThree.cores}}" 
+                wx:key="index"
+                bindtap="selectCore" 
+                data-skill-type="skillThree" 
+                data-index="{{index}}">
+                <view class="core-name">{{item.name}}</view>
+                <view class="core-tag">{{item.tag}}</view>
+                <view class="core-desc">{{item.description}}</view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 天赋选择 -->
+          <view class="talent-section" wx:if="{{selectedCores.skillThree !== -1}}">
+            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-list">
+              <view 
+                class="talent-item {{talentSelected.skillThree[index] ? 'selected' : ''}}" 
+                wx:for="{{heroSkills.skillThree.talents}}" 
+                wx:key="index"
+                bindtap="toggleTalent" 
+                data-skill-type="skillThree" 
+                data-index="{{index}}">
+                <view class="talent-name">{{item.name}}</view>
+                <view class="talent-tag">{{item.tag}}</view>
+                <view class="talent-desc">{{item.description}}</view>
+              </view>
+            </view>
+            <view class="talent-count">已选择 {{selectedTalents.skillThree.length}}/3</view>
+          </view>
+        </view>
+      </block>
     </view>
   </block>
   
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
-      <view class="step-title">第四步：出装推荐</view>
+      <view class="step-title">第三步：出装推荐</view>
       <textarea class="equipment-input" placeholder="请输入出装推荐..." value="{{equipment}}" bindinput="onEquipmentInput"></textarea>
       
       <view class="equipment-code-title">装备密语（选填）</view>
@@ -53,7 +162,7 @@
   
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
-      <view class="step-title">第五步：方案思路描述</view>
+      <view class="step-title">第四步：方案思路描述</view>
       <textarea class="plan-desc-input" placeholder="核心是什么?前期还是后期?如何快速发育?具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput"></textarea>
     </view>
   </block>

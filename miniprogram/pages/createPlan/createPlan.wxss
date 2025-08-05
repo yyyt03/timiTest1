@@ -33,6 +33,205 @@
   border-bottom: 2rpx solid #000000;
 }
 
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+/* 技能区域 */
+.skill-section {
+  margin-bottom: 40rpx;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  border: 1rpx solid #e9ecef;
+}
+
+.skill-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 20rpx;
+  text-align: center;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 10rpx 20rpx;
+  border-radius: 8rpx;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 流派选择 */
+.core-section {
+  margin-bottom: 30rpx;
+}
+
+.core-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 15rpx;
+  padding-left: 10rpx;
+  border-left: 4rpx solid #000000;
+}
+
+.core-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+.core-item {
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  border: 2rpx solid #e9ecef;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.core-item.selected {
+  background-color: #000000;
+  border: 4rpx solid #333333;
+  box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.3), 0 0 30rpx rgba(0, 0, 0, 0.2);
+  animation: coreGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes coreGlow {
+  0% {
+    box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.3), 0 0 30rpx rgba(0, 0, 0, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.4), 0 0 40rpx rgba(0, 0, 0, 0.3);
+  }
+}
+
+.core-item.selected .core-name,
+.core-item.selected .core-tag,
+.core-item.selected .core-desc {
+  color: #ffffff;
+}
+
+.core-name {
+  font-size: 28rpx;
+  color: #333333;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.core-tag {
+  font-size: 22rpx;
+  color: #666666;
+  background-color: #f0f0f0;
+  padding: 4rpx 8rpx;
+  border-radius: 4rpx;
+  display: inline-block;
+  margin-bottom: 8rpx;
+}
+
+.core-desc {
+  font-size: 24rpx;
+  color: #666666;
+  line-height: 1.4;
+}
+
+/* 天赋选择 */
+.talent-section {
+  margin-top: 20rpx;
+}
+
+.talent-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 15rpx;
+  padding-left: 10rpx;
+  border-left: 4rpx solid #ff6b35;
+}
+
+.talent-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12rpx;
+  margin-bottom: 15rpx;
+}
+
+.talent-item {
+  background-color: #ffffff;
+  border-radius: 8rpx;
+  padding: 15rpx;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 2rpx solid #e9ecef;
+  cursor: pointer;
+  min-height: 120rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.talent-item.selected {
+  background-color: #ff6b35;
+  border: 4rpx solid #e55a2b;
+  box-shadow: 0 0 15rpx rgba(255, 107, 53, 0.3);
+}
+
+.talent-item.selected .talent-name,
+.talent-item.selected .talent-tag,
+.talent-item.selected .talent-desc {
+  color: #ffffff;
+}
+
+.talent-name {
+  font-size: 24rpx;
+  color: #333333;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+
+.talent-tag {
+  font-size: 20rpx;
+  color: #666666;
+  background-color: #f0f0f0;
+  padding: 2rpx 6rpx;
+  border-radius: 4rpx;
+  display: inline-block;
+  margin-bottom: 6rpx;
+  align-self: flex-start;
+}
+
+.talent-desc {
+  font-size: 20rpx;
+  color: #666666;
+  line-height: 1.3;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.talent-count {
+  font-size: 24rpx;
+  color: #666666;
+  text-align: right;
+  font-weight: 500;
+}
+
 /* 英雄选择器 */
 .hero-selector {
   width: 100%;
@@ -59,117 +258,6 @@
 .picker-arrow {
   font-size: 24rpx;
   color: #999999;
-}
-
-/* 流派核心 */
-.core-list {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-}
-
-.core-item {
-  width: 30%;
-  height: 100rpx;
-  background-color: #f8f9fa;
-  border-radius: 8rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10rpx;
-  box-sizing: border-box;
-  border: 2rpx solid #e9ecef;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.core-item.selected {
-  background-color: #000000;
-  border: 4rpx solid #333333;
-  box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.3), 0 0 30rpx rgba(0, 0, 0, 0.2);
-  animation: coreGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes coreGlow {
-  0% {
-    box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.3), 0 0 30rpx rgba(0, 0, 0, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.4), 0 0 40rpx rgba(0, 0, 0, 0.3);
-  }
-}
-
-.core-item.selected .core-name {
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.core-name {
-  font-size: 26rpx;
-  color: #333333;
-  text-align: center;
-}
-
-/* 特性天赋 */
-.talent-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-}
-
-.talent-item {
-  width: 23%;
-  height: 80rpx;
-  background-color: #f8f9fa;
-  border-radius: 8rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 15rpx;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  border: 2rpx solid #e9ecef;
-}
-
-.talent-item::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: transparent;
-  z-index: 1;
-}
-
-.talent-item.selected {
-  background-color: #000000;
-  border: 4rpx solid #333333;
-  box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.3);
-}
-
-.talent-name {
-  font-size: 24rpx;
-  color: #333333;
-  text-align: center;
-  transition: all 0.3s ease;
-  z-index: 2;
-  position: relative;
-}
-
-.talent-item.selected .talent-name {
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.talent-count {
-  font-size: 24rpx;
-  color: #666666;
-  text-align: right;
 }
 
 /* 出装推荐 */

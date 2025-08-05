@@ -276,8 +276,8 @@
 }
 
 .equipment-icon {
-  width: 50rpx;
-  height: 50rpx;
+  width: 60rpx;
+  height: 60rpx;
   border-radius: 50%;
   margin-bottom: 8rpx;
   border: 2rpx solid #e9ecef;

@@ -211,15 +211,25 @@ Page({
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor(diff / (1000 * 60));
     
     if (days === 0) {
-      return '今天';
+      if (hours === 0) {
+        if (minutes === 0) {
+          return '刚刚';
+        } else {
+          return minutes + '分钟前';
+        }
+      } else {
+        return hours + '小时前';
+      }
     } else if (days === 1) {
-      return '昨天';
+      return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     } else if (days < 7) {
       return days + '天前';
     } else {
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
   },
 

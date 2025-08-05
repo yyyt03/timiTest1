@@ -38,7 +38,7 @@
 .plan-card {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20rpx;
-  padding: 30rpx;
+  padding: 24rpx;
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10rpx);
   transition: all 0.3s ease;
@@ -51,13 +51,13 @@
 
 /* 方案信息 */
 .plan-info {
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .plan-header {
   display: flex;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .hero-name {
@@ -77,7 +77,7 @@
 }
 
 .plan-description {
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .description-text {
@@ -86,49 +86,75 @@
   line-height: 1.6;
 }
 
-.plan-stats {
-  margin-bottom: 20rpx;
-}
-
-.stat-item {
+.plan-stats-row {
   display: flex;
   align-items: center;
-  margin-bottom: 10rpx;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+  flex-wrap: wrap;
 }
 
-.stat-label {
-  font-size: 24rpx;
-  color: #999999;
-  width: 120rpx;
-  flex-shrink: 0;
+.stat-badge {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1rpx solid #dee2e6;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.like-badge {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+  border-color: #ffc9c9;
+}
+
+.favorite-badge {
+  background: linear-gradient(135deg, #fff9db 0%, #fff3bf 100%);
+  border-color: #ffec99;
+}
+
+.stat-icon {
+  font-size: 20rpx;
+  margin-right: 6rpx;
 }
 
 .stat-value {
   font-size: 24rpx;
   color: #333333;
-  flex: 1;
+  font-weight: 600;
 }
 
-.plan-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+
 
 .meta-item {
   display: flex;
   align-items: center;
+  padding: 8rpx 12rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1rpx solid #e9ecef;
 }
 
-.meta-label {
-  font-size: 22rpx;
-  color: #999999;
-  margin-right: 10rpx;
+.author-item {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: #90caf9;
+}
+
+.time-item {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-color: #ce93d8;
+}
+
+.meta-icon {
+  font-size: 20rpx;
+  margin-right: 8rpx;
 }
 
 .meta-value {
   font-size: 22rpx;
-  color: #666666;
+  color: #333333;
+  font-weight: 500;
 }
 
 /* 操作按钮 */

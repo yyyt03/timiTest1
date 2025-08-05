@@ -6,7 +6,7 @@ Page({
     hero: '',
     heroId: '',
     selectedHero: false, // 是否已选择英雄
-    currentStep: 1, // 当前步骤：1-选择英雄，2-选择技能流派和天赋，3-出装推荐，4-方案思路，5-作者信息
+    currentStep: 1, // 当前步骤：1-选择英雄，2-选择技能流派和天赋，3-出装推荐，4-方案思路，5-方案名称，6-作者信息
     heroCategories: {} as any,
     heroSkills: null as any, // 英雄技能数据
     selectedCores: {
@@ -35,6 +35,7 @@ Page({
     ], // 新的装备列表数据结构
 
     planDescription: '', // 方案思路描述
+    planTitle: '', // 方案名称
     authorName: '', // 作者名称
     loading: true,
     skillsLoading: false
@@ -596,6 +597,13 @@ Page({
     });
   },
 
+  // 输入方案名称
+  onTitleInput(e: any) {
+    this.setData({
+      planTitle: e.detail.value
+    });
+  },
+
   // 输入作者名称
   onAuthorInput(e: any) {
     this.setData({
@@ -606,7 +614,7 @@ Page({
   // 下一步
   nextStep() {
     var currentStep = this.data.currentStep;
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       this.setData({
         currentStep: currentStep + 1
       });
@@ -625,7 +633,7 @@ Page({
 
   // 验证技能选择
   validateSkillSelection() {
-    const { selectedCores, selectedTalents, equipmentList, planDescription, authorName } = this.data;
+    const { selectedCores, selectedTalents, equipmentList, planDescription, planTitle, authorName } = this.data;
     
     // 检查是否每个技能都选择了核心
     if (selectedCores.skillOne === -1 || selectedCores.skillTwo === -1 || selectedCores.skillThree === -1) {
@@ -672,6 +680,15 @@ Page({
     if (!planDescription.trim()) {
       wx.showToast({
         title: '请输入方案思路',
+        icon: 'none'
+      });
+      return false;
+    }
+
+    // 检查方案名称是否填写
+    if (!planTitle.trim()) {
+      wx.showToast({
+        title: '请输入方案名称',
         icon: 'none'
       });
       return false;
@@ -734,7 +751,7 @@ Page({
       const planData = {
         heroId: this.data.heroId,
         heroName: this.data.hero,
-        title: this.data.hero + ' - 技能流派方案',
+        title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
         description: this.data.planDescription,
         // 修改数据格式以匹配方案详情页期望的格式
         skillOne: {
@@ -774,7 +791,7 @@ Page({
         const imageData = {
           heroName: this.data.hero,
           heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
-          title: this.data.hero + ' - 技能流派方案',
+          title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
           skillOne: {
             core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
             talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])

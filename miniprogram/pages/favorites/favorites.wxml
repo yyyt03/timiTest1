@@ -16,24 +16,22 @@
             <text class="plan-title">{{item.plan.title || item.plan.heroName + '方案'}}</text>
           </view>
           
-          <view class="plan-stats">
-            <view class="stat-item">
-              <text class="stat-label">点赞:</text>
-              <text class="stat-value">{{item.plan.likes || 0}}</text>
+          <!-- 重新布局：点赞收藏作者时间都在同一行 -->
+          <view class="plan-stats-row">
+            <view class="stat-badge like-badge">
+              <text class="stat-icon">👍</text>
+              <text class="stat-value">{{item.plan.likeCount || 0}}</text>
             </view>
-            <view class="stat-item">
-              <text class="stat-label">收藏:</text>
-              <text class="stat-value">{{item.plan.favorites || 0}}</text>
+            <view class="stat-badge favorite-badge">
+              <text class="stat-icon">⭐</text>
+              <text class="stat-value">{{item.plan.favoriteCount || 0}}</text>
             </view>
-          </view>
-          
-          <view class="plan-meta">
-            <view class="meta-item">
-              <text class="meta-label">作者:</text>
+            <view class="meta-item author-item">
+              <text class="meta-icon">👤</text>
               <text class="meta-value">{{item.plan.creatorName || '匿名用户'}}</text>
             </view>
-            <view class="meta-item">
-              <text class="meta-label">收藏时间:</text>
+            <view class="meta-item time-item">
+              <text class="meta-icon">🕒</text>
               <text class="meta-value">{{item.createTime}}</text>
             </view>
           </view>

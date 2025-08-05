@@ -94,8 +94,8 @@ exports.main = async (event, context) => {
       strategy,
       authorName: authorName, // 保存作者名称
       imageUrl: imageUrl || '',
-      likes: 0,
-      favorites: 0,
+      likeCount: 0,
+      favoriteCount: 0,
       views: 0,
       status: 'active',
       createTime: new Date().toISOString(),

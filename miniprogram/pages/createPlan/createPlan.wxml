@@ -213,7 +213,14 @@
 
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
-      <view class="step-title">第五步：作者信息</view>
+      <view class="step-title">第五步：方案名称</view>
+      <input class="plan-title-input" placeholder="请输入方案名称，如：爆发流妲己、坦克流亚瑟等" value="{{planTitle}}" bindinput="onTitleInput"></input>
+    </view>
+  </block>
+
+  <block wx:if="{{selectedHero}}">
+    <view class="step-container">
+      <view class="step-title">第六步：作者信息</view>
       <input class="author-input" placeholder="请输入您的昵称或游戏ID" value="{{authorName}}" bindinput="onAuthorInput"></input>
     </view>
   </block>

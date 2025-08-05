@@ -166,8 +166,7 @@
 .plan-actions-area {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16rpx;
+  justify-content: space-between;
   padding: 20rpx 30rpx;
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border-bottom: 1rpx solid #e9ecef;
@@ -176,6 +175,7 @@
 .action-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 12rpx 16rpx;
   border-radius: 24rpx;
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
@@ -184,6 +184,16 @@
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
   position: relative;
   z-index: 10;
+  flex: 1;
+  margin: 0 8rpx;
+}
+
+.action-item:first-child {
+  margin-left: 0;
+}
+
+.action-item:last-child {
+  margin-right: 0;
 }
 
 .action-item:active {

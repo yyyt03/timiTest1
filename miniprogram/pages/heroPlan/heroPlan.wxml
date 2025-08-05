@@ -30,15 +30,15 @@
            <text class="plan-title">{{item.title}}</text>
          </view>
          
-         <!-- 操作按钮区域 - 独立处理 -->
+         <!-- 操作按钮区域 - 优化布局，点赞和收藏各占一半 -->
          <view class="plan-actions-area">
-           <view class="action-item" bindtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
+           <view class="action-item action-item-left" bindtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
              <image class="action-icon {{item.isLiked ? 'liked' : ''}}" 
                     src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" 
                     mode="aspectFit"></image>
              <text class="action-count">{{item.likeCount || 0}}</text>
            </view>
-           <view class="action-item" bindtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
+           <view class="action-item action-item-right" bindtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
              <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
                     src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
                     mode="aspectFit"></image>

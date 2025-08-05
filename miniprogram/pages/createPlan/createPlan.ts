@@ -6,7 +6,7 @@ Page({
     hero: '',
     heroId: '',
     selectedHero: false, // 是否已选择英雄
-    currentStep: 1, // 当前步骤：1-选择英雄，2-选择技能流派和天赋，3-出装推荐，4-方案思路
+    currentStep: 1, // 当前步骤：1-选择英雄，2-选择技能流派和天赋，3-出装推荐，4-方案思路，5-作者信息
     heroCategories: {} as any,
     heroSkills: null as any, // 英雄技能数据
     selectedCores: {
@@ -35,6 +35,7 @@ Page({
     ], // 新的装备列表数据结构
 
     planDescription: '', // 方案思路描述
+    authorName: '', // 作者名称
     loading: true,
     skillsLoading: false
   },
@@ -595,10 +596,17 @@ Page({
     });
   },
 
+  // 输入作者名称
+  onAuthorInput(e: any) {
+    this.setData({
+      authorName: e.detail.value
+    });
+  },
+
   // 下一步
   nextStep() {
     var currentStep = this.data.currentStep;
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       this.setData({
         currentStep: currentStep + 1
       });
@@ -617,7 +625,7 @@ Page({
 
   // 验证技能选择
   validateSkillSelection() {
-    const { selectedCores, selectedTalents, equipmentList, planDescription } = this.data;
+    const { selectedCores, selectedTalents, equipmentList, planDescription, authorName } = this.data;
     
     // 检查是否每个技能都选择了核心
     if (selectedCores.skillOne === -1 || selectedCores.skillTwo === -1 || selectedCores.skillThree === -1) {
@@ -668,6 +676,15 @@ Page({
       });
       return false;
     }
+
+    // 检查作者名称是否填写
+    if (!authorName.trim()) {
+      wx.showToast({
+        title: '请输入作者名称',
+        icon: 'none'
+      });
+      return false;
+    }
     
     return true;
   },
@@ -711,6 +728,7 @@ Page({
       console.log('equipment:', equipmentData);
       console.log('equipmentText:', this.getEquipmentText());
       console.log('strategy:', this.data.planDescription);
+      console.log('authorName:', this.data.authorName);
       console.log('=== 调试数据结束 ===');
 
       const planData = {
@@ -718,11 +736,23 @@ Page({
         heroName: this.data.hero,
         title: this.data.hero + ' - 技能流派方案',
         description: this.data.planDescription,
-        cores: coreNames, // Frontend sends 'cores'
-        talents: talentNames,
+        // 修改数据格式以匹配方案详情页期望的格式
+        skillOne: {
+          core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
+          talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
+        },
+        skillTwo: {
+          core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
+          talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
+        },
+        skillThree: {
+          core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
+          talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
+        },
         equipment: equipmentData,
         equipmentText: this.getEquipmentText(),
-        strategy: this.data.planDescription
+        strategy: this.data.planDescription,
+        authorName: this.data.authorName
       };
 
       console.log('发送到云函数的数据:', planData);

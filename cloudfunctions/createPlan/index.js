@@ -16,11 +16,13 @@ exports.main = async (event, context) => {
       heroName,
       title,
       description,
-      cores, // Changed from coreSkill
-      talents,
+      skillOne,
+      skillTwo,
+      skillThree,
       equipment,
-      equipmentText, // Changed from equipmentCode
+      equipmentText,
       strategy,
+      authorName,
       imageUrl
     } = event;
 
@@ -29,11 +31,13 @@ exports.main = async (event, context) => {
     console.log('heroName:', heroName);
     console.log('title:', title);
     console.log('description:', description);
-    console.log('cores:', cores);
-    console.log('talents:', talents);
+    console.log('skillOne:', skillOne);
+    console.log('skillTwo:', skillTwo);
+    console.log('skillThree:', skillThree);
     console.log('equipment:', equipment);
     console.log('equipmentText:', equipmentText);
     console.log('strategy:', strategy);
+    console.log('authorName:', authorName);
     console.log('imageUrl:', imageUrl);
     console.log('=== 解构数据结束 ===');
 
@@ -42,21 +46,25 @@ exports.main = async (event, context) => {
     console.log('heroId 验证:', !!heroId);
     console.log('heroName 验证:', !!heroName);
     console.log('title 验证:', !!title);
-    console.log('cores 验证:', !!cores);
-    console.log('talents 验证:', !!talents);
+    console.log('skillOne 验证:', !!skillOne);
+    console.log('skillTwo 验证:', !!skillTwo);
+    console.log('skillThree 验证:', !!skillThree);
     console.log('equipment 验证:', !!equipment);
     console.log('strategy 验证:', !!strategy);
+    console.log('authorName 验证:', !!authorName);
     
-    if (!heroId || !heroName || !title || !cores || !talents || !equipment || !strategy) { // Updated validation
+    if (!heroId || !heroName || !title || !skillOne || !skillTwo || !skillThree || !equipment || !strategy || !authorName) {
       console.log('=== 验证失败 ===');
       console.log('失败的字段:');
       if (!heroId) console.log('- heroId 为空');
       if (!heroName) console.log('- heroName 为空');
       if (!title) console.log('- title 为空');
-      if (!cores) console.log('- cores 为空');
-      if (!talents) console.log('- talents 为空');
+      if (!skillOne) console.log('- skillOne 为空');
+      if (!skillTwo) console.log('- skillTwo 为空');
+      if (!skillThree) console.log('- skillThree 为空');
       if (!equipment) console.log('- equipment 为空');
       if (!strategy) console.log('- strategy 为空');
+      if (!authorName) console.log('- authorName 为空');
       
       return {
         success: false,
@@ -70,28 +78,21 @@ exports.main = async (event, context) => {
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;
     
-    // 获取用户信息
-    const userResult = await db.collection('users')
-      .where({
-        openid: currentUserId
-      })
-      .get();
-    
-    const creatorName = userResult.data.length > 0 ? userResult.data[0].nickName || '匿名用户' : '匿名用户';
-    
     // 创建方案数据
     const planData = {
       heroId,
       heroName,
       creatorId: currentUserId,
-      creatorName,
+      creatorName: authorName, // 使用用户输入的作者名称
       title,
       description: description || '',
-      cores,
-      talents,
+      skillOne,
+      skillTwo,
+      skillThree,
       equipment,
       equipmentText: equipmentText || '',
       strategy,
+      authorName: authorName, // 保存作者名称
       imageUrl: imageUrl || '',
       likes: 0,
       favorites: 0,

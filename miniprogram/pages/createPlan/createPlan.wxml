@@ -210,10 +210,17 @@
       <textarea class="plan-desc-input" placeholder="推荐3个必点核心? 强势期是前期还是后期? 如何快速发育? 具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput"></textarea>
     </view>
   </block>
+
+  <block wx:if="{{selectedHero}}">
+    <view class="step-container">
+      <view class="step-title">第五步：作者信息</view>
+      <input class="author-input" placeholder="请输入您的昵称或游戏ID" value="{{authorName}}" bindinput="onAuthorInput"></input>
+    </view>
+  </block>
   
   <block wx:if="{{selectedHero}}">
     <view class="btn-container">
-      <button class="generate-btn" bindtap="generatePlan">生成一图流</button>
+      <button class="generate-btn" bindtap="generatePlan">创建方案</button>
     </view>
   </block>
 </view> 

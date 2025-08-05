@@ -24,7 +24,7 @@ Page({
   getUserInfo() {
     wx.cloud.callFunction({
       name: 'getUserInfo',
-      success: (res) => {
+      success: (res: any) => {
         this.setData({
           userInfo: res.result.data
         });
@@ -44,7 +44,7 @@ Page({
         limit: 10,
         status: 'active'
       },
-      success: (res) => {
+      success: (res: any) => {
         this.setData({
           plans: res.result.data || [],
           loading: false
@@ -78,7 +78,7 @@ Page({
 
   goToCreatePlan() {
     wx.navigateTo({
-      url: '/pages/createPlan/createPlan'
+      url: '/pages/heroCategory/heroCategory?source=createPlan'
     });
   },
 

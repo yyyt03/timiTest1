@@ -517,10 +517,21 @@ Page({
     if (!equipmentName.trim()) return;
     
     try {
+      const equipmentList = [...this.data.equipmentList];
+      
+      // 如果输入少于2个字符，不进行匹配，但显示提示
+      if (equipmentName.trim().length < 2) {
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = [];
+        this.setData({
+          equipmentList: equipmentList
+        });
+        return;
+      }
+      
       // 查找匹配的装备
       const matchedEquipment = findEquipmentByName(equipmentName);
-      
-      const equipmentList = [...this.data.equipmentList];
       
       if (matchedEquipment) {
         // 找到匹配的装备
@@ -571,9 +582,21 @@ Page({
 
   // 生成装备建议
   generateEquipmentSuggestions(input: string): any[] {
-    // 这里可以基于输入生成装备建议
-    // 暂时返回空数组，后续可以扩展
-    return [];
+    if (!input || input.trim().length < 2) return [];
+    
+    // 导入装备建议功能
+    const { getEquipmentSuggestions } = require('../../utils/equipmentMatcher');
+    
+    try {
+      const suggestions = getEquipmentSuggestions(input, 3); // 最多显示3个建议
+      return suggestions.map(equipment => ({
+        name: equipment.name,
+        imageUrl: `../images/equipment/${equipment.image}` || '../images/unused/default-avatar.png'
+      }));
+    } catch (error) {
+      console.error('生成装备建议失败:', error);
+      return [];
+    }
   },
 
   // 选择装备建议
@@ -616,7 +639,7 @@ Page({
              showEquipmentHint() {
              wx.showModal({
                title: '装备匹配规则',
-               content: '1. 输入装备名称即可自动匹配\n\n2. 输入至少3个字符\n\n3. 匹配成功会显示装备图标\n\n4. 每个装备最多输入10个字符',
+               content: '1. 输入装备名称即可自动匹配\n\n2. 输入至少2个字符开始匹配\n\n3. 如果2个字符匹配不到，请继续输入更多字符\n\n4. 匹配成功会显示装备图标\n\n5. 每个装备最多输入10个字符',
                showCancel: false,
                confirmText: '知道了'
              });

@@ -166,26 +166,84 @@ function calculateSimilarity(str1: string, str2: string): number {
   return maxLen === 0 ? 1 : (maxLen - matrix[len1][len2]) / maxLen;
 }
 
-// 模糊匹配装备
+// 计算匹配分数（优化后的算法）
+function calculateMatchScore(input: string, equipmentName: string): number {
+  const inputLower = input.toLowerCase();
+  const nameLower = equipmentName.toLowerCase();
+  
+  // 完全匹配得分最高
+  if (inputLower === nameLower) {
+    return 1.0;
+  }
+  
+  // 开头匹配得分较高
+  if (nameLower.startsWith(inputLower)) {
+    return 0.9;
+  }
+  
+  // 包含子串匹配
+  if (nameLower.includes(inputLower)) {
+    // 根据输入长度调整得分
+    if (inputLower.length >= 2) {
+      return 0.8;
+    } else {
+      return 0.6; // 单个字符匹配得分较低
+    }
+  }
+  
+  // 使用编辑距离计算相似度
+  const similarity = calculateSimilarity(inputLower, nameLower);
+  return similarity * 0.7; // 降低编辑距离的权重
+}
+
+// 模糊匹配装备（优化版本）
 export function findEquipmentByName(equipmentName: string): Equipment | null {
-  if (!equipmentName) return null;
+  if (!equipmentName || equipmentName.trim().length === 0) return null;
+
+  const input = equipmentName.trim();
+  
+  // 如果输入少于2个字符，不进行匹配
+  if (input.length < 2) {
+    return null;
+  }
 
   let bestMatch: Equipment | null = null;
   let bestScore = 0;
   const threshold = 0.6; // 相似度阈值
 
   for (const equipment of equipmentData) {
-    // 计算相似度
-    const similarity = calculateSimilarity(equipmentName, equipment.name);
+    // 计算匹配分数
+    const score = calculateMatchScore(input, equipment.name);
     
-    // 如果相似度超过阈值且比当前最佳匹配更好
-    if (similarity > threshold && similarity > bestScore) {
-      bestScore = similarity;
+    // 如果分数超过阈值且比当前最佳匹配更好
+    if (score > threshold && score > bestScore) {
+      bestScore = score;
       bestMatch = equipment;
     }
   }
 
   return bestMatch;
+}
+
+// 获取装备建议列表（新增功能）
+export function getEquipmentSuggestions(input: string, maxSuggestions: number = 5): Equipment[] {
+  if (!input || input.trim().length === 0) return [];
+
+  const inputTrimmed = input.trim();
+  const suggestions: Array<{equipment: Equipment, score: number}> = [];
+
+  for (const equipment of equipmentData) {
+    const score = calculateMatchScore(inputTrimmed, equipment.name);
+    if (score > 0.3) { // 较低的阈值以获取更多建议
+      suggestions.push({equipment, score});
+    }
+  }
+
+  // 按分数排序并返回前N个建议
+  return suggestions
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxSuggestions)
+    .map(item => item.equipment);
 }
 
 // 获取装备图片URL

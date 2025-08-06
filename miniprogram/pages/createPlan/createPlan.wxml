@@ -177,7 +177,7 @@
                      <view class="equipment-input-wrapper">
                        <input 
                          class="equipment-input" 
-                         placeholder="输入装备名称..." 
+                         placeholder="输入装备名称（至少2个字符）..." 
                          value="{{item.name}}" 
                          bindinput="onEquipmentInput" 
                          data-index="{{index}}"
@@ -186,8 +186,11 @@
                          maxlength="10">
                        </input>
                        <view class="equipment-match-status" wx:if="{{item.name}}">
-                         <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
+                         <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}" wx:if="{{item.name.length >= 2}}">
                            {{item.matched ? '✓' : '?'}}
+                         </text>
+                         <text class="match-status unmatched" wx:else>
+                           ?
                          </text>
                        </view>
                      </view>

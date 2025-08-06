@@ -420,6 +420,8 @@
   color: #ffffff;
 }
 
+
+
 /* 装备建议 */
 .equipment-suggestions {
   margin-top: 6rpx;

@@ -14,6 +14,32 @@
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
 }
 
+/* 环境提示 */
+.env-notice {
+  width: 100%;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  border-radius: 12rpx;
+  padding: 15rpx 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 107, 0.3);
+  border: 2rpx solid #ff5252;
+}
+
+.env-notice.dev {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  box-shadow: 0 4rpx 16rpx rgba(78, 205, 196, 0.3);
+  border: 2rpx solid #26a69a;
+}
+
+.env-text {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: center;
+  display: block;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
 .step-container {
   width: 100%;
   background: #ffffff;

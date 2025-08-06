@@ -38,10 +38,14 @@ Page({
     planTitle: '', // 方案名称
     authorName: '', // 作者名称
     loading: true,
-    skillsLoading: false
+    skillsLoading: false,
+    isDevelopment: false // 是否为开发环境
   },
 
   onLoad(options: any) {
+    // 检测环境
+    this.detectEnvironment();
+    
     if (options.hero) {
       this.setData({
         hero: options.hero,
@@ -55,6 +59,34 @@ Page({
       this.loadHeroSkills();
     }
     this.loadHeroData();
+  },
+
+  // 检测环境
+  detectEnvironment() {
+    // 检测是否为开发环境
+    // 可以通过多种方式检测：
+    // 1. 检查云环境ID
+    // 2. 检查版本号
+    // 3. 检查调试模式
+    const accountInfo = wx.getAccountInfoSync();
+    const version = accountInfo.miniProgram?.version || '';
+    const envVersion = accountInfo.miniProgram?.envVersion || '';
+    
+    // 开发环境判断逻辑
+    const isDev = envVersion === 'develop' || 
+                  envVersion === 'trial' || 
+                  version.includes('dev') || 
+                  version.includes('test');
+    
+    this.setData({
+      isDevelopment: isDev
+    });
+    
+    console.log('环境检测结果:', {
+      version,
+      envVersion,
+      isDevelopment: isDev
+    });
   },
 
   // 加载英雄数据
@@ -746,6 +778,7 @@ Page({
       console.log('equipmentText:', this.getEquipmentText());
       console.log('strategy:', this.data.planDescription);
       console.log('authorName:', this.data.authorName);
+      console.log('isDevelopment:', this.data.isDevelopment);
       console.log('=== 调试数据结束 ===');
 
       const planData = {
@@ -772,18 +805,62 @@ Page({
         authorName: this.data.authorName
       };
 
-      console.log('发送到云函数的数据:', planData);
+      // 根据环境决定处理方式
+      if (this.data.isDevelopment) {
+        // 开发环境：上传到数据库
+        console.log('开发环境：上传方案到数据库');
+        
+        const result = await wx.cloud.callFunction({
+          name: 'createPlan',
+          data: planData
+        }) as any;
 
-      const result = await wx.cloud.callFunction({
-        name: 'createPlan',
-        data: planData
-      }) as any;
+        console.log('云函数返回结果:', result);
 
-      console.log('云函数返回结果:', result);
-
-      if (result.result && result.result.success) {
+        if (result.result && result.result.success) {
+          wx.showToast({
+            title: '方案创建成功',
+            icon: 'success'
+          });
+          
+          // 准备跳转到生成一图流页面的数据
+          const imageData = {
+            heroName: this.data.hero,
+            heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
+            title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
+            skillOne: {
+              core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
+              talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
+            },
+            skillTwo: {
+              core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
+              talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
+            },
+            skillThree: {
+              core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
+              talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
+            },
+            equipment: equipmentData,
+            strategy: this.data.planDescription
+          };
+          
+          // 跳转到生成一图流页面
+          wx.navigateTo({
+            url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
+          });
+        } else {
+          console.error('云函数返回错误:', result.result);
+          wx.showToast({
+            title: result.result?.message || '创建失败',
+            icon: 'error'
+          });
+        }
+      } else {
+        // 用户环境：只生成一图流浏览
+        console.log('用户环境：只生成一图流浏览');
+        
         wx.showToast({
-          title: '方案创建成功',
+          title: '方案生成成功',
           icon: 'success'
         });
         
@@ -811,12 +888,6 @@ Page({
         // 跳转到生成一图流页面
         wx.navigateTo({
           url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
-        });
-      } else {
-        console.error('云函数返回错误:', result.result);
-        wx.showToast({
-          title: result.result?.message || '创建失败',
-          icon: 'error'
         });
       }
     } catch (error) {

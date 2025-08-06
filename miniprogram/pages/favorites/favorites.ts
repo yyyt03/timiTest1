@@ -53,10 +53,28 @@ Page({
           const total = res.result.data.total;
           const hasMore = res.result.data.hasMore;
           
-          // 格式化时间
+          // 格式化时间并处理数据结构
           const formattedFavorites = favorites.map((fav: any) => {
             const newFav = Object.assign({}, fav);
             newFav.createTime = formatTime(fav.createTime);
+            
+            // 如果方案信息在plan对象中，将其展开到顶层
+            if (fav.plan) {
+              newFav.heroName = fav.plan.heroName;
+              newFav.title = fav.plan.title;
+              newFav.creatorName = fav.plan.creatorName;
+              newFav.likeCount = fav.plan.likeCount;
+              newFav.favoriteCount = fav.plan.favoriteCount;
+              newFav.heroId = fav.plan.heroId;
+              newFav.description = fav.plan.description;
+              newFav.equipment = fav.plan.equipment;
+              newFav.skillOne = fav.plan.skillOne;
+              newFav.skillTwo = fav.plan.skillTwo;
+              newFav.skillThree = fav.plan.skillThree;
+              newFav.views = fav.plan.views;
+              newFav.status = fav.plan.status;
+            }
+            
             return newFav;
           });
           

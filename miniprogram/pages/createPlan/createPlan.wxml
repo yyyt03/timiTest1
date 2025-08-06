@@ -35,7 +35,7 @@
           
           <!-- 流派选择 -->
           <view class="core-section">
-            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-title">核心流派（必选1个）</view>
             <view class="core-list">
               <view 
                 class="core-item {{selectedCores.skillOne === index ? 'selected' : ''}}" 
@@ -75,7 +75,7 @@
           
           <!-- 流派选择 -->
           <view class="core-section">
-            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-title">核心流派（必选1个）</view>
             <view class="core-list">
               <view 
                 class="core-item {{selectedCores.skillTwo === index ? 'selected' : ''}}" 
@@ -115,7 +115,7 @@
           
           <!-- 流派选择 -->
           <view class="core-section">
-            <view class="core-title">选择流派（必选1个）</view>
+            <view class="core-title">核心流派（必选1个）</view>
             <view class="core-list">
               <view 
                 class="core-item {{selectedCores.skillThree === index ? 'selected' : ''}}" 

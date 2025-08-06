@@ -417,7 +417,7 @@
 
 .match-status.unmatched {
   background: #ffc107;
-  color: #ffffff;
+  color:rgb(0, 0, 0);
 }
 
 

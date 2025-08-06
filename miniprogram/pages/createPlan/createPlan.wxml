@@ -185,12 +185,9 @@
                          data-index="{{index}}"
                          maxlength="10">
                        </input>
-                       <view class="equipment-match-status" wx:if="{{item.name}}">
-                         <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}" wx:if="{{item.name.length >= 2}}">
+                       <view class="equipment-match-status" wx:if="{{item.name && item.name.length >= 2}}">
+                         <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
                            {{item.matched ? '✓' : '?'}}
-                         </text>
-                         <text class="match-status unmatched" wx:else>
-                           ?
                          </text>
                        </view>
                      </view>

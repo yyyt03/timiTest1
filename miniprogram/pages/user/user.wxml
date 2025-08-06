@@ -1,41 +1,55 @@
 <view class="container">
   <!-- 用户信息区域 -->
-  <view class="user-info">
-    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-    <text class="nickname">{{userInfo.nickName || '微信用户'}}</text>
-    <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
-      <text class="login-text">点击获取微信信息</text>
+  <view class="header-section">
+    <view class="user-profile">
+      <view class="avatar-container">
+        <image wx:if="{{hasUserInfo}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="avatar-placeholder">👤</view>
+      </view>
+      <view class="user-details">
+        <text wx:if="{{hasUserInfo}}" class="nickname">{{userInfo.nickName}}</text>
+        <text wx:else class="nickname">微信用户</text>
+        <text class="user-status">王者荣耀天赋助手</text>
+      </view>
+      <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
+        <text class="login-text">登录</text>
+      </view>
     </view>
   </view>
   
   <!-- 功能卡片区域 -->
-  <view class="function-container">
-    <!-- 我的方案 -->
-    <view class="function-card" bindtap="goToMyPlans">
-      <view class="card-content">
-        <image class="card-icon" src="{{myPlanIcon}}" mode="aspectFit"></image>
-        <text class="card-title">我的方案</text>
-        <text class="card-count" wx:if="{{userPlansCount > 0}}">{{userPlansCount}}个</text>
+  <view class="content-section">
+    <view class="function-list">
+      <!-- 我的方案 -->
+      <view class="function-card" bindtap="goToMyPlans">
+        <view class="card-icon my-plan-icon">📋</view>
+        <view class="card-content">
+          <text class="card-title">我的方案</text>
+          <text class="card-desc" wx:if="{{userPlansCount > 0}}">{{userPlansCount}}个方案</text>
+          <text class="card-desc" wx:else>暂无方案</text>
+        </view>
+        <view class="card-arrow">→</view>
       </view>
-      <view class="card-arrow">></view>
-    </view>
-    
-    <!-- 收藏方案 -->
-    <view class="function-card" bindtap="goToFavorites">
-      <view class="card-content">
-        <image class="card-icon" src="{{favoritePlanIcon}}" mode="aspectFit"></image>
-        <text class="card-title">收藏方案</text>
+      
+      <!-- 收藏方案 -->
+      <view class="function-card" bindtap="goToFavorites">
+        <view class="card-icon favorite-icon">❤️</view>
+        <view class="card-content">
+          <text class="card-title">收藏方案</text>
+          <text class="card-desc">管理收藏的攻略</text>
+        </view>
+        <view class="card-arrow">→</view>
       </view>
-      <view class="card-arrow">></view>
-    </view>
-    
-    <!-- 创作方案 -->
-    <view class="function-card" bindtap="goToCreatePlan">
-      <view class="card-content">
-        <image class="card-icon" src="{{createPlanIcon}}" mode="aspectFit"></image>
-        <text class="card-title">创作方案</text>
+      
+      <!-- 创作方案 -->
+      <view class="function-card" bindtap="goToCreatePlan">
+        <view class="card-icon create-icon">✏️</view>
+        <view class="card-content">
+          <text class="card-title">创作方案</text>
+          <text class="card-desc">创建个性化天赋</text>
+        </view>
+        <view class="card-arrow">→</view>
       </view>
-      <view class="card-arrow">></view>
     </view>
   </view>
 </view> 

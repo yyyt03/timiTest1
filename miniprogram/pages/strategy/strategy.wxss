@@ -1,32 +1,20 @@
 /* strategy.wxss */
 .container {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
   padding: 0;
 }
 
 /* 顶部展示区 */
-.banner-container {
+.header-section {
   width: 100%;
-  height: 25vh;
-  margin-bottom: 30rpx;
-  overflow: hidden;
-  position: relative;
-}
-
-.banner-text {
-  width: 100%;
-  height: 100%;
+  padding: 60rpx 40rpx 40rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   position: relative;
-  color: white;
+  overflow: hidden;
 }
 
-.banner-text::before {
+.header-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -34,7 +22,7 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  animation: shimmer 3s infinite;
+  animation: shimmer 4s infinite;
 }
 
 @keyframes shimmer {
@@ -42,41 +30,52 @@
   100% { transform: translateX(100%); }
 }
 
-.banner-title {
-  font-size: 48rpx;
-  font-weight: bold;
-  margin-bottom: 16rpx;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+.welcome-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   z-index: 1;
   position: relative;
 }
 
-/* 功能区 */
-.function-container {
-  width: 100%;
-  padding: 0 30rpx;
+.main-title {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+}
+
+.sub-title {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 内容区域 */
+.content-section {
+  padding: 40rpx 30rpx;
   box-sizing: border-box;
 }
 
-.function-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 30rpx;
-  width: 100%;
+/* 功能网格 */
+.function-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  margin-bottom: 40rpx;
 }
 
 .function-card {
-  width: 48%;
-  height: 200rpx;
-  background-color: #ffffff;
-  border-radius: 16rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-  border: 1rpx solid #f0f0f0;
-  transition: all 0.3s ease;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -87,57 +86,161 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4rpx;
-  background: linear-gradient(90deg, #000000, #333333);
+  height: 3rpx;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .function-card:active {
-  transform: translateY(2rpx);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
+  transform: translateY(2rpx) scale(0.98);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
-.function-icon {
+.function-card:active::before {
+  opacity: 1;
+}
+
+.card-icon {
   width: 80rpx;
   height: 80rpx;
-  margin-bottom: 20rpx;
-  border-radius: 12rpx;
-  background-color: #f8f9fa;
-  padding: 15rpx;
-  box-sizing: border-box;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 20rpx;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
-.function-title {
-  font-size: 28rpx;
-  color: #333333;
+.recommend-icon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.hero-icon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.beta-icon {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+.create-icon {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-size: 32rpx;
   font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8rpx;
 }
 
-/* 测试卡片特殊样式 */
+.card-desc {
+  font-size: 24rpx;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.card-arrow {
+  font-size: 32rpx;
+  color: #94a3b8;
+  font-weight: 300;
+  transition: all 0.3s ease;
+}
+
+.function-card:active .card-arrow {
+  transform: translateX(4rpx);
+  color: #667eea;
+}
+
+/* 测试功能区域 */
+.test-section {
+  margin-top: 20rpx;
+}
+
 .test-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.test-card .function-title {
-  color: white;
+.test-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  animation: shimmer 3s infinite;
 }
 
-.test-card .function-icon {
-  background-color: rgba(255, 255, 255, 0.1);
+.test-card:active {
+  transform: translateY(2rpx) scale(0.98);
+  box-shadow: 0 4rpx 20rpx rgba(102, 126, 234, 0.4);
 }
 
-/* 占位卡片样式 */
-.placeholder-card {
-  background: transparent;
-  box-shadow: none;
-  border: none;
+.test-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 20rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10rpx);
+  z-index: 1;
+  position: relative;
 }
 
-.placeholder-card::before {
-  display: none;
+.test-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  position: relative;
 }
 
-.placeholder-content {
-  width: 100%;
-  height: 100%;
+.test-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.test-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+}
+
+.test-arrow {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  transition: all 0.3s ease;
+  z-index: 1;
+  position: relative;
+}
+
+.test-card:active .test-arrow {
+  transform: translateX(4rpx);
+  color: #ffffff;
 } 

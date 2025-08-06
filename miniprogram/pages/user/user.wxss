@@ -6,36 +6,31 @@
   box-sizing: border-box;
 }
 
-/* 用户信息区域 */
-.header-section {
-  width: 100%;
-  padding: 40rpx 30rpx 30rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* 内容区域 */
+.content-section {
+  padding: 20rpx 30rpx 40rpx;
+  box-sizing: border-box;
+}
+
+/* 用户信息卡片 */
+.user-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
 }
 
-.header-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  animation: shimmer 4s infinite;
+.user-card::before {
+  display: none;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.user-profile {
+.user-info {
   display: flex;
   align-items: center;
-  z-index: 1;
-  position: relative;
 }
 
 .avatar-container {
@@ -46,21 +41,20 @@
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  border: 3rpx solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.15);
+  border: 3rpx solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
 .avatar-placeholder {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 40rpx;
-  border: 3rpx solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10rpx);
+  border: 3rpx solid rgba(102, 126, 234, 0.2);
 }
 
 .user-details {
@@ -72,28 +66,25 @@
 .nickname {
   font-size: 32rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: #1e293b;
   margin-bottom: 6rpx;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
 }
 
 .user-status {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx;
+  color: #64748b;
   font-weight: 400;
 }
 
 .login-btn {
   padding: 12rpx 24rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
   border-radius: 40rpx;
-  backdrop-filter: blur(10rpx);
   transition: all 0.3s ease;
 }
 
 .login-btn:active {
-  background: rgba(255, 255, 255, 0.3);
   transform: scale(0.95);
 }
 
@@ -103,25 +94,20 @@
   font-weight: 500;
 }
 
-/* 内容区域 */
-.content-section {
-  padding: 20rpx 20rpx 40rpx;
-  box-sizing: border-box;
-}
-
-.function-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+/* 功能网格 */
+.function-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
 }
 
 .function-card {
   background: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx 20rpx;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
   display: flex;
   align-items: center;
-  box-shadow: 0 3rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
   border: 1rpx solid rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -150,16 +136,16 @@
 }
 
 .card-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 12rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
-  margin-right: 16rpx;
+  font-size: 40rpx;
+  margin-right: 20rpx;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .my-plan-icon {
@@ -181,20 +167,20 @@
 }
 
 .card-title {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4rpx;
+  margin-bottom: 8rpx;
 }
 
 .card-desc {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #64748b;
   font-weight: 400;
 }
 
 .card-arrow {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #94a3b8;
   font-weight: 300;
   transition: all 0.3s ease;
@@ -203,4 +189,20 @@
 .function-card:active .card-arrow {
   transform: translateX(4rpx);
   color: #667eea;
+}
+
+/* 占位卡片样式 */
+.placeholder-card {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.placeholder-card::before {
+  display: none;
+}
+
+.placeholder-content {
+  width: 100%;
+  height: 100%;
 } 

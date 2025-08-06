@@ -1,25 +1,25 @@
 <view class="container">
-  <!-- 用户信息区域 -->
-  <view class="header-section">
-    <view class="user-profile">
-      <view class="avatar-container">
-        <image wx:if="{{hasUserInfo}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-        <view wx:else class="avatar-placeholder">👤</view>
-      </view>
-      <view class="user-details">
-        <text wx:if="{{hasUserInfo}}" class="nickname">{{userInfo.nickName}}</text>
-        <text wx:else class="nickname">微信用户</text>
-        <text class="user-status">王者荣耀天赋助手</text>
-      </view>
-      <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
-        <text class="login-text">登录</text>
+  <!-- 用户信息卡片 -->
+  <view class="content-section">
+    <view class="user-card">
+      <view class="user-info">
+        <view class="avatar-container">
+          <image wx:if="{{hasUserInfo}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          <view wx:else class="avatar-placeholder">👤</view>
+        </view>
+        <view class="user-details">
+          <text wx:if="{{hasUserInfo}}" class="nickname">{{userInfo.nickName}}</text>
+          <text wx:else class="nickname">微信用户</text>
+          <text class="user-status">王者荣耀天赋助手</text>
+        </view>
+        <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
+          <text class="login-text">登录</text>
+        </view>
       </view>
     </view>
-  </view>
-  
-  <!-- 功能卡片区域 -->
-  <view class="content-section">
-    <view class="function-list">
+    
+    <!-- 功能网格 -->
+    <view class="function-grid">
       <!-- 我的方案 -->
       <view class="function-card" bindtap="goToMyPlans">
         <view class="card-icon my-plan-icon">📋</view>
@@ -49,6 +49,11 @@
           <text class="card-desc">创建个性化天赋</text>
         </view>
         <view class="card-arrow">→</view>
+      </view>
+      
+      <!-- 占位卡片 -->
+      <view class="function-card placeholder-card">
+        <view class="placeholder-content"></view>
       </view>
     </view>
   </view>

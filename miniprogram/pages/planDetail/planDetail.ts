@@ -11,9 +11,12 @@ Page({
   onLoad(options: any) {
     console.log('方案详情页面接收到的参数:', options);
     
-    if (options.id) {
+    // 支持id和planId两种参数名
+    const planId = options.id || options.planId;
+    
+    if (planId) {
       this.setData({
-        planId: options.id
+        planId: planId
       });
       
       // 如果有传递收藏状态，先设置到本地数据
@@ -23,7 +26,7 @@ Page({
         });
       }
       
-      this.loadPlanDetail(options.id);
+      this.loadPlanDetail(planId);
     } else {
       wx.showToast({
         title: '参数错误',
@@ -241,7 +244,7 @@ Page({
     const plan = this.data.plan;
     return {
       title: `${plan.heroName} - ${plan.title}`,
-      path: `/pages/planDetail/planDetail?id=${plan._id}`
+      path: `/pages/planDetail/planDetail?planId=${plan._id}`
     };
   }
 }); 

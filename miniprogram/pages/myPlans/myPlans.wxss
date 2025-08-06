@@ -1,0 +1,343 @@
+/* 我的方案页面样式 */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-right: 10rpx;
+}
+
+.plan-count {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 方案列表 */
+.plans-list {
+  width: 100%;
+}
+
+.plan-item {
+  margin-bottom: 30rpx;
+}
+
+.plan-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s ease;
+}
+
+.plan-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
+}
+
+/* 方案信息 */
+.plan-info {
+  margin-bottom: 20rpx;
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.hero-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-right: 20rpx;
+}
+
+.plan-title {
+  font-size: 28rpx;
+  color: #666666;
+  flex: 1;
+}
+
+.plan-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.status-badge.published {
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+  border: 1rpx solid #c3e6cb;
+  color: #155724;
+}
+
+.status-badge.draft {
+  background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 100%);
+  border: 1rpx solid #ffd43b;
+  color: #856404;
+}
+
+.status-icon {
+  font-size: 20rpx;
+  margin-right: 6rpx;
+}
+
+.status-text {
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1rpx solid #dee2e6;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.like-badge {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+  border-color: #ffc9c9;
+}
+
+.favorite-badge {
+  background: linear-gradient(135deg, #fff9db 0%, #fff3bf 100%);
+  border-color: #ffec99;
+}
+
+.stat-icon {
+  font-size: 20rpx;
+  margin-right: 6rpx;
+}
+
+.stat-value {
+  font-size: 24rpx;
+  color: #333333;
+  font-weight: 600;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 12rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1rpx solid #e9ecef;
+}
+
+.time-item {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-color: #ce93d8;
+}
+
+.meta-icon {
+  font-size: 20rpx;
+  margin-right: 8rpx;
+}
+
+.meta-value {
+  font-size: 22rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+/* 操作按钮 */
+.plan-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 20rpx 16rpx;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.action-btn:active::before {
+  left: 100%;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  border: 2rpx solid #dee2e6;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+.edit-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.12);
+}
+
+.publish-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: #ffffff;
+  border: 2rpx solid #1e7e34;
+  box-shadow: 0 2rpx 8rpx rgba(40, 167, 69, 0.3);
+}
+
+.publish-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(40, 167, 69, 0.4);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: #ffffff;
+  border: 2rpx solid #bd2130;
+  box-shadow: 0 2rpx 8rpx rgba(220, 53, 69, 0.3);
+}
+
+.delete-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(220, 53, 69, 0.4);
+}
+
+.btn-text {
+  color: inherit;
+  font-size: 26rpx;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 20rpx;
+}
+
+.empty-tip {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 40rpx;
+}
+
+.empty-btn {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  padding: 20rpx 40rpx;
+  border-radius: 50rpx;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.empty-btn:active {
+  transform: scale(0.95);
+}
+
+.empty-btn .btn-text {
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 0;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border-top: 4rpx solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 没有更多 */
+.no-more {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.no-more-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.5);
+} 

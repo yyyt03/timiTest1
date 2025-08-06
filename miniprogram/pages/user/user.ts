@@ -1,5 +1,5 @@
 import { getUserInfo } from '../../utils/cloud'
-import { getFavoritePlanIcon, getCreatePlanIcon } from '../../utils/iconManager'
+import { getFavoritePlanIcon, getCreatePlanIcon, getMyPlanIcon } from '../../utils/iconManager'
 
 // 用户页面
 Page({
@@ -11,7 +11,11 @@ Page({
     hasUserInfo: false,
     // 图标路径
     favoritePlanIcon: getFavoritePlanIcon(),
-    createPlanIcon: getCreatePlanIcon()
+    createPlanIcon: getCreatePlanIcon(),
+    myPlanIcon: getMyPlanIcon(),
+    // 用户方案数据
+    userPlans: [],
+    userPlansCount: 0
   },
 
   onLoad() {
@@ -23,6 +27,9 @@ Page({
       },
       hasUserInfo: false
     });
+    
+    // 获取用户方案数据
+    this.getUserPlans();
   },
 
   // 获取用户信息
@@ -106,10 +113,39 @@ Page({
     });
   },
 
+  // 获取用户方案数据
+  getUserPlans() {
+    wx.cloud.callFunction({
+      name: 'getUserPlans',
+      data: {
+        page: 1,
+        pageSize: 20
+      },
+      success: (res: any) => {
+        if (res.result.success) {
+          this.setData({
+            userPlans: res.result.data.plans,
+            userPlansCount: res.result.data.total
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('获取用户方案失败:', err);
+      }
+    });
+  },
+
   // 跳转到创作方案页面
   goToCreatePlan() {
     wx.navigateTo({
       url: '../createPlan/createPlan'
+    });
+  },
+
+  // 跳转到我的方案页面
+  goToMyPlans() {
+    wx.navigateTo({
+      url: '../myPlans/myPlans'
     });
   }
 }); 

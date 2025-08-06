@@ -97,7 +97,7 @@ exports.main = async (event, context) => {
       likeCount: 0,
       favoriteCount: 0,
       views: 0,
-      status: 'active',
+      status: 'draft', // 用户创建的方案默认为草稿状态
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     };

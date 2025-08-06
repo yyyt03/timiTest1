@@ -10,6 +10,16 @@
   
   <!-- 功能卡片区域 -->
   <view class="function-container">
+    <!-- 我的方案 -->
+    <view class="function-card" bindtap="goToMyPlans">
+      <view class="card-content">
+        <image class="card-icon" src="{{myPlanIcon}}" mode="aspectFit"></image>
+        <text class="card-title">我的方案</text>
+        <text class="card-count" wx:if="{{userPlansCount > 0}}">{{userPlansCount}}个</text>
+      </view>
+      <view class="card-arrow">></view>
+    </view>
+    
     <!-- 收藏方案 -->
     <view class="function-card" bindtap="goToFavorites">
       <view class="card-content">

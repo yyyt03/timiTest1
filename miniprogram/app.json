@@ -9,7 +9,8 @@
     "pages/heroPlan/heroPlan",
     "pages/favorites/favorites",
     "pages/planDetail/planDetail",
-    "pages/generateImage/generateImage"
+    "pages/generateImage/generateImage",
+    "pages/myPlans/myPlans"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -54,7 +54,7 @@ exports.main = async function(event, context) {
       db.collection('plans')
         .where({
           heroId: heroId,
-          status: 'active'
+          status: 'published' // 只显示已发布的方案
         })
         .orderBy('createTime', 'desc')
         .skip(skip)
@@ -63,7 +63,7 @@ exports.main = async function(event, context) {
       db.collection('plans')
         .where({
           heroId: heroId,
-          status: 'active'
+          status: 'published' // 只显示已发布的方案
         })
         .count()
     ]);

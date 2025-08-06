@@ -39,14 +39,26 @@ Page({
     authorName: '', // 作者名称
     loading: true,
     skillsLoading: false,
-    isDevelopment: false // 是否为开发环境
+    isDevelopment: false, // 是否为开发环境
+    editMode: false, // 是否为编辑模式
+    planId: '' // 编辑时的方案ID
   },
 
   onLoad(options: any) {
     // 检测环境
     this.detectEnvironment();
     
-    if (options.hero) {
+    // 检查是否为编辑模式
+    if (options.editMode === 'true' && options.planId) {
+      this.setData({
+        editMode: true,
+        planId: options.planId
+      });
+      wx.setNavigationBarTitle({
+        title: '编辑方案'
+      });
+      this.loadPlanForEdit(options.planId);
+    } else if (options.hero) {
       this.setData({
         hero: options.hero,
         heroId: options.heroId || '',
@@ -87,6 +99,158 @@ Page({
       envVersion,
       isDevelopment: isDev
     });
+  },
+
+  // 查找核心技能索引
+  findCoreIndex(coreData: any): number {
+    if (!coreData || !this.data.heroSkills) {
+      return 0;
+    }
+    
+    // 遍历所有技能的核心，找到匹配的
+    const skills = ['skillOne', 'skillTwo', 'skillThree'];
+    for (const skillKey of skills) {
+      const skill = this.data.heroSkills[skillKey];
+      if (skill && skill.cores) {
+        for (let i = 0; i < skill.cores.length; i++) {
+          if (skill.cores[i] && skill.cores[i].name === coreData.name) {
+            return i;
+          }
+        }
+      }
+    }
+    
+    return 0; // 默认返回第一个
+  },
+
+  // 查找天赋索引
+  findTalentIndexes(talentsData: any[]): number[] {
+    if (!talentsData || !Array.isArray(talentsData) || !this.data.heroSkills) {
+      return [];
+    }
+    
+    const result: number[] = [];
+    
+    // 遍历所有技能的天赋，找到匹配的
+    const skills = ['skillOne', 'skillTwo', 'skillThree'];
+    for (const skillKey of skills) {
+      const skill = this.data.heroSkills[skillKey];
+      if (skill && skill.talents) {
+        for (let i = 0; i < skill.talents.length; i++) {
+          const talent = skill.talents[i];
+          if (talent && talentsData.some(t => t.name === talent.name)) {
+            result.push(i);
+          }
+        }
+      }
+    }
+    
+    return result;
+  },
+
+  // 加载方案数据用于编辑
+  async loadPlanForEdit(planId: string) {
+    try {
+      wx.showLoading({ title: '加载方案数据...' });
+      
+      const result = await wx.cloud.callFunction({
+        name: 'getPlanDetail',
+        data: { planId }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const plan = result.result.data;
+        
+        // 设置英雄信息
+        this.setData({
+          hero: plan.heroName,
+          heroId: plan.heroId,
+          selectedHero: true,
+          currentStep: 2
+        });
+        
+        // 设置方案数据
+        this.setData({
+          planTitle: plan.title || '',
+          planDescription: plan.description || '',
+          authorName: plan.authorName || plan.creatorName || ''
+        });
+        
+        // 加载英雄技能数据
+        await this.loadHeroSkills();
+        
+        // 等待技能数据加载完成后设置技能选择
+        setTimeout(() => {
+          if (plan.skillOne) {
+            // 找到对应的核心技能索引
+            const skillOneCoreIndex = this.findCoreIndex(plan.skillOne.core);
+            const skillTwoCoreIndex = this.findCoreIndex(plan.skillTwo?.core);
+            const skillThreeCoreIndex = this.findCoreIndex(plan.skillThree?.core);
+            
+            // 找到对应的天赋索引
+            const skillOneTalentIndexes = this.findTalentIndexes(plan.skillOne.talents);
+            const skillTwoTalentIndexes = this.findTalentIndexes(plan.skillTwo?.talents);
+            const skillThreeTalentIndexes = this.findTalentIndexes(plan.skillThree?.talents);
+            
+            // 设置天赋选中状态
+            const talentSelected = {
+              skillOne: new Array(9).fill(false),
+              skillTwo: new Array(9).fill(false),
+              skillThree: new Array(9).fill(false)
+            };
+            
+            // 设置选中的天赋
+            skillOneTalentIndexes.forEach(index => {
+              if (index >= 0 && index < 9) talentSelected.skillOne[index] = true;
+            });
+            skillTwoTalentIndexes.forEach(index => {
+              if (index >= 0 && index < 9) talentSelected.skillTwo[index] = true;
+            });
+            skillThreeTalentIndexes.forEach(index => {
+              if (index >= 0 && index < 9) talentSelected.skillThree[index] = true;
+            });
+            
+            this.setData({
+              'selectedCores.skillOne': skillOneCoreIndex,
+              'selectedCores.skillTwo': skillTwoCoreIndex,
+              'selectedCores.skillThree': skillThreeCoreIndex,
+              'selectedTalents.skillOne': skillOneTalentIndexes,
+              'selectedTalents.skillTwo': skillTwoTalentIndexes,
+              'selectedTalents.skillThree': skillThreeTalentIndexes,
+              'talentSelected': talentSelected
+            });
+          }
+        }, 500); // 等待500ms确保技能数据已加载
+        
+        // 设置装备数据
+        if (plan.equipment && Array.isArray(plan.equipment)) {
+          const equipmentList = plan.equipment.map((item: any, index: number) => ({
+            name: item.name || '',
+            imageUrl: item.imageUrl || '',
+            matched: true,
+            suggestions: []
+          }));
+          
+          this.setData({
+            equipmentList: equipmentList
+          });
+        }
+        
+        wx.hideLoading();
+      } else {
+        wx.showToast({
+          title: '加载方案失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('加载方案数据失败:', error);
+      wx.hideLoading();
+      wx.showToast({
+        title: '加载方案失败',
+        icon: 'none'
+      });
+    }
   },
 
   // 加载英雄数据
@@ -828,8 +992,39 @@ Page({
         authorName: this.data.authorName
       };
 
-      // 根据环境决定处理方式
-      if (this.data.isDevelopment) {
+      // 根据模式决定处理方式
+      if (this.data.editMode) {
+        // 编辑模式：更新方案
+        console.log('编辑模式：更新方案到数据库');
+        
+        const result = await wx.cloud.callFunction({
+          name: 'updatePlan',
+          data: {
+            planId: this.data.planId,
+            planData: planData
+          }
+        }) as any;
+
+        console.log('云函数返回结果:', result);
+
+        if (result.result && result.result.success) {
+          wx.showToast({
+            title: '方案更新成功',
+            icon: 'success'
+          });
+          
+          // 返回上一页
+          setTimeout(() => {
+            wx.navigateBack();
+          }, 1500);
+        } else {
+          console.error('云函数返回错误:', result.result);
+          wx.showToast({
+            title: result.result?.message || '更新失败',
+            icon: 'error'
+          });
+        }
+      } else if (this.data.isDevelopment) {
         // 开发环境：上传到数据库
         console.log('开发环境：上传方案到数据库');
         

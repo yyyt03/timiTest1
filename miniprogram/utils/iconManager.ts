@@ -25,7 +25,7 @@ function getStatusIcon(type: 'favorite' | 'like', isActive: boolean): string {
  * @param type 图标类型
  * @returns 图标URL
  */
-function getFeatureIcon(type: 'hero-category' | 'beta-plan' | 'recommend-plan' | 'create-plan' | 'favorite-plan'): string {
+function getFeatureIcon(type: 'hero-category' | 'beta-plan' | 'recommend-plan' | 'create-plan' | 'favorite-plan' | 'my-plan'): string {
   return `${CLOUD_BASE_PATH}/${type}.png`;
 }
 
@@ -99,6 +99,14 @@ export function getFavoritePlanIcon(): string {
 }
 
 /**
+ * 获取我的方案图标
+ * @returns 图标URL
+ */
+export function getMyPlanIcon(): string {
+  return getFeatureIcon('my-plan');
+}
+
+/**
  * 获取空状态图标
  * @param type 空状态类型
  * @returns 图标URL
@@ -154,6 +162,7 @@ export function getAllIconUrls(): string[] {
     getRecommendPlanIcon(),
     getCreatePlanIcon(),
     getFavoritePlanIcon(),
+    getMyPlanIcon(),
     
     // Tabbar图标
     getStrategyTabIcon(false),

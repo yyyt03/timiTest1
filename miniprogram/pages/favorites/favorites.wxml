@@ -5,6 +5,35 @@
     <text class="favorite-count">({{total}})</text>
   </view>
 
+  <!-- 英雄分类选择器 -->
+  <view class="hero-selector" wx:if="{{heroCategories.length > 0}}">
+    <view class="selector-header" bindtap="toggleHeroSelector">
+      <text class="selector-title">
+        {{selectedHero === 'all' ? '全部英雄' : selectedHero}}
+      </text>
+      <text class="selector-count">({{total}})</text>
+      <text class="selector-arrow {{showHeroSelector ? 'expanded' : ''}}">▼</text>
+    </view>
+    
+    <!-- 英雄分类列表 -->
+    <view class="hero-list {{showHeroSelector ? 'show' : ''}}" wx:if="{{showHeroSelector}}">
+      <!-- 全部选项 -->
+      <view class="hero-item {{selectedHero === 'all' ? 'selected' : ''}}" 
+            bindtap="selectHero" data-hero="all">
+        <text class="hero-name">全部英雄</text>
+        <text class="hero-count">({{allFavorites.length}})</text>
+      </view>
+      
+      <!-- 英雄选项 -->
+      <view class="hero-item {{selectedHero === item.heroName ? 'selected' : ''}}" 
+            wx:for="{{heroCategories}}" wx:key="heroName"
+            bindtap="selectHero" data-hero="{{item.heroName}}">
+        <text class="hero-name">{{item.heroName}}</text>
+        <text class="hero-count">({{item.count}})</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 收藏列表 -->
   <view class="favorites-list" wx:if="{{favorites.length > 0}}">
     <view class="favorite-item" wx:for="{{favorites}}" wx:key="_id">

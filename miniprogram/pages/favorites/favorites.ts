@@ -5,12 +5,17 @@ import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
 Page({
   data: {
     favorites: [] as any[],
+    allFavorites: [] as any[], // 存储所有收藏数据
     loading: false,
     hasMore: true,
     page: 1,
     pageSize: 20,
     total: 0,
-    emptyIcon: getEmptyIcon('favorites')
+    emptyIcon: getEmptyIcon('favorites'),
+    // 英雄分类相关
+    heroCategories: [] as any[], // 英雄分类列表
+    selectedHero: 'all', // 当前选中的英雄，'all'表示全部
+    showHeroSelector: false // 是否显示英雄选择器
   },
 
   onLoad() {
@@ -82,19 +87,26 @@ Page({
             // 刷新模式，替换数据
             that.setData({
               favorites: formattedFavorites,
+              allFavorites: formattedFavorites, // 保存所有数据
               page: 1,
               total: total,
               hasMore: hasMore
             });
+            // 生成英雄分类
+            that.generateHeroCategories();
           } else {
             // 加载更多模式，追加数据
             const newFavorites = that.data.favorites.concat(formattedFavorites);
+            const newAllFavorites = that.data.allFavorites.concat(formattedFavorites);
             that.setData({
               favorites: newFavorites,
+              allFavorites: newAllFavorites, // 保存所有数据
               page: page + 1,
               total: total,
               hasMore: hasMore
             });
+            // 重新生成英雄分类
+            that.generateHeroCategories();
           }
         } else {
           wx.showToast({
@@ -205,5 +217,71 @@ Page({
   // 上拉加载更多
   onReachBottom() {
     this.loadMore();
+  },
+
+  // 切换英雄选择器显示状态
+  toggleHeroSelector() {
+    this.setData({
+      showHeroSelector: !this.data.showHeroSelector
+    });
+  },
+
+  // 选择英雄分类
+  selectHero(e: any) {
+    const heroName = e.currentTarget.dataset.hero;
+    this.setData({
+      selectedHero: heroName,
+      showHeroSelector: false
+    });
+    this.filterFavoritesByHero();
+  },
+
+  // 根据英雄筛选收藏
+  filterFavoritesByHero() {
+    const { allFavorites, selectedHero } = this.data;
+    
+    if (selectedHero === 'all') {
+      // 显示全部收藏
+      this.setData({
+        favorites: allFavorites,
+        total: allFavorites.length
+      });
+    } else {
+      // 筛选指定英雄的收藏
+      const filteredFavorites = allFavorites.filter(fav => fav.heroName === selectedHero);
+      this.setData({
+        favorites: filteredFavorites,
+        total: filteredFavorites.length
+      });
+    }
+  },
+
+  // 生成英雄分类列表
+  generateHeroCategories() {
+    const { allFavorites } = this.data;
+    const heroMap = new Map();
+    
+    // 统计每个英雄的收藏数量
+    allFavorites.forEach(fav => {
+      const heroName = fav.heroName || '未知英雄';
+      if (heroMap.has(heroName)) {
+        heroMap.set(heroName, heroMap.get(heroName) + 1);
+      } else {
+        heroMap.set(heroName, 1);
+      }
+    });
+    
+    // 转换为数组格式
+    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
+      heroName,
+      count
+    }));
+    
+    // 按收藏数量排序
+    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
+    
+    this.setData({
+      heroCategories
+    });
   }
 }); 

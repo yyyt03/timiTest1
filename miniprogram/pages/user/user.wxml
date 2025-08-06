@@ -57,4 +57,9 @@
       </view>
     </view>
   </view>
+  
+  <!-- 联系信息 -->
+  <view class="contact-info">
+    <text class="contact-text">如有建议，敬请联系QQ：206789750</text>
+  </view>
 </view> 

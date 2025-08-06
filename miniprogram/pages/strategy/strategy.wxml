@@ -1,10 +1,23 @@
 <view class="container">
   <!-- 顶部展示区 -->
   <view class="header-section">
-    <view class="welcome-text">
-      <text class="main-title">攻略中心</text>
-      <text class="sub-title">专业的王者荣耀天赋助手</text>
-    </view>
+    <!-- 轮播图 -->
+    <swiper class="header-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}">
+      <!-- 第一页：文字展示 -->
+      <swiper-item>
+        <view class="text-slide">
+          <view class="welcome-text">
+            <text class="main-title">觉醒天赋推荐</text>
+            <text class="sub-title">梦也许会流泪，但是永远不会倒下。</text>
+          </view>
+        </view>
+      </swiper-item>
+      
+      <!-- 第二页：图片展示 -->
+      <swiper-item>
+        <image class="header-image" src="cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/lunbo/lunbo2.jpg" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
   </view>
   
   <!-- 功能区 -->
@@ -48,18 +61,6 @@
           <text class="card-desc">创建个性化方案</text>
         </view>
         <view class="card-arrow">→</view>
-      </view>
-    </view>
-    
-    <!-- 测试功能区域 -->
-    <view class="test-section">
-      <view class="test-card" bindtap="testGenerateImage">
-        <view class="test-icon">🎨</view>
-        <view class="test-content">
-          <text class="test-title">一图流测试</text>
-          <text class="test-desc">生成方案图片</text>
-        </view>
-        <view class="test-arrow">→</view>
       </view>
     </view>
   </view>

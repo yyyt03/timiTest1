@@ -306,7 +306,7 @@
   z-index: 1000;
 }
 
-.share-btn, .favorite-btn {
+.favorite-btn {
   flex: 1;
   height: 90rpx;
   border-radius: 45rpx;
@@ -319,16 +319,6 @@
   font-size: 30rpx;
   transition: all 0.3s ease;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
-}
-
-.share-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-}
-
-.share-btn:active {
-  transform: translateY(2rpx);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
 }
 
 .favorite-btn {

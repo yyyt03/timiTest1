@@ -236,8 +236,12 @@ Page({
   // 查看方案详情
   viewPlan(e: any) {
     var planId = e.currentTarget.dataset.id;
+    const planIndex = e.currentTarget.dataset.index;
+    const plan = this.data.plans[planIndex];
+    
+    // 传递收藏状态到详情页
     wx.navigateTo({
-      url: '../planDetail/planDetail?id=' + planId
+      url: `../planDetail/planDetail?id=${planId}&isFavorited=${plan.isFavorited || false}`
     });
   },
 

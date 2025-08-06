@@ -26,7 +26,7 @@
     <block wx:else>
              <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index">
          <!-- 方案标题区域 - 可点击跳转 -->
-         <view class="plan-title-area" bindtap="viewPlan" data-id="{{item._id}}">
+         <view class="plan-title-area" bindtap="viewPlan" data-id="{{item._id}}" data-index="{{index}}">
            <text class="plan-title">{{item.title}}</text>
          </view>
          

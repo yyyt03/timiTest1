@@ -15,6 +15,14 @@ Page({
       this.setData({
         planId: options.id
       });
+      
+      // 如果有传递收藏状态，先设置到本地数据
+      if (options.isFavorited !== undefined) {
+        this.setData({
+          'plan.isFavorited': options.isFavorited === 'true'
+        });
+      }
+      
       this.loadPlanDetail(options.id);
     } else {
       wx.showToast({
@@ -43,8 +51,13 @@ Page({
         console.log('获取到的方案数据:', plan);
         
         // 先设置方案数据，避免页面空白
+        // 保留传递过来的收藏状态，避免被服务器数据覆盖
+        const currentIsFavorited = this.data.plan.isFavorited;
         this.setData({
-          plan: plan,
+          plan: {
+            ...plan,
+            isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : plan.isFavorited
+          },
           loading: false
         });
         
@@ -183,13 +196,7 @@ Page({
     }
   },
 
-  // 分享方案
-  sharePlan() {
-    wx.showToast({
-      title: '分享功能开发中',
-      icon: 'none'
-    });
-  },
+
 
   // 切换收藏状态
   async toggleFavorite() {

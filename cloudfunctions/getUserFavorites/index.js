@@ -47,9 +47,46 @@ exports.main = async function(event, context) {
       })
       .get();
     
-    // 将方案信息与收藏信息合并
+    // 获取所有方案的点赞和收藏数量
+    const [likeCounts, favoriteCounts] = await Promise.all([
+      db.collection('likes')
+        .where({
+          planId: db.command.in(planIds)
+        })
+        .field({
+          planId: true
+        })
+        .get(),
+      db.collection('favorites')
+        .where({
+          planId: db.command.in(planIds)
+        })
+        .field({
+          planId: true
+        })
+        .get()
+    ]);
+    
+    // 统计每个方案的点赞和收藏数量
+    const likeCountMap = {};
+    const favoriteCountMap = {};
+    
+    likeCounts.data.forEach(like => {
+      likeCountMap[like.planId] = (likeCountMap[like.planId] || 0) + 1;
+    });
+    
+    favoriteCounts.data.forEach(favorite => {
+      favoriteCountMap[favorite.planId] = (favoriteCountMap[favorite.planId] || 0) + 1;
+    });
+    
+    // 将方案信息与收藏信息合并，并更新点赞收藏数量
     const favoritesWithPlans = favoritesResult.data.map(favorite => {
       const plan = plansResult.data.find(p => p._id === favorite.planId);
+      if (plan) {
+        // 使用实时统计的数量，而不是plans集合中存储的数量
+        plan.likeCount = likeCountMap[plan._id] || 0;
+        plan.favoriteCount = favoriteCountMap[plan._id] || 0;
+      }
       return {
         ...favorite,
         plan: plan || null

@@ -139,9 +139,6 @@
 
   <!-- 操作按钮 -->
   <view class="action-buttons">
-    <button class="share-btn" bindtap="sharePlan">
-      <text class="btn-text">分享方案</text>
-    </button>
     <button class="favorite-btn {{plan.isFavorited ? 'favorited' : ''}}" bindtap="toggleFavorite">
       <text class="btn-text">{{plan.isFavorited ? '取消收藏' : '收藏方案'}}</text>
     </button>

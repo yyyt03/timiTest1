@@ -6,6 +6,7 @@ Page({
     heroName: '',
     heroImageUrl: '',
     title: '',
+    authorName: '',
     skillOne: null,
     skillTwo: null,
     skillThree: null,
@@ -25,6 +26,7 @@ Page({
         this.setData({
           heroName: planData.heroName || '',
           title: planData.title || '',
+          authorName: planData.authorName || '',
           skillOne: planData.skillOne || null,
           skillTwo: planData.skillTwo || null,
           skillThree: planData.skillThree || null,
@@ -85,8 +87,6 @@ Page({
       });
     }
   },
-
-
 
   // 返回编辑
   goBack() {

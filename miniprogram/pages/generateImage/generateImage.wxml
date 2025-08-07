@@ -4,144 +4,141 @@
     <text class="tip-text">💡 自行截图保存即可</text>
   </view>
 
-  <!-- 方案卡片 -->
-  <view class="plan-card">
-    <!-- 英雄信息 -->
-    <view class="hero-section">
+  <!-- 英雄信息头部 -->
+  <view class="hero-header">
+    <view class="hero-info">
       <image class="hero-avatar" src="{{heroImageUrl}}" mode="aspectFit"></image>
-      <view class="hero-info">
-        <text class="hero-name">{{heroName}}</text>
-        <text class="plan-title">{{title}}</text>
+      <view class="hero-details">
+        <text class="hero-name">{{title}}</text>
+        <text class="plan-author">作者: {{authorName || '匿名'}}</text>
       </view>
     </view>
+  </view>
 
-    <!-- 技能部分 -->
-    <view class="section">
+  <!-- 技能、装备和玩法部分 -->
+  <view class="skills-section" wx:if="{{skillOne || skillTwo || skillThree}}">
+    <view class="skills-container">
+      <!-- 天赋加点小标题 -->
       <view class="section-title">
         <text class="title-text">天赋加点</text>
       </view>
-      <view class="skills-container">
-        <!-- 一技能 -->
-        <view class="skill-column" wx:if="{{skillOne}}">
-          <view class="skill-layout">
-            <!-- 左侧：技能名称 -->
-            <view class="skill-name-section">
-              <text class="skill-name-text">一技能</text>
-            </view>
-            <!-- 右侧：核心技能和天赋 -->
-            <view class="skill-content-section">
-              <!-- 核心技能 -->
-              <view class="skill-core" wx:if="{{skillOne.core}}">
-                <view class="skill-info">
-                  <text class="skill-name">{{skillOne.core.name}}</text>
-                  <text class="skill-desc">{{skillOne.core.description}}</text>
-                </view>
-                <text class="skill-tag">{{skillOne.core.tag}}</text>
-              </view>
-              <!-- 天赋列表 -->
-              <view class="skill-talents">
-                <view class="talent-item" wx:for="{{skillOne.talents}}" wx:key="index">
-                  <view class="talent-info">
-                    <text class="talent-name">{{item.name}}</text>
-                    <text class="talent-desc">{{item.description}}</text>
-                  </view>
-                  <text class="talent-tag">{{item.tag}}</text>
-                </view>
-              </view>
-            </view>
+      
+      <!-- 一技能 -->
+      <view class="skill-column" wx:if="{{skillOne}}">
+        <view class="skill-layout">
+          <!-- 左侧：技能名称 -->
+          <view class="skill-name-section">
+            <text class="skill-name-text">一技能</text>
           </view>
-        </view>
-
-        <!-- 二技能 -->
-        <view class="skill-column" wx:if="{{skillTwo}}">
-          <view class="skill-layout">
-            <!-- 左侧：技能名称 -->
-            <view class="skill-name-section">
-              <text class="skill-name-text">二技能</text>
-            </view>
-            <!-- 右侧：核心技能和天赋 -->
-            <view class="skill-content-section">
-              <!-- 核心技能 -->
-              <view class="skill-core" wx:if="{{skillTwo.core}}">
-                <view class="skill-info">
-                  <text class="skill-name">{{skillTwo.core.name}}</text>
-                  <text class="skill-desc">{{skillTwo.core.description}}</text>
-                </view>
-                <text class="skill-tag">{{skillTwo.core.tag}}</text>
+          <!-- 右侧：核心技能和天赋 -->
+          <view class="skill-content-section">
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{skillOne.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{skillOne.core.name}}</text>
+                <text class="skill-desc">{{skillOne.core.description}}</text>
               </view>
-              <!-- 天赋列表 -->
-              <view class="skill-talents">
-                <view class="talent-item" wx:for="{{skillTwo.talents}}" wx:key="index">
-                  <view class="talent-info">
-                    <text class="talent-name">{{item.name}}</text>
-                    <text class="talent-desc">{{item.description}}</text>
-                  </view>
-                  <text class="talent-tag">{{item.tag}}</text>
-                </view>
-              </view>
+              <text class="skill-tag skill-tag-top">{{skillOne.core.tag}}</text>
             </view>
-          </view>
-        </view>
-
-        <!-- 三技能 -->
-        <view class="skill-column" wx:if="{{skillThree}}">
-          <view class="skill-layout">
-            <!-- 左侧：技能名称 -->
-            <view class="skill-name-section">
-              <text class="skill-name-text">三技能</text>
-            </view>
-            <!-- 右侧：核心技能和天赋 -->
-            <view class="skill-content-section">
-              <!-- 核心技能 -->
-              <view class="skill-core" wx:if="{{skillThree.core}}">
-                <view class="skill-info">
-                  <text class="skill-name">{{skillThree.core.name}}</text>
-                  <text class="skill-desc">{{skillThree.core.description}}</text>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{skillOne.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
                 </view>
-                <text class="skill-tag">{{skillThree.core.tag}}</text>
-              </view>
-              <!-- 天赋列表 -->
-              <view class="skill-talents">
-                <view class="talent-item" wx:for="{{skillThree.talents}}" wx:key="index">
-                  <view class="talent-info">
-                    <text class="talent-name">{{item.name}}</text>
-                    <text class="talent-desc">{{item.description}}</text>
-                  </view>
-                  <text class="talent-tag">{{item.tag}}</text>
-                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
               </view>
             </view>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 出装推荐 -->
-    <view class="section">
-      <view class="section-title">
-        <text class="title-text">出装推荐</text>
-      </view>
-      <view class="equipment-grid">
-        <view class="equipment-item" wx:for="{{equipment}}" wx:key="index">
-          <image class="equipment-icon" src="{{item.imageUrl}}" mode="aspectFit"></image>
-          <text class="equipment-name">{{item.name}}</text>
+      <!-- 二技能 -->
+      <view class="skill-column" wx:if="{{skillTwo}}">
+        <view class="skill-layout">
+          <!-- 左侧：技能名称 -->
+          <view class="skill-name-section">
+            <text class="skill-name-text">二技能</text>
+          </view>
+          <!-- 右侧：核心技能和天赋 -->
+          <view class="skill-content-section">
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{skillTwo.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{skillTwo.core.name}}</text>
+                <text class="skill-desc">{{skillTwo.core.description}}</text>
+              </view>
+              <text class="skill-tag skill-tag-top">{{skillTwo.core.tag}}</text>
+            </view>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{skillTwo.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
+                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 玩法说明 -->
-    <view class="section">
-      <view class="section-title">
-        <text class="title-text">玩法说明</text>
+      <!-- 三技能 -->
+      <view class="skill-column" wx:if="{{skillThree}}">
+        <view class="skill-layout">
+          <!-- 左侧：技能名称 -->
+          <view class="skill-name-section">
+            <text class="skill-name-text">三技能</text>
+          </view>
+          <!-- 右侧：核心技能和天赋 -->
+          <view class="skill-content-section">
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{skillThree.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{skillThree.core.name}}</text>
+                <text class="skill-desc">{{skillThree.core.description}}</text>
+              </view>
+              <text class="skill-tag skill-tag-top">{{skillThree.core.tag}}</text>
+            </view>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{skillThree.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
+                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
       </view>
-      <view class="strategy-content">
-        <text class="strategy-text">{{strategy}}</text>
-      </view>
-    </view>
 
-    <!-- 底部信息 -->
-    <view class="footer">
-      <text class="footer-text">微信小程序-觉醒天赋推荐</text>
+      <!-- 装备部分 -->
+      <view class="equipment-section" wx:if="{{equipment}}">
+        <view class="section-title">出装推荐</view>
+        <view class="equipment-grid">
+          <view class="equipment-item" wx:for="{{equipment}}" wx:key="index">
+            <image class="equipment-icon" src="{{item.imageUrl}}" mode="aspectFit" wx:if="{{item.imageUrl}}"></image>
+            <text class="equipment-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 玩法说明 -->
+      <view class="strategy-section" wx:if="{{strategy}}">
+        <view class="section-title">玩法说明</view>
+        <view class="strategy-content">
+          <text class="strategy-text">{{strategy}}</text>
+        </view>
+      </view>
+
+      <!-- 底部信息 -->
+      <view class="footer">
+        <text class="footer-text">微信小程序-觉醒天赋推荐</text>
+      </view>
     </view>
   </view>
 

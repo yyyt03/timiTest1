@@ -14,6 +14,7 @@ exports.main = async function(event, context) {
     const { planId, planData } = event;
     
     if (!planId || !planData) {
+      console.error('参数验证失败:', { planId, planData });
       return {
         success: false,
         data: null,
@@ -25,12 +26,16 @@ exports.main = async function(event, context) {
     const currentUserId = wxContext.OPENID;
     
     if (!currentUserId) {
+      console.error('用户未登录');
       return {
         success: false,
         data: null,
         message: '用户未登录'
       };
     }
+    
+    console.log('当前用户ID:', currentUserId);
+    console.log('要更新的方案ID:', planId);
     
     // 验证方案是否属于当前用户
     const planResult = await db.collection('plans')
@@ -40,7 +45,10 @@ exports.main = async function(event, context) {
       })
       .get();
     
+    console.log('查询到的方案:', planResult.data);
+    
     if (planResult.data.length === 0) {
+      console.error('方案不存在或无权限修改');
       return {
         success: false,
         data: null,
@@ -48,25 +56,33 @@ exports.main = async function(event, context) {
       };
     }
     
-    // 更新方案数据
+    // 准备更新数据
     const updateData = {
-      ...planData,
+      heroId: planData.heroId,
+      heroName: planData.heroName,
+      title: planData.title,
+      description: planData.description,
+      skillOne: planData.skillOne,
+      skillTwo: planData.skillTwo,
+      skillThree: planData.skillThree,
+      equipment: planData.equipment,
+      equipmentText: planData.equipmentText,
+      strategy: planData.strategy,
+      authorName: planData.authorName,
+      isBetaPlan: planData.isBetaPlan,
       updateTime: new Date().toISOString()
     };
     
-    // 移除不需要更新的字段
-    delete updateData._id;
-    delete updateData.creatorId;
-    delete updateData.createTime;
-    delete updateData.likeCount;
-    delete updateData.favoriteCount;
-    delete updateData.views;
+    console.log('准备更新的数据:', updateData);
     
-    await db.collection('plans')
+    // 执行更新
+    const updateResult = await db.collection('plans')
       .doc(planId)
       .update({
         data: updateData
       });
+    
+    console.log('更新结果:', updateResult);
     
     return {
       success: true,

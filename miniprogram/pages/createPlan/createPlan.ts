@@ -1056,6 +1056,7 @@ Page({
             heroName: this.data.hero,
             heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
             title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
+            authorName: this.data.authorName,
             skillOne: {
               core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
               talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
@@ -1097,6 +1098,7 @@ Page({
           heroName: this.data.hero,
           heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
           title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
+          authorName: this.data.authorName,
           skillOne: {
             core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
             talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])

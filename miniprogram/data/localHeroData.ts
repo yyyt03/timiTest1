@@ -115,6 +115,12 @@ export const heroes = [
     avatar: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/sunwukong.jpg',
     category: 'assassin'
   },
+  {
+    _id: 'lan',
+    name: '澜',
+    avatar: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/lan.jpg',
+    category: 'assassin'
+  },
   
   // 战士
   {
@@ -152,6 +158,12 @@ export const heroes = [
     name: '吕布',
     avatar: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/lvbu.jpg',
     category: 'warrior'
+  },
+  {
+    _id: 'zhangfei',
+    name: '张飞',
+    avatar: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/heroes/zhangfei.jpg',
+    category: 'support'
   },
   
   // 法师

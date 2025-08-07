@@ -45,6 +45,7 @@
                 data-skill-type="skillOne" 
                 data-index="{{index}}">
                 <view class="core-name">{{item.name}}</view>
+                <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
               </view>
             </view>
@@ -62,6 +63,7 @@
                 data-skill-type="skillOne" 
                 data-index="{{index}}">
                 <view class="talent-name">{{item.name}}</view>
+                <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
               </view>
             </view>
@@ -85,6 +87,7 @@
                 data-skill-type="skillTwo" 
                 data-index="{{index}}">
                 <view class="core-name">{{item.name}}</view>
+                <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
               </view>
             </view>
@@ -102,6 +105,7 @@
                 data-skill-type="skillTwo" 
                 data-index="{{index}}">
                 <view class="talent-name">{{item.name}}</view>
+                <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
               </view>
             </view>
@@ -125,6 +129,7 @@
                 data-skill-type="skillThree" 
                 data-index="{{index}}">
                 <view class="core-name">{{item.name}}</view>
+                <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
               </view>
             </view>
@@ -142,6 +147,7 @@
                 data-skill-type="skillThree" 
                 data-index="{{index}}">
                 <view class="talent-name">{{item.name}}</view>
+                <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
               </view>
             </view>

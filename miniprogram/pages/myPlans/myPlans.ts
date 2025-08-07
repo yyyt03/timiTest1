@@ -6,11 +6,44 @@ Page({
     page: 1,
     pageSize: 10,
     hasMore: true,
-    emptyIcon: '/images/icons/empty-favorites.png'
+    emptyIcon: '/images/icons/empty-favorites.png',
+    isDevelopment: false // 添加环境标识
   },
 
   onLoad() {
+    this.detectEnvironment(); // 检测环境
     this.loadUserPlans();
+  },
+
+  // 检测环境
+  detectEnvironment() {
+    try {
+      const accountInfo = wx.getAccountInfoSync();
+      const version = accountInfo.miniProgram?.version || '';
+      const envVersion = accountInfo.miniProgram?.envVersion || '';
+      
+      // 开发环境判断逻辑
+      const isDev = envVersion === 'develop' || 
+                    envVersion === 'trial' || 
+                    version.includes('dev') || 
+                    version.includes('test');
+      
+      this.setData({
+        isDevelopment: isDev
+      });
+      
+      console.log('个人方案页面环境检测结果:', {
+        version,
+        envVersion,
+        isDevelopment: isDev
+      });
+    } catch (error) {
+      console.error('环境检测失败:', error);
+      // 如果检测失败，默认设置为非开发环境
+      this.setData({
+        isDevelopment: false
+      });
+    }
   },
 
   onPullDownRefresh() {

@@ -34,7 +34,7 @@
           <view class="action-btn edit-btn" catchtap="editPlan" data-plan="{{item}}">
             <text class="btn-text">编辑</text>
           </view>
-          <view class="action-btn publish-btn" wx:if="{{item.status === 'draft'}}" catchtap="publishPlan" data-plan="{{item}}">
+          <view class="action-btn publish-btn" wx:if="{{item.status === 'draft' && isDevelopment}}" catchtap="publishPlan" data-plan="{{item}}">
             <text class="btn-text">发布</text>
           </view>
           <view class="action-btn delete-btn" catchtap="deletePlan" data-plan="{{item}}">

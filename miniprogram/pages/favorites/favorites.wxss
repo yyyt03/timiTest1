@@ -176,15 +176,16 @@
 }
 
 .hero-name {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
-  margin-right: 20rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #888888;
+  margin-left: 20rpx;
 }
 
 .plan-title {
-  font-size: 28rpx;
-  color: #666666;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
   flex: 1;
 }
 

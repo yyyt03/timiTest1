@@ -1,4 +1,4 @@
-import { getFavoriteIcon, getLikeIcon } from '../../utils/iconManager';
+import { getFavoriteIcon, getLikeIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getHeroByName } from '../../data/localHeroData';
 
 // 英雄方案页面
@@ -17,7 +17,8 @@ Page({
     favoriteOutlineIcon: getFavoriteIcon(false),
     favoriteFilledIcon: getFavoriteIcon(true),
     likeOutlineIcon: getLikeIcon(false),
-    likeFilledIcon: getLikeIcon(true)
+    likeFilledIcon: getLikeIcon(true),
+    emptyIcon: getEmptyIcon('favorites')
   },
 
   onLoad(options: any) {

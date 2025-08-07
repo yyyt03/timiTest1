@@ -1,9 +1,9 @@
 // 英雄分类页面
-import { getTempFileURLs } from '../../utils/cloud'
-import { heroCache } from '../../utils/heroCache'
-import { LocalDataTest } from '../../utils/localDataTest'
-import { getHeroesByCategory } from '../../data/localHeroData'
+import { heroCache } from '../../utils/heroCache';
+import { getTempFileURLs } from '../../utils/cloud';
+import { getHeroesByCategory } from '../../data/localHeroData';
 
+// 英雄分类页面
 Page({
   data: {
     heroCategories: {},
@@ -170,8 +170,6 @@ Page({
     }
   },
 
-
-
   // 选择英雄
   selectHero: function(e: any) {
     var hero = e.currentTarget.dataset.hero;
@@ -192,18 +190,5 @@ Page({
         url: '../heroPlan/heroPlan?hero=' + hero.name + '&heroId=' + hero.id
       });
     }
-  },
-
-  // 测试本地化功能（开发调试用）
-  testLocalization: function() {
-    console.log('开始测试本地化功能...');
-    LocalDataTest.testLocalData();
-    LocalDataTest.generateReport();
-    
-    wx.showToast({
-      title: '测试完成，查看控制台',
-      icon: 'none',
-      duration: 2000
-    });
   }
 }); 

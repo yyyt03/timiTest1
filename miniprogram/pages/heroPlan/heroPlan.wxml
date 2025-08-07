@@ -10,57 +10,71 @@
     <button class="create-btn" bindtap="createPlan">创建新方案</button>
   </view>
   
-  <view class="plans-container">
+  <!-- 方案列表 -->
+  <view class="plans-section">
     <!-- 加载中 -->
     <view class="loading-container" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
       <view class="loading-text">加载中...</view>
     </view>
     
-    <!-- 无方案提示 -->
-    <view class="no-plans-container" wx:elif="{{noPlans}}">
-      <view class="no-plans-text">暂无方案</view>
-      <view class="no-plans-tip">点击上方按钮创建新方案</view>
+    <!-- 方案列表 -->
+    <view class="plans-grid" wx:else>
+      <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index" bindtap="viewPlan" data-id="{{item._id}}" data-index="{{index}}">
+        <!-- 方案头部 -->
+        <view class="plan-header">
+          <view class="plan-info">
+            <view class="plan-title">{{item.title}}</view>
+            <view class="plan-hero-name">{{hero}}</view>
+          </view>
+          <view class="plan-stats">
+            <view class="stat-item" catchtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
+              <image class="stat-icon" src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" mode="aspectFit"></image>
+              <text>{{item.likeCount || 0}}</text>
+            </view>
+            <view class="stat-item" catchtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
+              <image class="stat-icon" src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" mode="aspectFit"></image>
+              <text>{{item.favoriteCount || 0}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 方案描述 -->
+        <view class="plan-description">{{item.description || '这是一个精心设计的方案，适合当前版本使用。'}}</view>
+        
+        <!-- 方案标签 -->
+        <view class="plan-tags">
+          <view class="tag" wx:if="{{item.difficulty}}">{{item.difficulty}}</view>
+          <view class="tag" wx:if="{{item.style}}">{{item.style}}</view>
+          <view class="tag" wx:if="{{item.role}}">{{item.role}}</view>
+        </view>
+        
+        <!-- 方案底部 -->
+        <view class="plan-footer">
+          <view class="plan-author">
+            <text class="author-text">作者：{{item.creatorName || '匿名用户'}}</text>
+          </view>
+          <view class="plan-time">🕒 {{item.createTime}}</view>
+        </view>
+      </view>
     </view>
     
-    <!-- 方案列表 -->
-    <block wx:else>
-             <view class="plan-card" wx:for="{{plans}}" wx:key="_id" wx:for-index="index">
-         <!-- 方案标题区域 - 可点击跳转 -->
-         <view class="plan-title-area" bindtap="viewPlan" data-id="{{item._id}}" data-index="{{index}}">
-           <text class="plan-title">{{item.title}}</text>
-         </view>
-         
-         <!-- 操作按钮区域 - 优化布局，点赞和收藏各占一半 -->
-         <view class="plan-actions-area">
-           <view class="action-item action-item-left" bindtap="toggleLike" data-id="{{item._id}}" data-index="{{index}}">
-             <image class="action-icon {{item.isLiked ? 'liked' : ''}}" 
-                    src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" 
-                    mode="aspectFit"></image>
-             <text class="action-count">{{item.likeCount || 0}}</text>
-           </view>
-           <view class="action-item action-item-right" bindtap="toggleFavorite" data-id="{{item._id}}" data-index="{{index}}">
-             <image class="action-icon {{item.isFavorited ? 'favorited' : ''}}" 
-                    src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" 
-                    mode="aspectFit"></image>
-             <text class="action-count">{{item.favoriteCount || 0}}</text>
-           </view>
-         </view>
-         
-         <view class="plan-footer">
-           <text class="plan-author">{{item.creatorName || '匿名用户'}}</text>
-           <text class="plan-time">{{item.createTime}}</text>
-         </view>
-       </view>
-      
-      <!-- 加载更多 -->
-      <view class="load-more" wx:if="{{loadingMore}}">
-        <view class="loading-text">加载中...</view>
-      </view>
-      
-      <!-- 没有更多数据 -->
-      <view class="no-more" wx:if="{{!hasMore && plans.length > 0}}">
-        <view class="no-more-text">没有更多数据了</view>
-      </view>
-    </block>
+    <!-- 无数据提示 -->
+    <view class="no-data" wx:if="{{!loading && plans.length === 0}}">
+      <image class="no-data-icon" src="{{emptyIcon}}" mode="aspectFit"></image>
+      <view class="no-data-text">暂无方案</view>
+      <view class="no-data-tip">点击上方按钮创建新方案</view>
+    </view>
+    
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <view class="loading-spinner"></view>
+      <view class="loading-text">加载中...</view>
+    </view>
+    
+    <!-- 没有更多数据 -->
+    <view class="no-more" wx:if="{{!hasMore && plans.length > 0}}">
+      <view class="no-more-text">没有更多数据了</view>
+    </view>
   </view>
 </view> 

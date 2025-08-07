@@ -1,3 +1,4 @@
+/* 英雄分类页面样式 */
 .container {
   padding: 20rpx;
   box-sizing: border-box;
@@ -15,80 +16,7 @@
   border-left: 6rpx solid #000000;
 }
 
-
-
-.category-list {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 40rpx;
-}
-
-.category-item {
-  width: 30%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.category-icon-container {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  background-color: #f8f9fa;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 15rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-  border: 2rpx solid #e9ecef;
-  transition: all 0.3s ease;
-}
-
-.category-icon-container:active {
-  transform: translateY(2rpx);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
-}
-
-.category-icon {
-  width: 70rpx;
-  height: 70rpx;
-}
-
-.category-icon-text {
-  color: #333333;
-  font-size: 50rpx;
-  font-weight: bold;
-}
-
-.category-name {
-  font-size: 28rpx;
-  color: #333333;
-  font-weight: 500;
-}
-
-/* 英雄列表 */
-.hero-list {
-  width: 100%;
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  box-sizing: border-box;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-  border: 1rpx solid #f0f0f0;
-}
-
-.hero-list-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333333;
-  margin-bottom: 30rpx;
-  padding-bottom: 15rpx;
-  border-bottom: 2rpx solid #f0f0f0;
-}
-
+/* 英雄分类 */
 .hero-category {
   width: 100%;
   margin-bottom: 25rpx;
@@ -106,6 +34,7 @@
   border-radius: 8rpx;
 }
 
+/* 英雄网格 */
 .hero-grid {
   display: flex;
   flex-wrap: wrap;
@@ -145,12 +74,7 @@
 .hero-avatar {
   width: 100rpx;
   height: 100rpx;
-}
-
-.hero-avatar-text {
-  color: #333333;
-  font-size: 40rpx;
-  font-weight: bold;
+  object-fit: cover;
 }
 
 .hero-name {

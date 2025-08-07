@@ -41,8 +41,13 @@
         <!-- 方案信息 -->
         <view class="plan-info">
           <view class="plan-header">
-            <text class="hero-name">{{item.heroName || '未知英雄'}}</text>
             <text class="plan-title">{{item.title || item.heroName + '方案'}}</text>
+            <text class="hero-name">{{item.heroName || '未知英雄'}}</text>
+          </view>
+          
+          <!-- 方案描述 -->
+          <view class="plan-description" wx:if="{{item.description}}">
+            <text class="description-text">{{item.description}}</text>
           </view>
           
           <!-- 重新布局：点赞收藏作者时间都在同一行 -->

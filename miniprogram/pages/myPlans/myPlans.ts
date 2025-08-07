@@ -2,12 +2,18 @@
 Page({
   data: {
     userPlans: [],
+    allUserPlans: [], // 存储所有方案数据
     loading: true,
     page: 1,
     pageSize: 10,
     hasMore: true,
+    total: 0,
     emptyIcon: '/images/icons/empty-favorites.png',
-    isDevelopment: false // 添加环境标识
+    isDevelopment: false, // 添加环境标识
+    // 英雄分类相关
+    heroCategories: [] as any[], // 英雄分类列表
+    selectedHero: 'all', // 当前选中的英雄，'all'表示全部
+    showHeroSelector: false // 是否显示英雄选择器
   },
 
   onLoad() {
@@ -96,9 +102,14 @@ Page({
           
           this.setData({
             userPlans: newPlans,
+            allUserPlans: newPlans, // 保存所有数据
+            total: newPlans.length,
             hasMore: res.result.data.hasMore,
             loading: false
           });
+          
+          // 生成英雄分类
+          this.generateHeroCategories();
         } else {
           console.error('getUserPlans云函数返回失败:', res);
           wx.showToast({
@@ -267,5 +278,71 @@ Page({
   // 图片加载错误处理
   onImageError() {
     console.log('图片加载失败，使用默认图片');
+  },
+
+  // 切换英雄选择器显示状态
+  toggleHeroSelector() {
+    this.setData({
+      showHeroSelector: !this.data.showHeroSelector
+    });
+  },
+
+  // 选择英雄分类
+  selectHero(e: any) {
+    const heroName = e.currentTarget.dataset.hero;
+    this.setData({
+      selectedHero: heroName,
+      showHeroSelector: false
+    });
+    this.filterPlansByHero();
+  },
+
+  // 根据英雄筛选方案
+  filterPlansByHero() {
+    const { allUserPlans, selectedHero } = this.data;
+    
+    if (selectedHero === 'all') {
+      // 显示全部方案
+      this.setData({
+        userPlans: allUserPlans,
+        total: allUserPlans.length
+      });
+    } else {
+      // 筛选指定英雄的方案
+      const filteredPlans = allUserPlans.filter(plan => plan.heroName === selectedHero);
+      this.setData({
+        userPlans: filteredPlans,
+        total: filteredPlans.length
+      });
+    }
+  },
+
+  // 生成英雄分类列表
+  generateHeroCategories() {
+    const { allUserPlans } = this.data;
+    const heroMap = new Map();
+    
+    // 统计每个英雄的方案数量
+    allUserPlans.forEach(plan => {
+      const heroName = plan.heroName || '未知英雄';
+      if (heroMap.has(heroName)) {
+        heroMap.set(heroName, heroMap.get(heroName) + 1);
+      } else {
+        heroMap.set(heroName, 1);
+      }
+    });
+    
+    // 转换为数组格式
+    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
+      heroName,
+      count
+    }));
+    
+    // 按方案数量排序
+    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
+    
+    this.setData({
+      heroCategories
+    });
   }
 }); 

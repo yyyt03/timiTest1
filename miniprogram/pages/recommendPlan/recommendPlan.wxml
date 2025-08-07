@@ -11,11 +11,13 @@
     </view>
   </view>
 
+
+
   <!-- 英雄筛选器 -->
   <view class="hero-filter-section">
     <view class="hero-filter-header" bindtap="toggleHeroFilter">
       <view class="hero-filter-display">
-        <image class="hero-filter-avatar" src="{{selectedHeroInfo.avatar}}" mode="aspectFit"></image>
+        <image class="hero-filter-avatar" src="{{selectedHeroInfo.avatar}}" mode="aspectFit" wx:if="{{selectedHeroInfo.avatar}}"></image>
         <text class="hero-filter-text">{{selectedHeroInfo.name}}</text>
       </view>
       <view class="hero-filter-arrow {{showHeroFilter ? 'up' : 'down'}}">▼</view>
@@ -25,7 +27,6 @@
     <view class="hero-dropdown {{showHeroFilter ? 'show' : ''}}" wx:if="{{showHeroFilter}}">
       <view class="hero-dropdown-item {{selectedHero === 'all' ? 'active' : ''}}" 
             bindtap="filterByHero" data-hero="all">
-        <image class="hero-dropdown-avatar" src="/images_backup/heroes/mingshiyin.jpg" mode="aspectFit"></image>
         <text>全部英雄</text>
       </view>
       <view class="hero-dropdown-item {{selectedHero === item.heroId ? 'active' : ''}}" 
@@ -56,12 +57,12 @@
             <view class="plan-hero-name">{{item.heroName}}</view>
           </view>
           <view class="plan-stats">
-            <view class="stat-item">
-              <image class="stat-icon" src="{{likeOutlineIcon}}" mode="aspectFit"></image>
+            <view class="stat-item" bindtap="toggleLike" data-plan="{{item}}" data-index="{{index}}">
+              <image class="stat-icon" src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" mode="aspectFit"></image>
               <text>{{item.likeCount}}</text>
             </view>
-            <view class="stat-item">
-              <image class="stat-icon" src="{{favoriteOutlineIcon}}" mode="aspectFit"></image>
+            <view class="stat-item" bindtap="toggleFavorite" data-plan="{{item}}" data-index="{{index}}">
+              <image class="stat-icon" src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" mode="aspectFit"></image>
               <text>{{item.favoriteCount}}</text>
             </view>
           </view>
@@ -80,8 +81,7 @@
         <!-- 方案底部 -->
         <view class="plan-footer">
           <view class="plan-author">
-            <image class="author-avatar" src="{{item.authorAvatar}}" mode="aspectFit"></image>
-            <text>{{item.creatorName}}</text>
+            <text class="author-text">作者：{{item.creatorName}}</text>
           </view>
           <view class="plan-time">{{item.createTime}}</view>
         </view>

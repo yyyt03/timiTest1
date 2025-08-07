@@ -1,4 +1,5 @@
 import { getFavoriteIcon, getLikeIcon } from '../../utils/iconManager';
+import { getHeroByName } from '../../data/localHeroData';
 
 // 英雄方案页面
 Page({
@@ -33,55 +34,23 @@ Page({
         title: options.hero + '的方案'
       });
       // 获取英雄头像
-      this.getHeroAvatarFromCloud(options.hero);
+      this.getHeroAvatarFromLocal(options.hero);
       this.loadPlans();
     }
   },
 
-  // 从云存储获取英雄头像
-  async getHeroAvatarFromCloud(heroName: string) {
+  // 从本地数据获取英雄头像
+  getHeroAvatarFromLocal(heroName: string) {
     try {
-      // 调用云函数获取英雄列表
-      const result = await wx.cloud.callFunction({
-        name: 'getHeroList',
-        data: {}
-      }) as any;
-
-      if (result.result && result.result.success && result.result.data) {
-        // 查找对应英雄
-        let targetHero = null;
-        Object.values(result.result.data.categories).forEach((cat: any) => {
-          cat.heroes.forEach((hero: any) => {
-            if (hero.name === heroName) {
-              targetHero = hero;
-            }
-          });
+      // 从本地数据获取英雄信息
+      const hero = getHeroByName(heroName);
+      
+      if (hero && hero.avatar) {
+        this.setData({
+          heroAvatar: hero.avatar
         });
-
-        if (targetHero && (targetHero as any).avatar) {
-          // 获取临时URL
-          const tempURLs = await wx.cloud.getTempFileURL({
-            fileList: [(targetHero as any).avatar]
-          });
-
-          if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
-            this.setData({
-              heroAvatar: tempURLs.fileList[0].tempFileURL
-            });
-          } else {
-            // 获取失败，使用默认头像
-            this.setData({
-              heroAvatar: '../images/unused/default-avatar.png'
-            });
-          }
-        } else {
-          // 未找到英雄，使用默认头像
-          this.setData({
-            heroAvatar: '../images/unused/default-avatar.png'
-          });
-        }
       } else {
-        // 云函数调用失败，使用默认头像
+        // 未找到英雄，使用默认头像
         this.setData({
           heroAvatar: '../images/unused/default-avatar.png'
         });
@@ -125,7 +94,7 @@ Page({
         });
         
         // 获取英雄头像
-        this.getHeroAvatarFromCloud(plan.heroName);
+        this.getHeroAvatarFromLocal(plan.heroName);
       } else {
         wx.showToast({
           title: (result.result && result.result.message) || '加载方案详情失败',

@@ -1,4 +1,6 @@
 import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from '../../utils/iconManager';
+import { getAllHeroes, getHeroById } from '../../data/localHeroData';
+import { getTempFileURLs } from '../../utils/cloud';
 
 // 推荐方案页面
 Page({
@@ -20,173 +22,127 @@ Page({
     loading: false,
     loadingMore: false,
     hasMore: true,
-    
-    // 精选推荐方案（轮播）
-    featuredPlans: [
-      {
-        _id: 'plan_001',
-        heroId: 'mingshiyin',
-        heroName: '飞天流小明',
-        heroAvatar: '/images_backup/heroes/mingshiyin.jpg',
-        title: '飞天流小明 - 主二副三流',
-        description: '主二副三,12级的时候能完全体,前期很牢,后期很强。',
-        likeCount: 128,
-        favoriteCount: 56,
-        views: 2340,
-        creatorName: '诸神',
-        authorAvatar: '/images/头像.png'
-      },
-      {
-        _id: 'plan_002',
-        heroId: 'zhugeliang',
-        heroName: '诸葛亮',
-        heroAvatar: '/images_backup/heroes/zhugeliang.jpg',
-        title: '诸葛亮 - 法师核心流',
-        description: '以法师为核心的打法，注重技能连招和团战输出。',
-        likeCount: 89,
-        favoriteCount: 34,
-        views: 1567,
-        creatorName: '策略大师',
-        authorAvatar: '/images/头像.png'
-      },
-      {
-        _id: 'plan_003',
-        heroId: 'caocao',
-        heroName: '曹操',
-        heroAvatar: '/images_backup/heroes/caocao.jpg',
-        title: '曹操 - 战士坦克流',
-        description: '战士坦克双修，既有输出又有生存能力。',
-        likeCount: 67,
-        favoriteCount: 23,
-        views: 892,
-        creatorName: '王者归来',
-        authorAvatar: '/images/头像.png'
-      }
-    ],
+    page: 1,
+    pageSize: 10,
     
     // 英雄列表（用于筛选）
-    heroList: [
-      { heroId: 'mingshiyin', name: '明世隐', avatar: '/images_backup/heroes/mingshiyin.jpg' },
-      { heroId: 'zhugeliang', name: '诸葛亮', avatar: '/images_backup/heroes/zhugeliang.jpg' },
-      { heroId: 'caocao', name: '曹操', avatar: '/images_backup/heroes/caocao.jpg' },
-      { heroId: 'liubei', name: '刘备', avatar: '/images_backup/heroes/liubei.jpg' },
-      { heroId: 'guanyu', name: '关羽', avatar: '/images_backup/heroes/guanyu.jpg' },
-      { heroId: 'zhangfei', name: '张飞', avatar: '/images_backup/heroes/zhangfei.jpg' }
-    ],
+    heroList: [],
     
     // 当前选中的英雄信息
     selectedHeroInfo: {
       heroId: 'all',
       name: '全部英雄',
-      avatar: '/images_backup/heroes/mingshiyin.jpg'
+      avatar: ''
     },
     
     // 推荐方案列表
-    recommendPlans: [
-      {
-        _id: 'plan_001',
-        heroId: 'mingshiyin',
-        heroName: '飞天流小明',
-        heroAvatar: '/images_backup/heroes/mingshiyin.jpg',
-        title: '飞天流小明 - 主二副三流',
-        description: '主二副三,12级的时候能完全体,前期很牢,后期很强。',
-        likeCount: 128,
-        favoriteCount: 56,
-        views: 2340,
-        difficulty: '中等',
-        style: '辅助流',
-        role: '辅助',
-        creatorName: '诸神',
-        authorAvatar: '/images/头像.png',
-        createTime: '2025-01-27'
-      },
-      {
-        _id: 'plan_002',
-        heroId: 'zhugeliang',
-        heroName: '诸葛亮',
-        heroAvatar: '/images_backup/heroes/zhugeliang.jpg',
-        title: '诸葛亮 - 法师核心流',
-        description: '以法师为核心的打法，注重技能连招和团战输出。',
-        likeCount: 89,
-        favoriteCount: 34,
-        views: 1567,
-        difficulty: '困难',
-        style: '法师流',
-        role: '法师',
-        creatorName: '策略大师',
-        authorAvatar: '/images/头像.png',
-        createTime: '2025-01-26'
-      },
-      {
-        _id: 'plan_003',
-        heroId: 'caocao',
-        heroName: '曹操',
-        heroAvatar: '/images_backup/heroes/caocao.jpg',
-        title: '曹操 - 战士坦克流',
-        description: '战士坦克双修，既有输出又有生存能力。',
-        likeCount: 67,
-        favoriteCount: 23,
-        views: 892,
-        difficulty: '简单',
-        style: '战士流',
-        role: '战士',
-        creatorName: '王者归来',
-        authorAvatar: '/images/头像.png',
-        createTime: '2025-01-25'
-      },
-      {
-        _id: 'plan_004',
-        heroId: 'liubei',
-        heroName: '刘备',
-        heroAvatar: '/images_backup/heroes/liubei.jpg',
-        title: '刘备 - 团队领袖流',
-        description: '以团队协作为核心，注重保护和支援队友。',
-        likeCount: 45,
-        favoriteCount: 18,
-        views: 567,
-        difficulty: '中等',
-        style: '团队流',
-        role: '辅助',
-        creatorName: '团队之星',
-        authorAvatar: '/images/头像.png',
-        createTime: '2025-01-24'
-      },
-      {
-        _id: 'plan_005',
-        heroId: 'guanyu',
-        heroName: '关羽',
-        heroAvatar: '/images_backup/heroes/guanyu.jpg',
-        title: '关羽 - 爆发输出流',
-        description: '高爆发输出，适合快速击杀敌方核心。',
-        likeCount: 78,
-        favoriteCount: 29,
-        views: 1234,
-        difficulty: '困难',
-        style: '爆发流',
-        role: '战士',
-        creatorName: '战神',
-        authorAvatar: '/images/头像.png',
-        createTime: '2025-01-23'
-      }
-    ]
+    recommendPlans: []
   },
  
   // 生命周期函数--监听页面加载
   onLoad() {
     console.log('推荐方案页面加载');
-    // 这里可以调用云函数获取真实数据
-    // this.loadRecommendPlans();
+    this.initHeroList();
+    this.loadRecommendPlans();
+  },
+
+  // 初始化英雄列表 - 基于已有方案
+  async initHeroList() {
+    try {
+      // 获取所有推荐方案，从中提取英雄列表
+      const result = await wx.cloud.callFunction({
+        name: 'getRecommendPlans',
+        data: {
+          filter: 'featured',
+          page: 1,
+          pageSize: 100 // 获取更多数据以提取英雄列表
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const { plans } = result.result.data;
+        
+        // 从方案中提取唯一的英雄ID
+        const heroIds = Array.from(new Set(plans.map((plan: any) => plan.heroId)));
+        
+        // 从本地数据获取这些英雄的详细信息
+        const heroList = heroIds.map((heroId: string) => {
+          const hero = getHeroById(heroId);
+          return hero ? {
+            heroId: hero._id,
+            name: hero.name,
+            avatar: hero.avatar
+          } : null;
+        }).filter(hero => hero !== null);
+        
+        // 处理英雄头像URL
+        const avatarUrls = heroList.map(hero => hero.avatar).filter(avatar => avatar);
+        let tempUrls: string[] = [];
+        if (avatarUrls.length > 0) {
+          try {
+            tempUrls = await getTempFileURLs(avatarUrls);
+          } catch (error) {
+            console.error('获取英雄头像临时URL失败:', error);
+            tempUrls = avatarUrls.map(() => '');
+          }
+        }
+        
+        // 更新英雄列表的头像URL
+        const processedHeroList = heroList.map((hero, index) => ({
+          ...hero,
+          avatar: tempUrls[index] || hero.avatar
+        }));
+        
+        this.setData({
+          heroList: processedHeroList
+        });
+        
+        console.log('基于方案的英雄列表初始化完成，共', heroList.length, '个英雄');
+      }
+    } catch (error) {
+      console.error('初始化英雄列表失败:', error);
+      // 如果失败，使用默认的英雄列表
+      const defaultHeroes = getAllHeroes().slice(0, 10); // 只取前10个
+      const heroList = defaultHeroes.map(hero => ({
+        heroId: hero._id,
+        name: hero.name,
+        avatar: hero.avatar
+      }));
+      
+      // 处理默认英雄列表的头像URL
+      const avatarUrls = heroList.map(hero => hero.avatar).filter(avatar => avatar);
+      let tempUrls: string[] = [];
+      if (avatarUrls.length > 0) {
+        try {
+          tempUrls = await getTempFileURLs(avatarUrls);
+        } catch (error) {
+          console.error('获取默认英雄头像临时URL失败:', error);
+          tempUrls = avatarUrls.map(() => '');
+        }
+      }
+      
+      // 更新默认英雄列表的头像URL
+      const processedHeroList = heroList.map((hero, index) => ({
+        ...hero,
+        avatar: tempUrls[index] || hero.avatar
+      }));
+      
+      this.setData({
+        heroList: processedHeroList
+      });
+    }
   },
 
   // 切换筛选类型
-  switchFilter(e: any) {
+  async switchFilter(e: any) {
     const type = e.currentTarget.dataset.type;
     this.setData({
-      currentFilter: type
+      currentFilter: type,
+      page: 1 // 重置页码
     });
     console.log('切换筛选类型:', type);
-    // 这里可以根据筛选类型重新加载数据
-    // this.loadRecommendPlans();
+    // 重新加载数据
+    await this.loadRecommendPlans();
   },
 
   // 切换英雄筛选器显示状态
@@ -197,7 +153,7 @@ Page({
   },
 
   // 按英雄筛选
-  filterByHero(e: any) {
+  async filterByHero(e: any) {
     const hero = e.currentTarget.dataset.hero;
     let selectedHeroInfo;
     
@@ -205,35 +161,39 @@ Page({
       selectedHeroInfo = {
         heroId: 'all',
         name: '全部英雄',
-        avatar: '/images_backup/heroes/mingshiyin.jpg'
+        avatar: ''
       };
     } else {
       const heroItem = this.data.heroList.find(item => item.heroId === hero);
-      selectedHeroInfo = {
-        heroId: hero,
-        name: heroItem ? heroItem.name : '未知英雄',
-        avatar: heroItem ? heroItem.avatar : '/images_backup/heroes/mingshiyin.jpg'
-      };
+      if (heroItem) {
+        selectedHeroInfo = {
+          heroId: hero,
+          name: heroItem.name,
+          avatar: heroItem.avatar
+        };
+      } else {
+        // 如果没找到，尝试从本地数据获取
+        const localHero = getHeroById(hero);
+        selectedHeroInfo = {
+          heroId: hero,
+          name: localHero ? localHero.name : '未知英雄',
+          avatar: localHero ? localHero.avatar : ''
+        };
+      }
     }
     
     this.setData({
       selectedHero: hero,
       selectedHeroInfo: selectedHeroInfo,
-      showHeroFilter: false
+      showHeroFilter: false,
+      page: 1 // 重置页码
     });
-    console.log('按英雄筛选:', hero);
-    // 这里可以根据英雄筛选重新加载数据
-    // this.loadRecommendPlans();
+    console.log('按英雄筛选:', hero, selectedHeroInfo);
+    // 重新加载数据
+    await this.loadRecommendPlans();
   },
 
-  // 查看精选方案
-  viewFeaturedPlan(e: any) {
-    const plan = e.currentTarget.dataset.plan;
-    console.log('查看精选方案:', plan);
-    wx.navigateTo({
-      url: `/pages/planDetail/planDetail?id=${plan._id}`
-    });
-  },
+
 
   // 查看方案详情
   viewPlan(e: any) {
@@ -244,44 +204,255 @@ Page({
     });
   },
 
-  // 加载推荐方案数据
-  loadRecommendPlans() {
-    this.setData({ loading: true });
+  // 切换点赞状态
+  async toggleLike(e: any) {
+    // 阻止事件冒泡
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    const plan = e.currentTarget.dataset.plan;
+    const planIndex = e.currentTarget.dataset.index;
+    const isLiked = !plan.isLiked;
     
-    // 模拟云函数调用
-    setTimeout(() => {
-      this.setData({ 
-        loading: false,
-        // 这里可以设置从云函数获取的数据
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleLike',
+        data: {
+          planId: plan._id,
+          action: isLiked ? 'add' : 'remove'
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        // 更新本地数据
+        const updatedPlans = [...this.data.recommendPlans];
+        updatedPlans[planIndex] = {
+          ...updatedPlans[planIndex],
+          isLiked: isLiked,
+          likeCount: isLiked ? updatedPlans[planIndex].likeCount + 1 : updatedPlans[planIndex].likeCount - 1
+        };
+        
+        this.setData({
+          recommendPlans: updatedPlans
+        });
+        
+        wx.showToast({
+          title: isLiked ? '点赞成功' : '取消点赞',
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: '操作失败，请重试',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
       });
-    }, 1000);
+    }
+  },
+
+  // 切换收藏状态
+  async toggleFavorite(e: any) {
+    // 阻止事件冒泡
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    const plan = e.currentTarget.dataset.plan;
+    const planIndex = e.currentTarget.dataset.index;
+    const isFavorited = !plan.isFavorited;
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'toggleFavorite',
+        data: {
+          planId: plan._id,
+          action: isFavorited ? 'add' : 'remove'
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        // 更新本地数据
+        const updatedPlans = [...this.data.recommendPlans];
+        updatedPlans[planIndex] = {
+          ...updatedPlans[planIndex],
+          isFavorited: isFavorited,
+          favoriteCount: isFavorited ? updatedPlans[planIndex].favoriteCount + 1 : updatedPlans[planIndex].favoriteCount - 1
+        };
+        
+        this.setData({
+          recommendPlans: updatedPlans
+        });
+        
+        wx.showToast({
+          title: isFavorited ? '收藏成功' : '取消收藏',
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: '操作失败，请重试',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 加载推荐方案数据
+  async loadRecommendPlans(isLoadMore = false) {
+    if (isLoadMore) {
+      if (!this.data.hasMore || this.data.loadingMore) {
+        return;
+      }
+      this.setData({ loadingMore: true });
+    } else {
+      this.setData({ loading: true });
+    }
+
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getRecommendPlans',
+        data: {
+          filter: this.data.currentFilter,
+          heroId: this.data.selectedHero === 'all' ? null : this.data.selectedHero,
+          page: isLoadMore ? this.data.page + 1 : 1,
+          pageSize: this.data.pageSize
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const { plans, total, page, hasMore } = result.result.data;
+        
+        // 处理方案数据，添加英雄头像
+        const processedPlans = await this.processPlansWithAvatars(plans);
+        
+        // 格式化时间
+        const formattedPlans = processedPlans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+
+        this.setData({
+          recommendPlans: isLoadMore ? [...this.data.recommendPlans, ...formattedPlans] : formattedPlans,
+          page: page,
+          hasMore: hasMore,
+          loading: false,
+          loadingMore: false
+        });
+      } else {
+        wx.showToast({
+          title: (result.result && result.result.message) || '加载失败',
+          icon: 'none'
+        });
+        this.setData({
+          loading: false,
+          loadingMore: false
+        });
+      }
+    } catch (error) {
+      console.error('加载推荐方案失败:', error);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+      this.setData({
+        loading: false,
+        loadingMore: false
+      });
+    }
+  },
+
+  // 处理方案数据，添加英雄头像
+  async processPlansWithAvatars(plans: any[]) {
+    // 收集所有需要处理的头像URL
+    const avatarUrls: string[] = [];
+    const heroMap = new Map();
+    
+    plans.forEach(plan => {
+      const hero = getHeroById(plan.heroId);
+      if (hero && hero.avatar) {
+        avatarUrls.push(hero.avatar);
+        heroMap.set(plan._id, hero.avatar);
+      }
+    });
+    
+    // 批量获取临时URL
+    let tempUrls: string[] = [];
+    if (avatarUrls.length > 0) {
+      try {
+        tempUrls = await getTempFileURLs(avatarUrls);
+      } catch (error) {
+        console.error('获取头像临时URL失败:', error);
+        tempUrls = avatarUrls.map(() => '');
+      }
+    }
+    
+    // 创建URL映射
+    const urlMap = new Map();
+    avatarUrls.forEach((originalUrl, index) => {
+      urlMap.set(originalUrl, tempUrls[index] || originalUrl);
+    });
+    
+    // 处理方案数据
+    return plans.map(plan => {
+      const hero = getHeroById(plan.heroId);
+      const originalAvatar = hero ? hero.avatar : '';
+      const heroAvatar = urlMap.get(originalAvatar) || originalAvatar;
+      
+      return {
+        ...plan,
+        heroAvatar: heroAvatar
+      };
+    });
+  },
+
+  // 格式化时间
+  formatTime(timestamp: any) {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 60) {
+      return `${minutes}分钟前`;
+    } else if (hours < 24) {
+      return `${hours}小时前`;
+    } else if (days < 7) {
+      return `${days}天前`;
+    } else {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
   },
 
   // 加载更多数据
-  loadMorePlans() {
-    if (this.data.loadingMore || !this.data.hasMore) return;
-    
-    this.setData({ loadingMore: true });
-    
-    // 模拟加载更多
-    setTimeout(() => {
-      this.setData({ 
-        loadingMore: false,
-        hasMore: false // 模拟没有更多数据
-      });
-    }, 1000);
+  async loadMorePlans() {
+    await this.loadRecommendPlans(true);
   },
 
   // 页面相关事件处理函数--监听用户下拉动作
-  onPullDownRefresh() {
+  async onPullDownRefresh() {
     console.log('下拉刷新');
-    this.loadRecommendPlans();
+    this.setData({ page: 1 }); // 重置页码
+    await this.loadRecommendPlans();
     wx.stopPullDownRefresh();
   },
 
   // 页面上拉触底事件的处理函数
-  onReachBottom() {
+  async onReachBottom() {
     console.log('上拉加载更多');
-    this.loadMorePlans();
+    await this.loadMorePlans();
   }
 }); 

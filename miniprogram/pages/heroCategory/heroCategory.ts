@@ -16,6 +16,8 @@ Page({
         source: options.source
       });
     }
+    // 清除缓存以确保获取最新数据
+    heroCache.clearCache();
     this.getHeroList();
   },
 

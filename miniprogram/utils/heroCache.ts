@@ -1,4 +1,6 @@
 // 英雄数据缓存工具类
+import { getHeroesByCategory, getHeroById as getLocalHeroById, getHeroByName as getLocalHeroByName } from '../data/localHeroData';
+
 interface HeroCacheData {
   categories: any;
   totalHeroes: number;
@@ -9,18 +11,37 @@ interface HeroCacheData {
 interface CacheConfig {
   heroDataExpireTime: number; // 英雄数据缓存时间（毫秒）
   avatarURLExpireTime: number; // 头像URL缓存时间（毫秒）
+  useLocalData: boolean; // 是否优先使用本地数据
 }
 
 class HeroCache {
   private cacheKey = 'hero_list_cache';
   private config: CacheConfig = {
     heroDataExpireTime: 10 * 60 * 1000, // 10分钟
-    avatarURLExpireTime: 2 * 60 * 60 * 1000 // 2小时（临时URL有效期）
+    avatarURLExpireTime: 2 * 60 * 60 * 1000, // 2小时（临时URL有效期）
+    useLocalData: true // 优先使用本地数据
   };
 
   // 获取缓存数据
   getCache(): HeroCacheData | null {
     try {
+      // 如果启用本地数据，优先使用本地数据
+      if (this.config.useLocalData) {
+        console.log('使用本地英雄数据');
+        const localData = getHeroesByCategory();
+        
+        // 构建本地数据缓存格式，但需要获取头像临时URL
+        const localCache: HeroCacheData = {
+          categories: localData.categories,
+          totalHeroes: localData.totalHeroes,
+          avatarURLs: {}, // 头像URL需要从云存储获取
+          timestamp: Date.now()
+        };
+        
+        return localCache;
+      }
+      
+      // 否则使用原有缓存逻辑
       const cacheStr = wx.getStorageSync(this.cacheKey);
       if (!cacheStr) return null;
 
@@ -95,9 +116,35 @@ class HeroCache {
     this.clearCache();
   }
 
+  // 切换本地数据使用状态
+  toggleLocalData(useLocal: boolean): void {
+    this.config.useLocalData = useLocal;
+    console.log('本地数据使用状态已切换为:', useLocal);
+  }
+
+  // 获取本地数据使用状态
+  isLocalDataEnabled(): boolean {
+    return this.config.useLocalData;
+  }
+
   // 根据英雄ID查找英雄信息
   async getHeroById(heroId: string): Promise<any | null> {
     try {
+      // 如果启用本地数据，优先使用本地数据查找
+      if (this.config.useLocalData) {
+        const localHero = getLocalHeroById(heroId);
+        if (localHero) {
+          console.log('通过本地数据找到英雄:', localHero);
+          return {
+            id: localHero._id,
+            name: localHero.name,
+            avatar: localHero.avatar,
+            category: localHero.category
+          };
+        }
+      }
+      
+      // 否则使用原有缓存逻辑
       const cache = this.getCache();
       if (!cache || !cache.categories) {
         console.log('缓存中没有英雄数据');
@@ -126,6 +173,21 @@ class HeroCache {
   // 根据英雄名称查找英雄信息
   async getHeroByName(heroName: string): Promise<any | null> {
     try {
+      // 如果启用本地数据，优先使用本地数据查找
+      if (this.config.useLocalData) {
+        const localHero = getLocalHeroByName(heroName);
+        if (localHero) {
+          console.log('通过本地数据找到英雄:', localHero);
+          return {
+            id: localHero._id,
+            name: localHero.name,
+            avatar: localHero.avatar,
+            category: localHero.category
+          };
+        }
+      }
+      
+      // 否则使用原有缓存逻辑
       const cache = this.getCache();
       if (!cache || !cache.categories) {
         console.log('缓存中没有英雄数据');

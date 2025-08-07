@@ -1,6 +1,8 @@
 // 英雄分类页面
 import { getTempFileURLs } from '../../utils/cloud'
 import { heroCache } from '../../utils/heroCache'
+import { LocalDataTest } from '../../utils/localDataTest'
+import { getHeroesByCategory } from '../../data/localHeroData'
 
 Page({
   data: {
@@ -21,26 +23,71 @@ Page({
     this.getHeroList();
   },
 
-  // 获取英雄列表（优化版本）
+  // 获取英雄列表（本地化版本）
   async getHeroList() {
     const that = this;
     
     try {
       this.setData({ loading: true });
       
-      // 首先检查本地缓存
+      // 优先使用本地数据
       const cachedData = heroCache.getCache();
       if (cachedData) {
-        console.log('使用本地缓存的英雄数据');
+        console.log('使用本地英雄数据');
         
-        this.setData({
-          heroCategories: cachedData.categories,
+        // 获取本地数据
+        const localData = getHeroesByCategory();
+        const categoriesData = JSON.parse(JSON.stringify(localData.categories));
+        
+        // 批量获取所有英雄头像fileID
+        var allHeroes: any[] = [];
+        Object.values(categoriesData).forEach(function(cat: any) {
+          allHeroes = allHeroes.concat(cat.heroes);
+        });
+        
+        var fileIDs = allHeroes.map(function(hero: any) {
+          return hero.avatar;
+        }).filter(function(avatar: any) {
+          return avatar;
+        });
+        
+        // 获取临时URL
+        const tempURLs = await getTempFileURLs(fileIDs);
+        
+        // 构建头像URL映射
+        const avatarURLs: { [key: string]: string } = {};
+        let urlIdx = 0;
+        
+        Object.values(categoriesData).forEach(function(cat: any) {
+          cat.heroes.forEach(function(hero: any) {
+            if (hero.avatar) {
+              if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
+                // 使用临时URL
+                hero.avatar = tempURLs[urlIdx];
+                avatarURLs[hero.id] = tempURLs[urlIdx];
+              } else {
+                // 临时URL获取失败，使用默认图片
+                hero.avatar = '../images/unused/default-avatar.png';
+                avatarURLs[hero.id] = '../images/unused/default-avatar.png';
+              }
+            }
+            urlIdx++;
+          });
+        });
+        
+        // 缓存数据
+        heroCache.setCache(localData, avatarURLs);
+        
+        that.setData({
+          heroCategories: categoriesData,
           loading: false
         });
+        
         return;
       }
       
-      console.log('本地缓存未命中，从云函数获取数据');
+      // 如果本地数据不可用，回退到云函数
+      console.log('本地数据不可用，从云函数获取数据');
       
       // 调用云函数获取数据
       const result: any = await wx.cloud.callFunction({
@@ -145,5 +192,18 @@ Page({
         url: '../heroPlan/heroPlan?hero=' + hero.name + '&heroId=' + hero.id
       });
     }
+  },
+
+  // 测试本地化功能（开发调试用）
+  testLocalization: function() {
+    console.log('开始测试本地化功能...');
+    LocalDataTest.testLocalData();
+    LocalDataTest.generateReport();
+    
+    wx.showToast({
+      title: '测试完成，查看控制台',
+      icon: 'none',
+      duration: 2000
+    });
   }
 }); 

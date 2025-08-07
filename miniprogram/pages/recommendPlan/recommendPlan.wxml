@@ -13,27 +13,31 @@
 
 
 
-  <!-- 英雄筛选器 -->
-  <view class="hero-filter-section">
-    <view class="hero-filter-header" bindtap="toggleHeroFilter">
-      <view class="hero-filter-display">
-        <image class="hero-filter-avatar" src="{{selectedHeroInfo.avatar}}" mode="aspectFit" wx:if="{{selectedHeroInfo.avatar}}"></image>
-        <text class="hero-filter-text">{{selectedHeroInfo.name}}</text>
-      </view>
-      <view class="hero-filter-arrow {{showHeroFilter ? 'up' : 'down'}}">▼</view>
+  <!-- 英雄分类选择器 -->
+  <view class="hero-selector" wx:if="{{heroCategories.length > 0}}">
+    <view class="selector-header" bindtap="toggleHeroSelector">
+      <text class="selector-title">
+        {{selectedHero === 'all' ? '全部英雄' : selectedHero}}
+      </text>
+      <text class="selector-count">({{total}})</text>
+      <text class="selector-arrow {{showHeroSelector ? 'expanded' : ''}}">▼</text>
     </view>
     
-    <!-- 英雄下拉列表 -->
-    <view class="hero-dropdown {{showHeroFilter ? 'show' : ''}}" wx:if="{{showHeroFilter}}">
-      <view class="hero-dropdown-item {{selectedHero === 'all' ? 'active' : ''}}" 
-            bindtap="filterByHero" data-hero="all">
-        <text>全部英雄</text>
+    <!-- 英雄分类列表 -->
+    <view class="hero-list {{showHeroSelector ? 'show' : ''}}" wx:if="{{showHeroSelector}}">
+      <!-- 全部选项 -->
+      <view class="hero-item {{selectedHero === 'all' ? 'selected' : ''}}" 
+            bindtap="selectHero" data-hero="all">
+        <text class="hero-name">全部英雄</text>
+        <text class="hero-count">({{allRecommendPlans.length}})</text>
       </view>
-      <view class="hero-dropdown-item {{selectedHero === item.heroId ? 'active' : ''}}" 
-            wx:for="{{heroList}}" wx:key="heroId" 
-            bindtap="filterByHero" data-hero="{{item.heroId}}">
-        <image class="hero-dropdown-avatar" src="{{item.avatar}}" mode="aspectFit"></image>
-        <text>{{item.name}}</text>
+      
+      <!-- 英雄选项 -->
+      <view class="hero-item {{selectedHero === item.heroName ? 'selected' : ''}}" 
+            wx:for="{{heroCategories}}" wx:key="heroName"
+            bindtap="selectHero" data-hero="{{item.heroName}}">
+        <text class="hero-name">{{item.heroName}}</text>
+        <text class="hero-count">({{item.count}})</text>
       </view>
     </view>
   </view>

@@ -36,7 +36,7 @@
         <view class="card-icon favorite-icon">❤️</view>
         <view class="card-content">
           <text class="card-title">收藏方案</text>
-          <text class="card-desc">管理收藏的攻略</text>
+          <text class="card-desc">你的收藏在这</text>
         </view>
         <view class="card-arrow">→</view>
       </view>
@@ -45,8 +45,8 @@
       <view class="function-card" bindtap="goToCreatePlan">
         <view class="card-icon create-icon">✏️</view>
         <view class="card-content">
-          <text class="card-title">创作方案</text>
-          <text class="card-desc">创建个性化天赋</text>
+          <text class="card-title">方案创作</text>
+          <text class="card-desc">创建个性方案</text>
         </view>
         <view class="card-arrow">→</view>
       </view>

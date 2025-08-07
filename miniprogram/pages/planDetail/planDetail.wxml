@@ -4,7 +4,7 @@
     <view class="hero-info">
       <image class="hero-avatar" src="{{plan.heroAvatar}}" mode="aspectFit"></image>
       <view class="hero-details">
-        <text class="hero-name">{{plan.heroName}}</text>
+        <text class="hero-name">{{plan.title}}</text>
         <text class="plan-author">作者: {{plan.creatorName}}</text>
       </view>
     </view>
@@ -27,24 +27,24 @@
           </view>
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
-                         <!-- 核心技能 -->
-             <view class="skill-core" wx:if="{{plan.skillOne.core}}">
-               <view class="skill-info">
-                 <text class="skill-name">{{plan.skillOne.core.name}}</text>
-                 <text class="skill-desc">{{plan.skillOne.core.description}}</text>
-               </view>
-               <text class="skill-tag skill-tag-top">{{plan.skillOne.core.tag}}</text>
-             </view>
-             <!-- 天赋列表 -->
-             <view class="skill-talents">
-               <view class="talent-item" wx:for="{{plan.skillOne.talents}}" wx:key="index">
-                 <view class="talent-info">
-                   <text class="talent-name">{{item.name}}</text>
-                   <text class="talent-desc">{{item.description}}</text>
-                 </view>
-                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
-               </view>
-             </view>
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{plan.skillOne.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{plan.skillOne.core.name}}</text>
+                <text class="skill-desc">{{plan.skillOne.core.description}}</text>
+              </view>
+              <text class="skill-tag skill-tag-top">{{plan.skillOne.core.tag}}</text>
+            </view>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{plan.skillOne.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
+                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -58,24 +58,24 @@
           </view>
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
-                         <!-- 核心技能 -->
-             <view class="skill-core" wx:if="{{plan.skillTwo.core}}">
-               <view class="skill-info">
-                 <text class="skill-name">{{plan.skillTwo.core.name}}</text>
-                 <text class="skill-desc">{{plan.skillTwo.core.description}}</text>
-               </view>
-               <text class="skill-tag skill-tag-top">{{plan.skillTwo.core.tag}}</text>
-             </view>
-             <!-- 天赋列表 -->
-             <view class="skill-talents">
-               <view class="talent-item" wx:for="{{plan.skillTwo.talents}}" wx:key="index">
-                 <view class="talent-info">
-                   <text class="talent-name">{{item.name}}</text>
-                   <text class="talent-desc">{{item.description}}</text>
-                 </view>
-                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
-               </view>
-             </view>
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{plan.skillTwo.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{plan.skillTwo.core.name}}</text>
+                <text class="skill-desc">{{plan.skillTwo.core.description}}</text>
+              </view>
+              <text class="skill-tag skill-tag-top">{{plan.skillTwo.core.tag}}</text>
+            </view>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{plan.skillTwo.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
+                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -89,24 +89,24 @@
           </view>
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
-                         <!-- 核心技能 -->
-             <view class="skill-core" wx:if="{{plan.skillThree.core}}">
-               <view class="skill-info">
-                 <text class="skill-name">{{plan.skillThree.core.name}}</text>
-                 <text class="skill-desc">{{plan.skillThree.core.description}}</text>
-               </view>
-               <text class="skill-tag skill-tag-top">{{plan.skillThree.core.tag}}</text>
-             </view>
-             <!-- 天赋列表 -->
-             <view class="skill-talents">
-               <view class="talent-item" wx:for="{{plan.skillThree.talents}}" wx:key="index">
-                 <view class="talent-info">
-                   <text class="talent-name">{{item.name}}</text>
-                   <text class="talent-desc">{{item.description}}</text>
-                 </view>
-                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
-               </view>
-             </view>
+            <!-- 核心技能 -->
+            <view class="skill-core" wx:if="{{plan.skillThree.core}}">
+              <view class="skill-info">
+                <text class="skill-name">{{plan.skillThree.core.name}}</text>
+                <text class="skill-desc">{{plan.skillThree.core.description}}</text>
+              </view>
+              <text class="skill-tag skill-tag-top">{{plan.skillThree.core.tag}}</text>
+            </view>
+            <!-- 天赋列表 -->
+            <view class="skill-talents">
+              <view class="talent-item" wx:for="{{plan.skillThree.talents}}" wx:key="index">
+                <view class="talent-info">
+                  <text class="talent-name">{{item.name}}</text>
+                  <text class="talent-desc">{{item.description}}</text>
+                </view>
+                <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>

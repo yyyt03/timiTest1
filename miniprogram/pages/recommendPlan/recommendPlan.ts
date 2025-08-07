@@ -16,7 +16,7 @@ Page({
     // 筛选状态
     currentFilter: 'featured', // featured, latest
     selectedHero: 'all',
-    showHeroFilter: false,
+    showHeroSelector: false,
     
     // 加载状态
     loading: false,
@@ -25,15 +25,10 @@ Page({
     page: 1,
     pageSize: 10,
     
-    // 英雄列表（用于筛选）
-    heroList: [],
-    
-    // 当前选中的英雄信息
-    selectedHeroInfo: {
-      heroId: 'all',
-      name: '全部英雄',
-      avatar: ''
-    },
+    // 英雄分类相关
+    heroCategories: [] as any[], // 英雄分类列表
+    allRecommendPlans: [] as any[], // 存储所有推荐方案数据
+    total: 0,
     
     // 推荐方案列表
     recommendPlans: []
@@ -62,74 +57,19 @@ Page({
       if (result.result && result.result.success) {
         const { plans } = result.result.data;
         
-        // 从方案中提取唯一的英雄ID
-        const heroIds = Array.from(new Set(plans.map((plan: any) => plan.heroId)));
-        
-        // 从本地数据获取这些英雄的详细信息
-        const heroList = heroIds.map((heroId: string) => {
-          const hero = getHeroById(heroId);
-          return hero ? {
-            heroId: hero._id,
-            name: hero.name,
-            avatar: hero.avatar
-          } : null;
-        }).filter(hero => hero !== null);
-        
-        // 处理英雄头像URL
-        const avatarUrls = heroList.map(hero => hero.avatar).filter(avatar => avatar);
-        let tempUrls: string[] = [];
-        if (avatarUrls.length > 0) {
-          try {
-            tempUrls = await getTempFileURLs(avatarUrls);
-          } catch (error) {
-            console.error('获取英雄头像临时URL失败:', error);
-            tempUrls = avatarUrls.map(() => '');
-          }
-        }
-        
-        // 更新英雄列表的头像URL
-        const processedHeroList = heroList.map((hero, index) => ({
-          ...hero,
-          avatar: tempUrls[index] || hero.avatar
-        }));
-        
+        // 保存所有方案数据用于分类
         this.setData({
-          heroList: processedHeroList
+          allRecommendPlans: plans,
+          total: plans.length
         });
         
-        console.log('基于方案的英雄列表初始化完成，共', heroList.length, '个英雄');
+        // 生成英雄分类
+        this.generateHeroCategories();
+        
+        console.log('基于方案的英雄分类初始化完成');
       }
     } catch (error) {
       console.error('初始化英雄列表失败:', error);
-      // 如果失败，使用默认的英雄列表
-      const defaultHeroes = getAllHeroes().slice(0, 10); // 只取前10个
-      const heroList = defaultHeroes.map(hero => ({
-        heroId: hero._id,
-        name: hero.name,
-        avatar: hero.avatar
-      }));
-      
-      // 处理默认英雄列表的头像URL
-      const avatarUrls = heroList.map(hero => hero.avatar).filter(avatar => avatar);
-      let tempUrls: string[] = [];
-      if (avatarUrls.length > 0) {
-        try {
-          tempUrls = await getTempFileURLs(avatarUrls);
-        } catch (error) {
-          console.error('获取默认英雄头像临时URL失败:', error);
-          tempUrls = avatarUrls.map(() => '');
-        }
-      }
-      
-      // 更新默认英雄列表的头像URL
-      const processedHeroList = heroList.map((hero, index) => ({
-        ...hero,
-        avatar: tempUrls[index] || hero.avatar
-      }));
-      
-      this.setData({
-        heroList: processedHeroList
-      });
     }
   },
 
@@ -145,52 +85,70 @@ Page({
     await this.loadRecommendPlans();
   },
 
-  // 切换英雄筛选器显示状态
-  toggleHeroFilter() {
+  // 切换英雄选择器显示状态
+  toggleHeroSelector() {
     this.setData({
-      showHeroFilter: !this.data.showHeroFilter
+      showHeroSelector: !this.data.showHeroSelector
     });
   },
 
-  // 按英雄筛选
-  async filterByHero(e: any) {
-    const hero = e.currentTarget.dataset.hero;
-    let selectedHeroInfo;
+  // 选择英雄分类
+  selectHero(e: any) {
+    const heroName = e.currentTarget.dataset.hero;
+    this.setData({
+      selectedHero: heroName,
+      showHeroSelector: false
+    });
+    this.filterRecommendPlansByHero();
+  },
+
+  // 根据英雄筛选推荐方案
+  filterRecommendPlansByHero() {
+    const { allRecommendPlans, selectedHero } = this.data;
     
-    if (hero === 'all') {
-      selectedHeroInfo = {
-        heroId: 'all',
-        name: '全部英雄',
-        avatar: ''
-      };
+    if (selectedHero === 'all') {
+      // 显示全部推荐方案
+      this.setData({
+        recommendPlans: allRecommendPlans,
+        total: allRecommendPlans.length
+      });
     } else {
-      const heroItem = this.data.heroList.find(item => item.heroId === hero);
-      if (heroItem) {
-        selectedHeroInfo = {
-          heroId: hero,
-          name: heroItem.name,
-          avatar: heroItem.avatar
-        };
-      } else {
-        // 如果没找到，尝试从本地数据获取
-        const localHero = getHeroById(hero);
-        selectedHeroInfo = {
-          heroId: hero,
-          name: localHero ? localHero.name : '未知英雄',
-          avatar: localHero ? localHero.avatar : ''
-        };
-      }
+      // 筛选指定英雄的推荐方案
+      const filteredPlans = allRecommendPlans.filter(plan => plan.heroName === selectedHero);
+      this.setData({
+        recommendPlans: filteredPlans,
+        total: filteredPlans.length
+      });
     }
+  },
+
+  // 生成英雄分类列表
+  generateHeroCategories() {
+    const { allRecommendPlans } = this.data;
+    const heroMap = new Map();
+    
+    // 统计每个英雄的方案数量
+    allRecommendPlans.forEach(plan => {
+      const heroName = plan.heroName || '未知英雄';
+      if (heroMap.has(heroName)) {
+        heroMap.set(heroName, heroMap.get(heroName) + 1);
+      } else {
+        heroMap.set(heroName, 1);
+      }
+    });
+    
+    // 转换为数组格式
+    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
+      heroName,
+      count
+    }));
+    
+    // 按方案数量排序
+    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
     
     this.setData({
-      selectedHero: hero,
-      selectedHeroInfo: selectedHeroInfo,
-      showHeroFilter: false,
-      page: 1 // 重置页码
+      heroCategories
     });
-    console.log('按英雄筛选:', hero, selectedHeroInfo);
-    // 重新加载数据
-    await this.loadRecommendPlans();
   },
 
 
@@ -455,4 +413,4 @@ Page({
     console.log('上拉加载更多');
     await this.loadMorePlans();
   }
-}); 
+});

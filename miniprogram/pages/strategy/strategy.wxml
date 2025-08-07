@@ -27,8 +27,8 @@
       <view class="function-card" bindtap="goToRecommendPlan">
         <view class="card-icon recommend-icon">📚</view>
         <view class="card-content">
-          <text class="card-title">推荐方案</text>
-          <text class="card-desc">精选英雄攻略</text>
+          <text class="card-title">全部方案</text>
+          <text class="card-desc">已有方案展示</text>
         </view>
         <view class="card-arrow">→</view>
       </view>
@@ -38,7 +38,7 @@
         <view class="card-icon hero-icon">⚔️</view>
         <view class="card-content">
           <text class="card-title">英雄分类</text>
-          <text class="card-desc">按分类浏览英雄</text>
+          <text class="card-desc">按分类浏览</text>
         </view>
         <view class="card-arrow">→</view>
       </view>
@@ -48,7 +48,7 @@
         <view class="card-icon beta-icon">🔬</view>
         <view class="card-content">
           <text class="card-title">体验服方案</text>
-          <text class="card-desc">抢先体验新内容</text>
+          <text class="card-desc">暂无</text>
         </view>
         <view class="card-arrow">→</view>
       </view>
@@ -58,7 +58,7 @@
         <view class="card-icon create-icon">✏️</view>
         <view class="card-content">
           <text class="card-title">方案创作</text>
-          <text class="card-desc">创建个性化方案</text>
+          <text class="card-desc">创建个性方案</text>
         </view>
         <view class="card-arrow">→</view>
       </view>

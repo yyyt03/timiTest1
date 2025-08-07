@@ -126,29 +126,31 @@
 
 .plan-stats {
   display: flex;
-  gap: 24rpx;
+  gap: 32rpx;
 }
 
 .plan-stats .stat-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  font-size: 26rpx;
+  gap: 12rpx;
+  font-size: 28rpx;
   color: #666;
-  padding: 8rpx 12rpx;
-  border-radius: 16rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 20rpx;
   transition: all 0.3s ease;
   background: rgba(102, 126, 234, 0.05);
+  border: 2rpx solid rgba(102, 126, 234, 0.1);
 }
 
 .plan-stats .stat-item:active {
   background: rgba(102, 126, 234, 0.1);
   transform: scale(0.95);
+  border-color: rgba(102, 126, 234, 0.2);
 }
 
 .stat-icon {
-  width: 32rpx;
-  height: 32rpx;
+  width: 52rpx;
+  height: 52rpx;
 }
 
 .plan-description {

@@ -14,6 +14,8 @@ exports.main = async function(event, context) {
     const { 
       filter = 'featured', // featured: 精选方案, latest: 最新方案
       heroId = null, // 可选的英雄筛选
+      hero = null, // 英雄名称筛选
+      isBetaPlan = false, // 是否为体验服方案筛选
       page = 1, 
       pageSize = 10 
     } = event;
@@ -35,6 +37,16 @@ exports.main = async function(event, context) {
     // 如果指定了英雄ID，添加英雄筛选条件
     if (heroId && heroId !== 'all') {
       whereCondition.heroId = heroId;
+    }
+    
+    // 如果指定了英雄名称，添加英雄名称筛选条件
+    if (hero && hero !== 'all') {
+      whereCondition.heroName = hero;
+    }
+    
+    // 如果指定了体验服筛选条件，添加体验服筛选
+    if (isBetaPlan !== undefined) {
+      whereCondition.isBetaPlan = isBetaPlan;
     }
     
     // 根据筛选类型设置排序

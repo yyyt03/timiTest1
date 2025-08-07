@@ -138,7 +138,7 @@ Page({
   // 跳转到创作方案页面
   goToCreatePlan() {
     wx.navigateTo({
-      url: '../createPlan/createPlan'
+      url: '../heroCategory/heroCategory'
     });
   },
 

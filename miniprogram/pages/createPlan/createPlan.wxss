@@ -98,6 +98,64 @@
   color: #666666;
 }
 
+/* 体验服选项样式 */
+.beta-option-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+.beta-option-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.beta-option-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15rpx;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2rpx solid #dee2e6;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.beta-option-item.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #5a6fd8;
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+}
+
+.beta-option-item:active {
+  transform: scale(0.98);
+}
+
+.beta-option-icon {
+  font-size: 32rpx;
+  width: 40rpx;
+  text-align: center;
+}
+
+.beta-option-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.beta-option-item.selected .beta-option-text {
+  color: #ffffff;
+}
+
+.beta-option-desc {
+  font-size: 24rpx;
+  color: #666666;
+  padding: 0 20rpx;
+  line-height: 1.4;
+}
 /* 技能区域 */
 .skill-section {
   margin-bottom: 25rpx;

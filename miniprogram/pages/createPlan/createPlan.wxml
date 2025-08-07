@@ -227,7 +227,26 @@
 
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
-      <view class="step-title">第六步：作者信息</view>
+      <view class="step-title">第六步：体验服选项</view>
+      <view class="beta-option-container">
+        <view class="beta-option-row">
+          <view class="beta-option-item {{isBetaPlan ? 'selected' : ''}}" bindtap="selectBetaOption" data-value="true">
+            <view class="beta-option-icon">{{isBetaPlan ? '✅' : '⭕'}}</view>
+            <view class="beta-option-text">是</view>
+          </view>
+          <view class="beta-option-item {{!isBetaPlan ? 'selected' : ''}}" bindtap="selectBetaOption" data-value="false">
+            <view class="beta-option-icon">{{!isBetaPlan ? '✅' : '⭕'}}</view>
+            <view class="beta-option-text">否</view>
+          </view>
+        </view>
+        <view class="beta-option-desc">体验服方案将显示在体验服方案页面中</view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:if="{{selectedHero}}">
+    <view class="step-container">
+      <view class="step-title">第七步：作者信息</view>
       <input class="author-input" placeholder="请输入您的昵称或游戏ID" value="{{authorName}}" bindinput="onAuthorInput"></input>
     </view>
   </block>

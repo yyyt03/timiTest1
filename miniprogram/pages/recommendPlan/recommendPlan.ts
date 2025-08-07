@@ -172,6 +172,21 @@ Page({
     const planIndex = e.currentTarget.dataset.index;
     const isLiked = !plan.isLiked;
     
+    // 立即更新本地状态，提升响应速度
+    const updatedPlans = [...this.data.recommendPlans];
+    const currentLikeCount = updatedPlans[planIndex].likeCount || 0;
+    
+    // 立即切换状态
+    updatedPlans[planIndex] = {
+      ...updatedPlans[planIndex],
+      isLiked: isLiked,
+      likeCount: isLiked ? currentLikeCount + 1 : currentLikeCount - 1
+    };
+    
+    this.setData({
+      recommendPlans: updatedPlans
+    });
+    
     try {
       const result = await wx.cloud.callFunction({
         name: 'toggleLike',
@@ -182,12 +197,11 @@ Page({
       }) as any;
       
       if (result.result && result.result.success) {
-        // 更新本地数据
-        const updatedPlans = [...this.data.recommendPlans];
+        // 使用服务器返回的准确数据更新
         updatedPlans[planIndex] = {
           ...updatedPlans[planIndex],
-          isLiked: isLiked,
-          likeCount: isLiked ? updatedPlans[planIndex].likeCount + 1 : updatedPlans[planIndex].likeCount - 1
+          isLiked: result.result.data.isLiked,
+          likeCount: result.result.data.likes
         };
         
         this.setData({
@@ -199,6 +213,17 @@ Page({
           icon: 'success'
         });
       } else {
+        // 如果服务器操作失败，回滚本地状态
+        updatedPlans[planIndex] = {
+          ...updatedPlans[planIndex],
+          isLiked: !isLiked,
+          likeCount: currentLikeCount
+        };
+        
+        this.setData({
+          recommendPlans: updatedPlans
+        });
+        
         wx.showToast({
           title: '操作失败，请重试',
           icon: 'none'
@@ -206,6 +231,17 @@ Page({
       }
     } catch (error) {
       console.error('点赞操作失败:', error);
+      // 网络错误时回滚本地状态
+      updatedPlans[planIndex] = {
+        ...updatedPlans[planIndex],
+        isLiked: !isLiked,
+        likeCount: currentLikeCount
+      };
+      
+      this.setData({
+        recommendPlans: updatedPlans
+      });
+      
       wx.showToast({
         title: '网络错误，请重试',
         icon: 'none'
@@ -223,6 +259,21 @@ Page({
     const planIndex = e.currentTarget.dataset.index;
     const isFavorited = !plan.isFavorited;
     
+    // 立即更新本地状态，提升响应速度
+    const updatedPlans = [...this.data.recommendPlans];
+    const currentFavoriteCount = updatedPlans[planIndex].favoriteCount || 0;
+    
+    // 立即切换状态
+    updatedPlans[planIndex] = {
+      ...updatedPlans[planIndex],
+      isFavorited: isFavorited,
+      favoriteCount: isFavorited ? currentFavoriteCount + 1 : currentFavoriteCount - 1
+    };
+    
+    this.setData({
+      recommendPlans: updatedPlans
+    });
+    
     try {
       const result = await wx.cloud.callFunction({
         name: 'toggleFavorite',
@@ -233,12 +284,11 @@ Page({
       }) as any;
       
       if (result.result && result.result.success) {
-        // 更新本地数据
-        const updatedPlans = [...this.data.recommendPlans];
+        // 使用服务器返回的准确数据更新
         updatedPlans[planIndex] = {
           ...updatedPlans[planIndex],
-          isFavorited: isFavorited,
-          favoriteCount: isFavorited ? updatedPlans[planIndex].favoriteCount + 1 : updatedPlans[planIndex].favoriteCount - 1
+          isFavorited: result.result.data.isFavorited,
+          favoriteCount: result.result.data.favorites
         };
         
         this.setData({
@@ -250,6 +300,17 @@ Page({
           icon: 'success'
         });
       } else {
+        // 如果服务器操作失败，回滚本地状态
+        updatedPlans[planIndex] = {
+          ...updatedPlans[planIndex],
+          isFavorited: !isFavorited,
+          favoriteCount: currentFavoriteCount
+        };
+        
+        this.setData({
+          recommendPlans: updatedPlans
+        });
+        
         wx.showToast({
           title: '操作失败，请重试',
           icon: 'none'
@@ -257,6 +318,17 @@ Page({
       }
     } catch (error) {
       console.error('收藏操作失败:', error);
+      // 网络错误时回滚本地状态
+      updatedPlans[planIndex] = {
+        ...updatedPlans[planIndex],
+        isFavorited: !isFavorited,
+        favoriteCount: currentFavoriteCount
+      };
+      
+      this.setData({
+        recommendPlans: updatedPlans
+      });
+      
       wx.showToast({
         title: '网络错误，请重试',
         icon: 'none'

@@ -37,6 +37,7 @@ Page({
     planDescription: '', // 方案思路描述
     planTitle: '', // 方案名称
     authorName: '', // 作者名称
+    isBetaPlan: false, // 是否为体验服方案，默认选择否
     loading: true,
     skillsLoading: false,
     isDevelopment: false, // 是否为开发环境
@@ -830,6 +831,14 @@ Page({
     });
   },
 
+  // 选择体验服选项
+  selectBetaOption(e: any) {
+    const value = e.currentTarget.dataset.value === 'true';
+    this.setData({
+      isBetaPlan: value
+    });
+  },
+
   // 下一步
   nextStep() {
     var currentStep = this.data.currentStep;
@@ -989,7 +998,8 @@ Page({
         equipment: equipmentData,
         equipmentText: this.getEquipmentText(),
         strategy: this.data.planDescription,
-        authorName: this.data.authorName
+        authorName: this.data.authorName,
+        isBetaPlan: this.data.isBetaPlan
       };
 
       // 根据模式决定处理方式

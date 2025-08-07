@@ -243,6 +243,17 @@ Page({
     const planId = e.currentTarget.dataset.id;
     const planIndex = e.currentTarget.dataset.index;
     
+    // 立即更新本地状态，提升响应速度
+    const plans = [...this.data.plans];
+    const currentLikeState = plans[planIndex].isLiked;
+    const currentLikeCount = plans[planIndex].likeCount || 0;
+    
+    // 立即切换状态
+    plans[planIndex].isLiked = !currentLikeState;
+    plans[planIndex].likeCount = currentLikeState ? currentLikeCount - 1 : currentLikeCount + 1;
+    
+    this.setData({ plans });
+    
     try {
       const result = await wx.cloud.callFunction({
         name: 'toggleLike',
@@ -250,11 +261,9 @@ Page({
       }) as any;
 
       if (result.result && result.result.success) {
-        const plans = [...this.data.plans];
+        // 使用服务器返回的准确数据更新
         plans[planIndex].isLiked = result.result.data.isLiked;
-        // 使用云函数返回的具体数量
         plans[planIndex].likeCount = result.result.data.likes;
-        
         this.setData({ plans });
         
         wx.showToast({
@@ -262,6 +271,11 @@ Page({
           icon: 'success'
         });
       } else {
+        // 如果服务器操作失败，回滚本地状态
+        plans[planIndex].isLiked = currentLikeState;
+        plans[planIndex].likeCount = currentLikeCount;
+        this.setData({ plans });
+        
         wx.showToast({
           title: (result.result && result.result.message) || '操作失败',
           icon: 'none'
@@ -269,6 +283,11 @@ Page({
       }
     } catch (error) {
       console.error('切换点赞失败:', error);
+      // 网络错误时回滚本地状态
+      plans[planIndex].isLiked = currentLikeState;
+      plans[planIndex].likeCount = currentLikeCount;
+      this.setData({ plans });
+      
       wx.showToast({
         title: '网络错误，请重试',
         icon: 'none'
@@ -281,6 +300,17 @@ Page({
     const planId = e.currentTarget.dataset.id;
     const planIndex = e.currentTarget.dataset.index;
     
+    // 立即更新本地状态，提升响应速度
+    const plans = [...this.data.plans];
+    const currentFavoriteState = plans[planIndex].isFavorited;
+    const currentFavoriteCount = plans[planIndex].favoriteCount || 0;
+    
+    // 立即切换状态
+    plans[planIndex].isFavorited = !currentFavoriteState;
+    plans[planIndex].favoriteCount = currentFavoriteState ? currentFavoriteCount - 1 : currentFavoriteCount + 1;
+    
+    this.setData({ plans });
+    
     try {
       const result = await wx.cloud.callFunction({
         name: 'toggleFavorite',
@@ -288,11 +318,9 @@ Page({
       }) as any;
 
       if (result.result && result.result.success) {
-        const plans = [...this.data.plans];
+        // 使用服务器返回的准确数据更新
         plans[planIndex].isFavorited = result.result.data.isFavorited;
-        // 使用云函数返回的具体数量
         plans[planIndex].favoriteCount = result.result.data.favorites;
-        
         this.setData({ plans });
         
         wx.showToast({
@@ -300,6 +328,11 @@ Page({
           icon: 'success'
         });
       } else {
+        // 如果服务器操作失败，回滚本地状态
+        plans[planIndex].isFavorited = currentFavoriteState;
+        plans[planIndex].favoriteCount = currentFavoriteCount;
+        this.setData({ plans });
+        
         wx.showToast({
           title: (result.result && result.result.message) || '操作失败',
           icon: 'none'
@@ -307,6 +340,11 @@ Page({
       }
     } catch (error) {
       console.error('切换收藏失败:', error);
+      // 网络错误时回滚本地状态
+      plans[planIndex].isFavorited = currentFavoriteState;
+      plans[planIndex].favoriteCount = currentFavoriteCount;
+      this.setData({ plans });
+      
       wx.showToast({
         title: '网络错误，请重试',
         icon: 'none'

@@ -23,7 +23,8 @@ exports.main = async (event, context) => {
       equipmentText,
       strategy,
       authorName,
-      imageUrl
+      imageUrl,
+      isBetaPlan
     } = event;
 
     console.log('解构后的字段:');
@@ -39,6 +40,7 @@ exports.main = async (event, context) => {
     console.log('strategy:', strategy);
     console.log('authorName:', authorName);
     console.log('imageUrl:', imageUrl);
+    console.log('isBetaPlan:', isBetaPlan);
     console.log('=== 解构数据结束 ===');
 
     // 验证必填字段
@@ -94,6 +96,7 @@ exports.main = async (event, context) => {
       strategy,
       authorName: authorName, // 保存作者名称
       imageUrl: imageUrl || '',
+      isBetaPlan: isBetaPlan || false, // 是否为体验服方案
       likeCount: 0,
       favoriteCount: 0,
       views: 0,

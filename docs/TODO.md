@@ -97,6 +97,78 @@
 - `miniprogram/pages/recommendPlan/recommendPlan.ts`: 修复默认头像逻辑
 - `miniprogram/data/localHeroData.ts`: 更新所有头像路径为本地路径
 
+### 🎯 个人方案编辑功能优化和问题修复 (2025-08-08 02:07)
+- ✅ **编辑保存后跳转优化**: 修复编辑方案保存后的跳转逻辑
+  - **跳转目标**: 编辑保存成功后跳转到方案详情页（一图流预览）而不是返回上一页
+  - **用户体验**: 用户可以直接查看编辑后的方案效果
+  - **技术实现**: 使用`wx.redirectTo`跳转到`planDetail`页面
+- ✅ **预览按钮添加**: 在个人方案卡片上添加预览按钮
+  - **按钮位置**: 在方案卡片的操作按钮区域添加预览按钮
+  - **按钮样式**: 使用蓝色渐变背景，与其他按钮保持一致的视觉风格
+  - **功能实现**: 点击预览按钮跳转到方案详情页
+  - **用户体验**: 提供更直观的预览入口，虽然点击卡片本身也能预览
+- ✅ **按钮样式优化**: 为预览按钮添加专门的样式
+  - **渐变背景**: 使用蓝色渐变`linear-gradient(135deg, #007bff 0%, #0056b3 100%)`
+  - **交互效果**: 添加点击时的缩放和阴影变化效果
+  - **视觉一致性**: 与其他操作按钮保持一致的视觉风格
+
+#### 技术实现细节
+- **跳转逻辑**: 修改`createPlan.ts`中编辑模式的保存后逻辑
+- **按钮添加**: 在`myPlans.wxml`中添加预览按钮
+- **样式设计**: 在`myPlans.wxss`中添加预览按钮的专门样式
+- **功能复用**: 预览按钮复用现有的`viewPlan`方法
+
+#### 用户体验提升
+- **编辑流程优化**: 编辑保存后直接查看效果，流程更加顺畅
+- **预览入口增加**: 提供专门的预览按钮，操作更加直观
+- **视觉一致性**: 所有按钮样式统一，界面更加美观
+
+#### 测试验证方法
+1. **编辑功能测试**: 编辑方案并保存，确认跳转到详情页
+2. **预览按钮测试**: 点击预览按钮，确认跳转到详情页
+3. **样式测试**: 验证预览按钮的样式效果
+4. **功能一致性测试**: 确认预览按钮和点击卡片的功能一致
+
+- ✅ **云函数修复**: 修复updatePlan云函数的数据库更新逻辑
+  - **问题**: 使用`where().get()`查询但用`doc().update()`更新，导致文档ID不匹配
+  - **解决方案**: 改为使用`doc().get()`查询，确保文档ID一致
+  - **权限检查**: 优化权限检查逻辑，先查询文档再检查creatorId
+- ✅ **调试信息清理**: 清理所有调试输出信息
+  - **createPlan页面**: 移除所有console.log调试输出
+  - **recommendPlan页面**: 移除调试输出
+  - **云函数**: 保留必要的错误日志，移除冗余调试信息
+- ✅ **体验服方案页面修复**: 修复图片加载错误
+  - **问题**: 使用硬编码的本地图片路径，导致500错误
+  - **解决方案**: 参考推荐方案页面，使用云存储图片处理
+  - **图标管理**: 使用iconManager统一管理图标路径
+  - **头像处理**: 使用getTempFileURLs批量处理云存储图片
+- ✅ **推荐方案页面优化**: 集成体验服方案显示和布局优化
+  - **体验服方案集成**: 在推荐方案页面同时显示普通方案和体验服方案
+  - **体验服标签**: 为体验服方案添加橙色"体验服"标签，移到左下角标签区域
+  - **布局优化**: 修复标题过长时点赞按钮被遮挡的问题
+  - **响应式设计**: 优化点赞按钮大小和间距，确保在各种屏幕尺寸下正常显示
+- ✅ **点赞收藏功能统一优化**: 修复所有页面的点赞收藏按钮样式
+  - **样式统一**: 为所有页面的点赞收藏按钮添加`stat-text`类
+  - **图标优化**: 统一图标尺寸为32rpx，提升视觉效果
+  - **文字样式**: 添加`stat-text`样式，确保数字显示完整
+  - **页面覆盖**: 修复betaPlan页面和heroPlan页面的点赞收藏功能
+
+#### 修改文件
+- `miniprogram/pages/createPlan/createPlan.ts`: 修改编辑保存后的跳转逻辑，清理调试信息
+- `miniprogram/pages/myPlans/myPlans.wxml`: 添加预览按钮
+- `miniprogram/pages/myPlans/myPlans.wxss`: 添加预览按钮样式
+- `cloudfunctions/updatePlan/index.js`: 修复数据库更新逻辑
+- `miniprogram/pages/recommendPlan/recommendPlan.ts`: 清理调试信息
+- `miniprogram/pages/betaPlan/betaPlan.ts`: 修复图片加载问题，使用云存储图片处理
+- `miniprogram/pages/recommendPlan/recommendPlan.ts`: 添加体验服方案显示支持
+- `miniprogram/pages/recommendPlan/recommendPlan.wxml`: 添加体验服标签，修复标题过长问题
+- `miniprogram/pages/recommendPlan/recommendPlan.wxss`: 优化布局，修复点赞按钮被遮挡问题
+- `cloudfunctions/getRecommendPlans/index.js`: 添加includeBetaPlans参数支持
+- `miniprogram/pages/betaPlan/betaPlan.wxml`: 修复点赞按钮样式
+- `miniprogram/pages/betaPlan/betaPlan.wxss`: 添加stat-text样式
+- `miniprogram/pages/heroPlan/heroPlan.wxml`: 修复点赞按钮样式
+- `miniprogram/pages/heroPlan/heroPlan.wxss`: 添加stat-text样式
+
 ### 🔒 个人方案发布功能环境限制 (2025-08-07 15:30)
 - ✅ **环境检测逻辑添加**: 在个人方案页面添加环境检测功能
   - **检测方法**: 使用`wx.getAccountInfoSync()`获取小程序版本信息

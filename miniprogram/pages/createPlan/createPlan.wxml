@@ -164,44 +164,25 @@
             <!-- 装备输入区域 -->
             <view class="equipment-input-container">
               <view class="equipment-grid">
-                                 <view class="equipment-item" wx:for="{{equipmentList}}" wx:key="index">
-                   <view class="equipment-input-row">
-                     <view class="equipment-icon-container">
-                       <image 
-                         class="equipment-icon" 
-                         src="{{item.imageUrl || '../images/unused/default-avatar.png'}}" 
-                         mode="aspectFit">
-                       </image>
-                       <view class="equipment-index">{{index + 1}}</view>
-                     </view>
-                     <view class="equipment-input-wrapper">
-                       <input 
-                         class="equipment-input" 
-                         placeholder="输入装备名称（至少2个字符）..." 
-                         value="{{item.name}}" 
-                         bindinput="onEquipmentInput" 
-                         data-index="{{index}}"
-                         bindblur="onEquipmentBlur"
-                         data-index="{{index}}"
-                         maxlength="10">
-                       </input>
-                       <view class="equipment-match-status" wx:if="{{item.name && item.name.length >= 2}}">
-                         <view class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
-                         </view>
-                       </view>
-                     </view>
-                   </view>
-                  <view class="equipment-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
-                    <view 
-                      class="suggestion-item" 
-                      wx:for="{{item.suggestions}}" 
-                      wx:for-item="suggestion" 
-                      wx:key="suggestion.name"
-                      bindtap="selectEquipmentSuggestion" 
-                      data-main-index="{{index}}" 
-                      data-suggestion-name="{{suggestion.name}}">
-                      <image class="suggestion-icon" src="{{suggestion.imageUrl}}" mode="aspectFit"></image>
-                      <text class="suggestion-name">{{suggestion.name}}</text>
+                <view class="equipment-item" wx:for="{{equipmentList}}" wx:key="index">
+                  <view class="equipment-input-row">
+                    <view class="equipment-icon-container">
+                      <image 
+                        class="equipment-icon" 
+                        src="{{item.imageUrl || '../images/unused/default-avatar.png'}}" 
+                        mode="aspectFit">
+                      </image>
+                      <view class="equipment-index">{{index + 1}}</view>
+                    </view>
+                    <view class="equipment-input-wrapper">
+                      <input 
+                        class="equipment-input" 
+                        placeholder="输入装备名称..." 
+                        value="{{item.name}}" 
+                        bindinput="onEquipmentInput" 
+                        data-index="{{index}}"
+                        maxlength="10">
+                      </input>
                     </view>
                   </view>
                 </view>

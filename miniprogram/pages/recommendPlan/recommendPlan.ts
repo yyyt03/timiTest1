@@ -2,6 +2,8 @@ import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from
 import { getAllHeroes, getHeroById } from '../../data/localHeroData';
 import { getTempFileURLs } from '../../utils/cloud';
 
+
+
 // 推荐方案页面
 Page({
   data: {
@@ -354,7 +356,8 @@ Page({
           filter: this.data.currentFilter,
           heroId: this.data.selectedHero === 'all' ? null : this.data.selectedHero,
           page: isLoadMore ? this.data.page + 1 : 1,
-          pageSize: this.data.pageSize
+          pageSize: this.data.pageSize,
+          includeBetaPlans: true // 包含体验服方案
         }
       }) as any;
       

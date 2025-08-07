@@ -16,6 +16,7 @@ exports.main = async function(event, context) {
       heroId = null, // 可选的英雄筛选
       hero = null, // 英雄名称筛选
       isBetaPlan = false, // 是否为体验服方案筛选
+      includeBetaPlans = false, // 是否包含体验服方案
       page = 1, 
       pageSize = 10 
     } = event;
@@ -47,6 +48,11 @@ exports.main = async function(event, context) {
     // 如果指定了体验服筛选条件，添加体验服筛选
     if (isBetaPlan !== undefined) {
       whereCondition.isBetaPlan = isBetaPlan;
+    }
+    
+    // 如果包含体验服方案，则不限制isBetaPlan字段
+    if (includeBetaPlans) {
+      delete whereCondition.isBetaPlan;
     }
     
     // 根据筛选类型设置排序

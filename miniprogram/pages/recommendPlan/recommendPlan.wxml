@@ -63,11 +63,11 @@
           <view class="plan-stats">
             <view class="stat-item" catchtap="toggleLike" data-plan="{{item}}" data-index="{{index}}">
               <image class="stat-icon" src="{{item.isLiked ? likeFilledIcon : likeOutlineIcon}}" mode="aspectFit"></image>
-              <text>{{item.likeCount}}</text>
+              <text class="stat-text">{{item.likeCount}}</text>
             </view>
             <view class="stat-item" catchtap="toggleFavorite" data-plan="{{item}}" data-index="{{index}}">
               <image class="stat-icon" src="{{item.isFavorited ? favoriteFilledIcon : favoriteOutlineIcon}}" mode="aspectFit"></image>
-              <text>{{item.favoriteCount}}</text>
+              <text class="stat-text">{{item.favoriteCount}}</text>
             </view>
           </view>
         </view>
@@ -77,6 +77,7 @@
         
         <!-- 方案标签 -->
         <view class="plan-tags">
+          <view class="tag beta-tag" wx:if="{{item.isBetaPlan}}">体验服</view>
           <view class="tag" wx:if="{{item.difficulty}}">{{item.difficulty}}</view>
           <view class="tag" wx:if="{{item.style}}">{{item.style}}</view>
           <view class="tag" wx:if="{{item.role}}">{{item.role}}</view>

@@ -1,6 +1,4 @@
 // 方案创作页面
-import { findEquipmentByName, getEquipmentImageUrl } from '../../utils/equipmentMatcher';
-
 Page({
   data: {
     hero: '',
@@ -636,179 +634,24 @@ Page({
     });
   },
 
-  // 输入出装推荐
   // 装备输入处理
   onEquipmentInput(e: any) {
     const index = e.currentTarget.dataset.index;
     const value = e.detail.value;
     
     // 更新装备名称
-    const equipmentList = [...this.data.equipmentList];
-    equipmentList[index].name = value;
-    
-    // 如果输入为空，清空相关数据
-    if (!value.trim()) {
-      equipmentList[index].imageUrl = '';
-      equipmentList[index].matched = false;
-      equipmentList[index].suggestions = [];
-    } else {
-      // 实时匹配装备
-      this.matchEquipment(index, value);
-    }
-    
     this.setData({
-      equipmentList: equipmentList
-    });
-    
-    // 保持兼容性
-    this.setData({
-      equipment: this.getEquipmentText()
+      [`equipmentList[${index}].name`]: value
     });
   },
 
-  // 装备失焦处理
-  onEquipmentBlur(e: any) {
-    const index = e.currentTarget.dataset.index;
-    const value = e.detail.value;
-    
-    if (value.trim()) {
-      // 失焦时进行最终匹配
-      this.finalizeEquipmentMatch(index, value);
-    }
-  },
-
-  // 实时装备匹配
-  async matchEquipment(index: number, equipmentName: string) {
-    if (!equipmentName.trim()) return;
-    
-    try {
-      const equipmentList = [...this.data.equipmentList];
-      
-      // 如果输入少于2个字符，不进行匹配，但显示提示
-      if (equipmentName.trim().length < 2) {
-        equipmentList[index].matched = false;
-        equipmentList[index].imageUrl = '';
-        equipmentList[index].suggestions = [];
-        this.setData({
-          equipmentList: equipmentList
-        });
-        return;
-      }
-      
-      // 查找匹配的装备
-      const matchedEquipment = findEquipmentByName(equipmentName);
-      
-      if (matchedEquipment) {
-        // 找到匹配的装备
-        equipmentList[index].matched = true;
-        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
-        equipmentList[index].suggestions = [];
-      } else {
-        // 未找到匹配，生成建议
-        equipmentList[index].matched = false;
-        equipmentList[index].imageUrl = '';
-        equipmentList[index].suggestions = this.generateEquipmentSuggestions(equipmentName);
-      }
-      
-      this.setData({
-        equipmentList: equipmentList
-      });
-    } catch (error) {
-      console.error('装备匹配失败:', error);
-    }
-  },
-
-  // 最终装备匹配
-  async finalizeEquipmentMatch(index: number, equipmentName: string) {
-    if (!equipmentName.trim()) return;
-    
-    try {
-      const matchedEquipment = findEquipmentByName(equipmentName);
-      
-      const equipmentList = [...this.data.equipmentList];
-      
-      if (matchedEquipment) {
-        equipmentList[index].matched = true;
-        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
-        equipmentList[index].suggestions = [];
-      } else {
-        equipmentList[index].matched = false;
-        equipmentList[index].imageUrl = '';
-        equipmentList[index].suggestions = [];
-      }
-      
-      this.setData({
-        equipmentList: equipmentList
-      });
-    } catch (error) {
-      console.error('最终装备匹配失败:', error);
-    }
-  },
-
-  // 生成装备建议
-  generateEquipmentSuggestions(input: string): any[] {
-    if (!input || input.trim().length < 2) return [];
-    
-    // 导入装备建议功能
-    const { getEquipmentSuggestions } = require('../../utils/equipmentMatcher');
-    
-    try {
-      const suggestions = getEquipmentSuggestions(input, 3); // 最多显示3个建议
-      return suggestions.map(equipment => ({
-        name: equipment.name,
-        imageUrl: `../images/equipment/${equipment.image}` || '../images/unused/default-avatar.png'
-      }));
-    } catch (error) {
-      console.error('生成装备建议失败:', error);
-      return [];
-    }
-  },
-
-  // 选择装备建议
-  selectEquipmentSuggestion(e: any) {
-    const mainIndex = e.currentTarget.dataset.mainIndex;
-    const suggestionName = e.currentTarget.dataset.suggestionName;
-    
-    const equipmentList = [...this.data.equipmentList];
-    equipmentList[mainIndex].name = suggestionName;
-    equipmentList[mainIndex].matched = true;
-    equipmentList[mainIndex].suggestions = [];
-    
-    // 获取装备图片
-    getEquipmentImageUrl(suggestionName).then(imageUrl => {
-      equipmentList[mainIndex].imageUrl = imageUrl;
-      this.setData({
-        equipmentList: equipmentList
-      });
-    });
-    
-    this.setData({
-      equipmentList: equipmentList
-    });
-    
-    // 保持兼容性
-    this.setData({
-      equipment: this.getEquipmentText()
-    });
-  },
-
-  // 获取装备文本（兼容性）
+  // 获取装备文本
   getEquipmentText(): string {
     return this.data.equipmentList
       .map(item => item.name)
-      .filter(name => name.trim())
+      .filter(name => name && name.trim())
       .join('、');
   },
-
-  // 输入装备密语
-             showEquipmentHint() {
-             wx.showModal({
-               title: '装备匹配规则',
-               content: '1. 输入装备名称即可自动匹配\n\n2. 输入至少2个字符开始匹配\n\n3. 如果2个字符匹配不到，请继续输入更多字符\n\n4. 匹配成功会显示装备图标\n\n5. 每个装备最多输入10个字符',
-               showCancel: false,
-               confirmText: '知道了'
-             });
-           },
 
   // 输入方案思路
   onDescriptionInput(e: any) {
@@ -962,20 +805,7 @@ Page({
         imageUrl: item.imageUrl
       }));
 
-      // 调试输出：输出所有数据
-      console.log('=== 生成方案调试数据 ===');
-      console.log('heroId:', this.data.heroId);
-      console.log('heroName:', this.data.hero);
-      console.log('title:', this.data.hero + ' - 技能流派方案');
-      console.log('description:', this.data.planDescription);
-      console.log('cores:', coreNames);
-      console.log('talents:', talentNames);
-      console.log('equipment:', equipmentData);
-      console.log('equipmentText:', this.getEquipmentText());
-      console.log('strategy:', this.data.planDescription);
-      console.log('authorName:', this.data.authorName);
-      console.log('isDevelopment:', this.data.isDevelopment);
-      console.log('=== 调试数据结束 ===');
+
 
       const planData = {
         heroId: this.data.heroId,
@@ -1005,8 +835,6 @@ Page({
       // 根据模式决定处理方式
       if (this.data.editMode) {
         // 编辑模式：更新方案
-        console.log('编辑模式：更新方案到数据库');
-        
         const result = await wx.cloud.callFunction({
           name: 'updatePlan',
           data: {
@@ -1015,20 +843,19 @@ Page({
           }
         }) as any;
 
-        console.log('云函数返回结果:', result);
-
         if (result.result && result.result.success) {
           wx.showToast({
             title: '方案更新成功',
             icon: 'success'
           });
           
-          // 返回上一页
+          // 编辑模式保存成功后跳转到方案详情页
           setTimeout(() => {
-            wx.navigateBack();
+            wx.redirectTo({
+              url: `../planDetail/planDetail?planId=${this.data.planId}`
+            });
           }, 1500);
         } else {
-          console.error('云函数返回错误:', result.result);
           wx.showToast({
             title: result.result?.message || '更新失败',
             icon: 'error'
@@ -1036,14 +863,10 @@ Page({
         }
       } else if (this.data.isDevelopment) {
         // 开发环境：上传到数据库
-        console.log('开发环境：上传方案到数据库');
-        
         const result = await wx.cloud.callFunction({
           name: 'createPlan',
           data: planData
         }) as any;
-
-        console.log('云函数返回结果:', result);
 
         if (result.result && result.result.success) {
           wx.showToast({
@@ -1078,7 +901,6 @@ Page({
             url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
           });
         } else {
-          console.error('云函数返回错误:', result.result);
           wx.showToast({
             title: result.result?.message || '创建失败',
             icon: 'error'
@@ -1086,8 +908,6 @@ Page({
         }
       } else {
         // 用户环境：只生成一图流浏览
-        console.log('用户环境：只生成一图流浏览');
-        
         wx.showToast({
           title: '方案生成成功',
           icon: 'success'
@@ -1121,7 +941,6 @@ Page({
         });
       }
     } catch (error) {
-      console.error('生成方案错误:', error);
       wx.showToast({
         title: '创建失败',
         icon: 'error'

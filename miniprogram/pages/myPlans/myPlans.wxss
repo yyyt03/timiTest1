@@ -338,6 +338,18 @@
   left: 100%;
 }
 
+.preview-btn {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: #ffffff;
+  border: 2rpx solid #0056b3;
+  box-shadow: 0 2rpx 8rpx rgba(0, 123, 255, 0.3);
+}
+
+.preview-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(0, 123, 255, 0.4);
+}
+
 .edit-btn {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   color: #495057;

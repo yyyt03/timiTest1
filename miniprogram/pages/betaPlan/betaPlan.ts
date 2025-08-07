@@ -1,4 +1,7 @@
 // 体验服方案页面
+import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from '../../utils/iconManager';
+import { getAllHeroes, getHeroById } from '../../data/localHeroData';
+import { getTempFileURLs } from '../../utils/cloud';
 
 Page({
   data: {
@@ -14,11 +17,11 @@ Page({
     total: 0,
     
     // 图标路径
-    likeFilledIcon: '../images/icons/like-filled.png',
-    likeOutlineIcon: '../images/icons/like-outline.png',
-    favoriteFilledIcon: '../images/icons/favorite-filled.png',
-    favoriteOutlineIcon: '../images/icons/favorite-outline.png',
-    emptyIcon: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/icons/empty-favorites.png'
+    likeFilledIcon: getLikeIcon(true),
+    likeOutlineIcon: getLikeIcon(false),
+    favoriteFilledIcon: getFavoriteIcon(true),
+    favoriteOutlineIcon: getFavoriteIcon(false),
+    emptyIcon: getEmptyIcon('favorites')
   },
 
   onLoad() {
@@ -83,12 +86,7 @@ Page({
         }
         
         // 处理方案数据，添加英雄头像
-        const processedPlans = plans.map((plan: any) => ({
-          ...plan,
-          heroAvatar: `/images_backup/heroes/${plan.heroName}.jpg`,
-          isLiked: false, // 默认未点赞
-          isFavorited: false // 默认未收藏
-        }));
+        const processedPlans = await this.processPlansWithAvatars(plans);
 
         // 统计英雄分类
         const heroCategories = this.calculateHeroCategories(plans);
@@ -121,6 +119,52 @@ Page({
         loading: false
       });
     }
+  },
+
+  // 处理方案数据，添加英雄头像
+  async processPlansWithAvatars(plans: any[]) {
+    // 收集所有需要处理的头像URL
+    const avatarUrls: string[] = [];
+    const heroMap = new Map();
+    
+    plans.forEach(plan => {
+      const hero = getHeroById(plan.heroId);
+      if (hero && hero.avatar) {
+        avatarUrls.push(hero.avatar);
+        heroMap.set(plan._id, hero.avatar);
+      }
+    });
+    
+    // 批量获取临时URL
+    let tempUrls: string[] = [];
+    if (avatarUrls.length > 0) {
+      try {
+        tempUrls = await getTempFileURLs(avatarUrls);
+      } catch (error) {
+        console.error('获取头像临时URL失败:', error);
+        tempUrls = avatarUrls.map(() => '');
+      }
+    }
+    
+    // 创建URL映射
+    const urlMap = new Map();
+    avatarUrls.forEach((originalUrl, index) => {
+      urlMap.set(originalUrl, tempUrls[index] || originalUrl);
+    });
+    
+    // 处理方案数据
+    return plans.map(plan => {
+      const hero = getHeroById(plan.heroId);
+      const originalAvatar = hero ? hero.avatar : '';
+      const heroAvatar = urlMap.get(originalAvatar) || originalAvatar;
+      
+      return {
+        ...plan,
+        heroAvatar: heroAvatar,
+        isLiked: false, // 默认未点赞
+        isFavorited: false // 默认未收藏
+      };
+    });
   },
 
   // 计算英雄分类统计

@@ -39,20 +39,29 @@ exports.main = async function(event, context) {
     
     // 验证方案是否属于当前用户
     const planResult = await db.collection('plans')
-      .where({
-        _id: planId,
-        creatorId: currentUserId
-      })
+      .doc(planId)
       .get();
     
     console.log('查询到的方案:', planResult.data);
     
-    if (planResult.data.length === 0) {
-      console.error('方案不存在或无权限修改');
+    if (!planResult.data) {
+      console.error('方案不存在');
       return {
         success: false,
         data: null,
-        message: '方案不存在或无权限修改'
+        message: '方案不存在'
+      };
+    }
+    
+    // 检查权限
+    if (planResult.data.creatorId !== currentUserId) {
+      console.error('无权限修改此方案');
+      console.error('当前用户ID:', currentUserId);
+      console.error('方案创建者ID:', planResult.data.creatorId);
+      return {
+        success: false,
+        data: null,
+        message: '无权限修改此方案'
       };
     }
     

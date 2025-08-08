@@ -1,14 +1,6 @@
 <view class="container">
   <view class="title">方案创作</view>
   
-  <!-- 环境提示 -->
-  <view class="env-notice" wx:if="{{!isDevelopment}}">
-    <text class="env-text">预览模式：仅生成一图流，不会保存到数据库</text>
-  </view>
-  <view class="env-notice dev" wx:if="{{isDevelopment}}">
-    <text class="env-text">开发模式：方案将保存到数据库</text>
-  </view>
-  
   <view class="step-container">
     <view class="step-title">第一步：选择英雄</view>
     <view class="hero-info" wx:if="{{hero}}">

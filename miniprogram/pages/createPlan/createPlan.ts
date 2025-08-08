@@ -1046,14 +1046,40 @@ Page({
       return false;
     }
     
-    // 检查装备名称是否有效（不能都是相同的简单字符）
+    // 检查装备名称是否有效
+    // 1. 检查是否有重复的装备名称
     const uniqueNames = Array.from(new Set(equipmentNames)) as string[];
-    if (uniqueNames.length === 1 && uniqueNames[0].length <= 2) {
-      wx.showToast({
-        title: '请输入有效的装备名称',
-        icon: 'none'
-      });
-      return false;
+    if (uniqueNames.length === 1) {
+      // 如果只有一个唯一名称，检查是否是有效的装备名称
+      const equipmentName = uniqueNames[0];
+      
+      // 导入装备匹配功能
+      const { findEquipmentByName } = require('../../utils/equipmentMatcher');
+      const matchedEquipment = findEquipmentByName(equipmentName);
+      
+      if (!matchedEquipment) {
+        wx.showToast({
+          title: '请输入有效的装备名称',
+          icon: 'none'
+        });
+        return false;
+      }
+    }
+    
+    // 2. 检查每个装备名称是否都是有效的
+    for (const equipmentName of equipmentNames) {
+      if (equipmentName.trim()) {
+        const { findEquipmentByName } = require('../../utils/equipmentMatcher');
+        const matchedEquipment = findEquipmentByName(equipmentName);
+        
+        if (!matchedEquipment) {
+          wx.showToast({
+            title: `装备"${equipmentName}"无效，请输入正确的装备名称`,
+            icon: 'none'
+          });
+          return false;
+        }
+      }
     }
     
     // 检查方案思路是否填写

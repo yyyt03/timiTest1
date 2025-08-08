@@ -74,30 +74,31 @@ Page({
 
   // 检测环境
   detectEnvironment() {
-    // 检测是否为开发环境
-    // 可以通过多种方式检测：
-    // 1. 检查云环境ID
-    // 2. 检查版本号
-    // 3. 检查调试模式
-    const accountInfo = wx.getAccountInfoSync();
-    const version = accountInfo.miniProgram?.version || '';
-    const envVersion = accountInfo.miniProgram?.envVersion || '';
-    
-    // 开发环境判断逻辑
-    const isDev = envVersion === 'develop' || 
-                  envVersion === 'trial' || 
-                  version.includes('dev') || 
-                  version.includes('test');
-    
-    this.setData({
-      isDevelopment: isDev
-    });
-    
-    console.log('环境检测结果:', {
-      version,
-      envVersion,
-      isDevelopment: isDev
-    });
+    try {
+      const accountInfo = wx.getAccountInfoSync();
+      const version = accountInfo.miniProgram?.version || '';
+      const envVersion = accountInfo.miniProgram?.envVersion || '';
+      
+      // 开发环境判断逻辑 - 只在真正的开发环境下显示
+      const isDev = envVersion === 'develop' || 
+                    envVersion === 'trial';
+      
+      this.setData({
+        isDevelopment: isDev
+      });
+      
+      console.log('方案创作页面环境检测结果:', {
+        version,
+        envVersion,
+        isDevelopment: isDev
+      });
+    } catch (error) {
+      console.error('环境检测失败:', error);
+      // 如果检测失败，默认设置为非开发环境
+      this.setData({
+        isDevelopment: false
+      });
+    }
   },
 
   // 查找核心技能索引
@@ -1002,10 +1003,10 @@ Page({
             icon: 'success'
           });
           
-          // 编辑模式保存成功后跳转到方案详情页
+          // 编辑模式保存成功后跳转到方案详情页，传递强制刷新参数
           setTimeout(() => {
             wx.redirectTo({
-              url: `../planDetail/planDetail?planId=${this.data.planId}`
+              url: `../planDetail/planDetail?planId=${this.data.planId}&forceRefresh=true`
             });
           }, 1500);
         } else {

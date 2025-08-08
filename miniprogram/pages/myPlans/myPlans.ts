@@ -28,11 +28,9 @@ Page({
       const version = accountInfo.miniProgram?.version || '';
       const envVersion = accountInfo.miniProgram?.envVersion || '';
       
-      // 开发环境判断逻辑
+      // 开发环境判断逻辑 - 只在真正的开发环境下显示
       const isDev = envVersion === 'develop' || 
-                    envVersion === 'trial' || 
-                    version.includes('dev') || 
-                    version.includes('test');
+                    envVersion === 'trial';
       
       this.setData({
         isDevelopment: isDev

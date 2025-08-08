@@ -73,7 +73,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId } = event;
+    const { planId, forceRefresh = false, clearCacheOnly = false } = event;
     
     if (!planId) {
       return {
@@ -87,32 +87,46 @@ exports.main = async function(event, context) {
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;
     
-    // 检查缓存
-    const cacheKey = getCacheKey(planId, currentUserId);
-    const cachedData = planCache.get(cacheKey);
-    
-    if (cachedData && isCacheValid(cachedData.timestamp)) {
-      performanceMetrics.cacheHits++;
-      console.log('从缓存获取方案详情:', planId);
-      
-      const responseTime = Date.now() - startTime;
-      performanceMetrics.averageResponseTime = 
-        (performanceMetrics.averageResponseTime * (performanceMetrics.totalCalls - 1) + responseTime) / performanceMetrics.totalCalls;
-      
+    // 如果只是清除缓存，直接返回成功
+    if (clearCacheOnly) {
+      const cacheKey = getCacheKey(planId, currentUserId);
+      planCache.delete(cacheKey);
+      console.log('清除方案详情缓存:', planId);
       return {
         success: true,
-        data: cachedData.data,
-        message: '从缓存获取方案详情成功',
-        fromCache: true,
-        performance: {
-          responseTime,
-          cacheHit: true
-        }
+        data: null,
+        message: '缓存清除成功'
       };
     }
     
+    // 检查缓存（只在非强制刷新时使用）
+    if (!forceRefresh) {
+      const cacheKey = getCacheKey(planId, currentUserId);
+      const cachedData = planCache.get(cacheKey);
+      
+      if (cachedData && isCacheValid(cachedData.timestamp)) {
+        performanceMetrics.cacheHits++;
+        console.log('从缓存获取方案详情:', planId);
+        
+        const responseTime = Date.now() - startTime;
+        performanceMetrics.averageResponseTime = 
+          (performanceMetrics.averageResponseTime * (performanceMetrics.totalCalls - 1) + responseTime) / performanceMetrics.totalCalls;
+        
+        return {
+          success: true,
+          data: cachedData.data,
+          message: '从缓存获取方案详情成功',
+          fromCache: true,
+          performance: {
+            responseTime,
+            cacheHit: true
+          }
+        };
+      }
+    }
+    
     performanceMetrics.cacheMisses++;
-    console.log('缓存未命中，从数据库获取方案详情:', planId);
+    console.log('缓存未命中或强制刷新，从数据库获取方案详情:', planId);
     
     // 清理过期缓存
     cleanExpiredCache();
@@ -190,6 +204,7 @@ exports.main = async function(event, context) {
     };
     
     // 缓存结果
+    const cacheKey = getCacheKey(planId, currentUserId);
     planCache.set(cacheKey, {
       data: planDetail,
       timestamp: Date.now()

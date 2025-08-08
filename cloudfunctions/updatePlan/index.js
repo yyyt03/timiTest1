@@ -93,6 +93,44 @@ exports.main = async function(event, context) {
     
     console.log('更新结果:', updateResult);
     
+    // 清除相关缓存，确保数据及时更新
+    try {
+      // 清除方案详情缓存
+      await db.collection('plans_cache').where({
+        key: db.RegExp({
+          regexp: planId,
+          options: 'i'
+        })
+      }).remove();
+      
+      // 清除英雄方案列表缓存
+      await db.collection('plans_cache').where({
+        key: db.RegExp({
+          regexp: `hero_plans_${planData.heroId}`,
+          options: 'i'
+        })
+      }).remove();
+      
+      // 调用getPlanDetail云函数清除内存缓存
+      try {
+        const cloud = require('wx-server-sdk');
+        await cloud.callFunction({
+          name: 'getPlanDetail',
+          data: {
+            planId: planId,
+            forceRefresh: true,
+            clearCacheOnly: true
+          }
+        });
+      } catch (cacheError) {
+        console.log('清除内存缓存失败，但不影响主功能:', cacheError);
+      }
+      
+      console.log('缓存清除完成');
+    } catch (cacheError) {
+      console.log('缓存清除失败，但不影响主功能:', cacheError);
+    }
+    
     return {
       success: true,
       data: null,

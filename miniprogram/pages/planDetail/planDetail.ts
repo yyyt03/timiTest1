@@ -13,6 +13,7 @@ Page({
     
     // 支持id和planId两种参数名
     const planId = options.id || options.planId;
+    const forceRefresh = options.forceRefresh === 'true';
     
     if (planId) {
       this.setData({
@@ -26,7 +27,7 @@ Page({
         });
       }
       
-      this.loadPlanDetail(planId);
+      this.loadPlanDetail(planId, forceRefresh);
     } else {
       wx.showToast({
         title: '参数错误',
@@ -39,13 +40,13 @@ Page({
   },
 
   // 加载方案详情
-  async loadPlanDetail(planId: string) {
+  async loadPlanDetail(planId: string, forceRefresh: boolean = false) {
     this.setData({ loading: true });
     
     try {
       const result = await wx.cloud.callFunction({
         name: 'getPlanDetail',
-        data: { planId }
+        data: { planId, forceRefresh }
       }) as any;
       
       if (result.result && result.result.success) {

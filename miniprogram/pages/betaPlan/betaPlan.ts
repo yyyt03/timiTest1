@@ -33,6 +33,8 @@ Page({
     this.loadBetaPlans();
   },
 
+  // 从推荐页返回也能同步：依赖 onShow 刷新
+
   // 切换筛选类型
   switchFilter(e: any) {
     const type = e.currentTarget.dataset.type;
@@ -85,7 +87,7 @@ Page({
           plans = [];
         }
         
-        // 处理方案数据，添加英雄头像
+        // 处理方案数据，添加英雄头像（保留云端返回的 isLiked/isFavorited）
         const processedPlans = await this.processPlansWithAvatars(plans);
 
         // 统计英雄分类
@@ -161,9 +163,10 @@ Page({
       return {
         ...plan,
         heroAvatar: heroAvatar,
-        isLiked: false, // 默认未点赞
-        isFavorited: false, // 默认未收藏
-        createTime: this.formatTime(plan.createTime) // 格式化时间
+        // 保留云端返回的 isLiked / isFavorited，如无则默认 false
+        isLiked: typeof plan.isLiked === 'boolean' ? plan.isLiked : false,
+        isFavorited: typeof plan.isFavorited === 'boolean' ? plan.isFavorited : false,
+        createTime: this.formatTime(plan.createTime)
       };
     });
   },
@@ -308,7 +311,7 @@ Page({
       if (result.result && result.result.success) {
         // 使用服务器返回的准确数据更新
         betaPlans[index].isFavorited = result.result.data.isFavorited;
-        betaPlans[index].favoriteCount = result.result.data.favoriteCount;
+        betaPlans[index].favoriteCount = result.result.data.favorites;
 
         this.setData({
           betaPlans

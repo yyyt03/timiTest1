@@ -1197,90 +1197,22 @@ Page({
             icon: 'error'
           });
         }
-      } else if (this.data.isDevelopment) {
-        // 开发环境：上传到数据库
+      } else {
+        // 所有环境：直接上传到数据库，成功后跳转详情页
         const result = await wx.cloud.callFunction({
           name: 'createPlan',
           data: planData
         }) as any;
 
         if (result.result && result.result.success) {
-          wx.showToast({
-            title: '方案创建成功',
-            icon: 'success'
-          });
-          
-          // 准备跳转到生成一图流页面的数据
-          const imageData = {
-            heroName: this.data.hero,
-            heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
-            title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
-            authorName: this.data.authorName,
-            skillOne: {
-              core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
-              talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index]),
-              priorityCore: this.data.priorityCores.skillOne,
-              priorityTalents: this.data.priorityTalents.skillOne
-            },
-            skillTwo: {
-              core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
-              talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index]),
-              priorityCore: this.data.priorityCores.skillTwo,
-              priorityTalents: this.data.priorityTalents.skillTwo
-            },
-            skillThree: {
-              core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
-              talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]),
-              priorityCore: this.data.priorityCores.skillThree,
-              priorityTalents: this.data.priorityTalents.skillThree
-            },
-            equipment: equipmentData,
-            strategy: this.data.planDescription
-          };
-          
-          // 跳转到生成一图流页面
-          wx.navigateTo({
-            url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
-          });
+          const newId = result.result.data.planId;
+          wx.showToast({ title: '方案创建成功', icon: 'success' });
+          setTimeout(() => {
+            wx.redirectTo({ url: `../planDetail/planDetail?planId=${newId}&forceRefresh=true` });
+          }, 600);
         } else {
-          wx.showToast({
-            title: result.result?.message || '创建失败',
-            icon: 'error'
-          });
+          wx.showToast({ title: result.result?.message || '创建失败', icon: 'error' });
         }
-      } else {
-        // 用户环境：只生成一图流浏览
-        wx.showToast({
-          title: '方案生成成功',
-          icon: 'success'
-        });
-        
-        // 准备跳转到生成一图流页面的数据
-        const imageData = {
-          heroName: this.data.hero,
-          heroImageUrl: this.data.heroImageUrl || '../images/unused/default-avatar.png',
-          title: this.data.planTitle || this.data.hero + ' - 技能流派方案',
-          authorName: this.data.authorName,
-          skillOne: {
-            core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
-            talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
-          },
-          skillTwo: {
-            core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
-            talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
-          },
-          skillThree: {
-            core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
-            talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
-          },
-          equipment: equipmentData,
-          strategy: this.data.planDescription
-        };
-        
-        // 跳转到生成一图流页面
-        wx.navigateTo({
-          url: `/pages/generateImage/generateImage?planData=${encodeURIComponent(JSON.stringify(imageData))}`
-        });
       }
     } catch (error) {
       wx.showToast({

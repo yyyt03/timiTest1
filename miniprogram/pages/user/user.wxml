@@ -13,11 +13,7 @@
         <view class="user-details">
           <text wx:if="{{hasUserInfo}}" class="nickname">{{userInfo.nickName}}</text>
           <text wx:else class="nickname">微信用户</text>
-          <text class="user-status">
-            <text wx:if="{{isLoggedIn}}">登录成功</text>
-            <text wx:else>点击登录</text>
-          </text>
-          <text wx:if="{{loginStatus !== '未登录'}}" class="login-status">{{loginStatus}}</text>
+          <!-- 仅保留右侧状态按钮，移除中部登录成功/状态文案 -->
         </view>
         <view wx:if="{{!isLoggedIn}}" class="login-btn" bindtap="getUserInfo">
           <text class="login-text">登录</text>
@@ -51,6 +47,16 @@
         <view class="card-arrow">→</view>
       </view>
       
+      <!-- 方案管理/审核（仅开发者可见） -->
+      <view class="function-card" wx:if="{{isDevelopment}}" bindtap="goToPlanReview">
+        <view class="card-icon hero-plan-icon">🛠️</view>
+        <view class="card-content">
+          <text class="card-title">方案管理/审核</text>
+          <text class="card-desc">仅开发者可见，查看全部方案</text>
+        </view>
+        <view class="card-arrow">→</view>
+      </view>
+
       <!-- 创作方案 -->
       <view class="function-card" bindtap="goToCreatePlan">
         <view class="card-icon create-icon">✏️</view>

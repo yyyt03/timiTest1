@@ -1,8 +1,16 @@
 <view class="container">
   <!-- 页面标题 -->
   <view class="page-header">
-    <text class="page-title">我的方案</text>
+    <text class="page-title">{{pageTitle}}</text>
     <text class="plan-count">({{total}})</text>
+  </view>
+
+  <!-- 管理员状态筛选，仅管理员审核模式显示 -->
+  <view wx:if="{{isAdminReview}}" class="admin-filters">
+    <view class="filter-btn {{adminStatusFilter === 'all' ? 'active' : ''}}" data-status="all" bindtap="switchAdminStatus">全部</view>
+    <view class="filter-btn {{adminStatusFilter === 'draft' ? 'active' : ''}}" data-status="draft" bindtap="switchAdminStatus">草稿</view>
+    <view class="filter-btn {{adminStatusFilter === 'pending' ? 'active' : ''}}" data-status="pending" bindtap="switchAdminStatus">审核中</view>
+    <view class="filter-btn {{adminStatusFilter === 'published' ? 'active' : ''}}" data-status="published" bindtap="switchAdminStatus">已发布</view>
   </view>
 
   <!-- 英雄分类选择器 -->
@@ -47,9 +55,9 @@
           
           <!-- 状态和时间信息 -->
           <view class="plan-stats-row">
-            <view class="status-badge {{item.status === 'published' ? 'published' : 'draft'}}">
-              <text class="status-icon">{{item.status === 'published' ? '✅' : '📝'}}</text>
-              <text class="status-text">{{item.status === 'published' ? '已发布' : '草稿'}}</text>
+            <view class="status-badge {{item.status === 'published' ? 'published' : (item.status === 'pending' ? 'pending' : (item.status === 'rejected' ? 'rejected' : 'draft'))}}">
+              <text class="status-icon">{{item.status === 'published' ? '✅' : (item.status === 'pending' ? '🔄' : (item.status === 'rejected' ? '⛔' : '📝'))}}</text>
+              <text class="status-text">{{item.status === 'published' ? '已发布' : (item.status === 'pending' ? '审核中' : (item.status === 'rejected' ? '已拒绝' : '草稿'))}}</text>
             </view>
             <view class="meta-item time-item">
               <text class="meta-icon">🕒</text>
@@ -68,6 +76,21 @@
           </view>
           <view class="action-btn publish-btn" wx:if="{{item.status === 'draft' && isDevelopment}}" catchtap="publishPlan" data-plan="{{item}}">
             <text class="btn-text">发布</text>
+          </view>
+          <!-- 提交审核，仅草稿可见 -->
+          <view class="action-btn publish-btn" wx:if="{{item.status === 'draft'}}" catchtap="submitReview" data-plan="{{item}}">
+            <text class="btn-text">提交审核</text>
+          </view>
+          <!-- 提交审核，仅已拒绝可见 -->
+          <view class="action-btn publish-btn" wx:if="{{item.status === 'rejected'}}" catchtap="submitReview" data-plan="{{item}}">
+            <text class="btn-text">提交审核</text>
+          </view>
+          <!-- 管理员审核操作：仅管理员审核模式且审核中可见 -->
+          <view class="action-btn publish-btn" wx:if="{{isAdminReview && item.status === 'pending'}}" catchtap="approvePlan" data-plan="{{item}}">
+            <text class="btn-text">通过发布</text>
+          </view>
+          <view class="action-btn delete-btn" wx:if="{{isAdminReview && item.status === 'pending'}}" catchtap="rejectPlan" data-plan="{{item}}">
+            <text class="btn-text">拒绝</text>
           </view>
           <view class="action-btn delete-btn" catchtap="deletePlan" data-plan="{{item}}">
             <text class="btn-text">删除</text>

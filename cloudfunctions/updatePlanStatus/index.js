@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId, status } = event;
+    const { planId, status, admin = false } = event;
     
     if (!planId || !status) {
       return {
@@ -32,48 +32,54 @@ exports.main = async function(event, context) {
       };
     }
 
-    // 环境验证：只在开发环境下允许发布
+    // 环境验证：只在开发环境下允许发布；管理员操作(admin=true)则放宽限制
     if (status === 'published') {
-      // 获取小程序版本信息
-      const accountInfo = wxContext.ACCOUNT_INFO || {};
-      const envVersion = accountInfo.envVersion || '';
-      const version = accountInfo.version || '';
-      
-      // 检查是否为开发环境
-      const isDev = envVersion === 'develop' || 
-                    envVersion === 'trial' || 
-                    version.includes('dev') || 
-                    version.includes('test');
-      
-      console.log('云函数环境检测结果:', {
-        envVersion,
-        version,
-        isDevelopment: isDev
-      });
-      
+      let isDev = false;
+      if (admin) {
+        isDev = true;
+      } else {
+        const accountInfo = wxContext.ACCOUNT_INFO || {};
+        const envVersion = accountInfo.envVersion || '';
+        const version = accountInfo.version || '';
+        isDev = envVersion === 'develop' || envVersion === 'trial' || version.includes('dev') || version.includes('test');
+        console.log('云函数环境检测结果:', { envVersion, version, isDevelopment: isDev });
+      }
       if (!isDev) {
-        return {
-          success: false,
-          data: null,
-          message: '发布功能仅在开发环境下可用'
-        };
+        return { success: false, data: null, message: '发布功能仅在开发环境下可用' };
       }
     }
     
-    // 验证方案是否属于当前用户
-    const planResult = await db.collection('plans')
-      .where({
-        _id: planId,
-        creatorId: currentUserId
-      })
-      .get();
-    
-    if (planResult.data.length === 0) {
-      return {
-        success: false,
-        data: null,
-        message: '方案不存在或无权限修改'
-      };
+    // 所有权验证：管理员(admin=true)跳过，否则需验证归属
+    let isDev = false;
+    if (admin) {
+      isDev = true;
+    } else {
+      try {
+        const accountInfo = wxContext.ACCOUNT_INFO || {};
+        const envVersion = accountInfo.envVersion || '';
+        const version = accountInfo.version || '';
+        isDev = envVersion === 'develop' || envVersion === 'trial' || version.includes('dev') || version.includes('test');
+      } catch (e) {
+        isDev = false;
+      }
+    }
+
+    if (!isDev && !admin) {
+      // 非开发环境需要验证归属
+      const planResult = await db.collection('plans')
+        .where({
+          _id: planId,
+          creatorId: currentUserId
+        })
+        .get();
+      
+      if (planResult.data.length === 0) {
+        return {
+          success: false,
+          data: null,
+          message: '方案不存在或无权限修改'
+        };
+      }
     }
     
     // 更新方案状态

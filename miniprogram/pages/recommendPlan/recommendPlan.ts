@@ -43,6 +43,11 @@ Page({
     this.loadRecommendPlans();
   },
 
+  onShow() {
+    // 返回页面时刷新，确保与体验服页面点赞/收藏状态同步
+    this.loadRecommendPlans();
+  },
+
   // 初始化英雄列表 - 基于已有方案
   async initHeroList() {
     try {
@@ -203,7 +208,7 @@ Page({
         updatedPlans[planIndex] = {
           ...updatedPlans[planIndex],
           isLiked: result.result.data.isLiked,
-          likeCount: result.result.data.likes
+          likeCount: result.result.data.likeCount
         };
         
         this.setData({

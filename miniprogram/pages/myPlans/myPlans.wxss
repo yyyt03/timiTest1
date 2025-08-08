@@ -14,6 +14,47 @@
   margin-bottom: 10rpx;
 }
 
+/* 管理员筛选栏样式 */
+
+/* 管理筛选栏改为横向滚动，避免换行变形 */
+.admin-filters {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  margin: 10rpx 0 20rpx 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  padding: 8rpx 8rpx;
+  border-radius: 16rpx;
+  background: rgba(255,255,255,0.2);
+  box-sizing: border-box;
+}
+
+.admin-filters .filter-btn {
+  flex: 0 0 auto; /* 防止自动换行填充 */
+  min-width: 140rpx; /* 减小最小宽度，避免两端溢出 */
+  text-align: center;
+  padding: 14rpx 24rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  border: 1rpx solid rgba(255,255,255,0.6);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+
+/* 隐藏横向滚动条 */
+.admin-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-filters .filter-btn.active {
+  background: linear-gradient(135deg, #ffd43b 0%, #ffa94d 100%);
+  color: #222;
+  border-color: #ffc078;
+  font-weight: 700;
+}
+
 .page-title {
   font-size: 36rpx;
   font-weight: bold;
@@ -236,6 +277,18 @@
   background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 100%);
   border: 1rpx solid #ffd43b;
   color: #856404;
+}
+
+.status-badge.pending {
+  background: linear-gradient(135deg, #e6f0ff 0%, #d0ebff 100%);
+  border: 1rpx solid #74c0fc;
+  color: #1c7ed6;
+}
+
+.status-badge.rejected {
+  background: linear-gradient(135deg, #ffe3e3 0%, #ffc9c9 100%);
+  border: 1rpx solid #ff8787;
+  color: #c92a2a;
 }
 
 .status-icon {

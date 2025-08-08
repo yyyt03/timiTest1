@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { page = 1, pageSize = 10 } = event;
+    const { page = 1, pageSize = 10, adminAll = false } = event;
     
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;
@@ -27,22 +27,21 @@ exports.main = async function(event, context) {
     // 计算偏移量
     const skip = (page - 1) * pageSize;
     
-    console.log('获取用户方案数据');
+    console.log('获取用户方案数据', { adminAll, page, pageSize });
     
     // 并行查询用户方案列表和总数
+    // 构建查询条件：管理员模式下加载全部方案
+    const whereCondition = adminAll ? {} : { creatorId: currentUserId };
+
     const [plansResult, countResult] = await Promise.all([
       db.collection('plans')
-        .where({
-          creatorId: currentUserId
-        })
+        .where(whereCondition)
         .orderBy('createTime', 'desc')
         .skip(skip)
         .limit(pageSize)
         .get(),
       db.collection('plans')
-        .where({
-          creatorId: currentUserId
-        })
+        .where(whereCondition)
         .count()
     ]);
     

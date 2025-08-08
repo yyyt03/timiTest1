@@ -56,7 +56,7 @@ Page({
       const version = accountInfo.miniProgram?.version || '';
       const envVersion = accountInfo.miniProgram?.envVersion || '';
       
-      // 开发环境判断逻辑 - 只在develop环境下显示创作功能
+      // 仅开发版显示管理员入口；trial 视作 release
       const isDev = envVersion === 'develop';
       
       this.setData({
@@ -147,10 +147,7 @@ Page({
           loginStatus: '已登录'
         });
         
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success'
-        });
+        // 登录成功后，不再弹出提示，仅在界面右侧按钮展示状态
         return;
       }
       
@@ -176,11 +173,7 @@ Page({
             isLoggedIn: true,
             loginStatus: '已登录(开发模式)'
           });
-          
-          wx.showToast({
-            title: '开发模式登录成功',
-            icon: 'success'
-          });
+          // 开发模式下不再弹出多余的成功提示
         }
         });
       } else {
@@ -200,10 +193,7 @@ Page({
           // 同步用户信息到云端
           await this.syncUserInfoToCloud(userProfile.userInfo);
           
-          wx.showToast({
-            title: '获取用户信息成功',
-            icon: 'success'
-          });
+          // 获取用户信息成功后不再弹出提示
         } catch (err) {
           console.error('获取用户信息失败:', err);
           
@@ -219,10 +209,7 @@ Page({
             loginStatus: '已登录(基础模式)'
           });
           
-          wx.showToast({
-            title: '登录成功(基础模式)',
-            icon: 'success'
-          });
+          // 基础模式登录成功后不再弹出提示
         }
       }
     } catch (error) {
@@ -236,6 +223,13 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  // 跳转到方案审核（仅开发者可见入口）
+  goToPlanReview() {
+    wx.navigateTo({
+      url: '../myPlans/myPlans?admin=1'
+    });
   },
 
   // 同步用户信息到云端

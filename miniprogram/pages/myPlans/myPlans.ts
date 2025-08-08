@@ -10,15 +10,29 @@ Page({
     total: 0,
     emptyIcon: '/images/icons/empty-favorites.png',
     isDevelopment: false, // 添加环境标识
+    isAdminReview: false, // 是否为管理员审核模式
+    pageTitle: '我的方案',
     // 英雄分类相关
     heroCategories: [] as any[], // 英雄分类列表
     selectedHero: 'all', // 当前选中的英雄，'all'表示全部
-    showHeroSelector: false // 是否显示英雄选择器
+    showHeroSelector: false, // 是否显示英雄选择器
+    // 管理筛选
+    adminStatusFilter: 'all' // all | draft | published
   },
 
-  onLoad() {
+  onLoad(options?: any) {
+    // 识别管理员审核模式
+    const isAdmin = options && (options.admin === '1' || options.mode === 'admin');
+    this.setData({
+      isAdminReview: !!isAdmin,
+      pageTitle: !!isAdmin ? '方案审核' : '我的方案'
+    });
     this.detectEnvironment(); // 检测环境
-    this.loadUserPlans();
+    if (this.data.isAdminReview) {
+      this.loadAllPlansForAdmin();
+    } else {
+      this.loadUserPlans();
+    }
   },
 
   // 检测环境
@@ -54,7 +68,11 @@ Page({
       page: 1,
       hasMore: true
     });
-    this.loadUserPlans();
+    if (this.data.isAdminReview) {
+      this.loadAllPlansForAdmin();
+    } else {
+      this.loadUserPlans();
+    }
   },
 
   // 格式化时间显示
@@ -84,7 +102,8 @@ Page({
       name: 'getUserPlans',
       data: {
         page: this.data.page,
-        pageSize: this.data.pageSize
+        pageSize: this.data.pageSize,
+        adminAll: this.data.isAdminReview
       },
       success: (res: any) => {
         console.log('getUserPlans云函数调用成功:', res);
@@ -130,8 +149,75 @@ Page({
     });
   },
 
+  // 管理员审核模式：全量加载所有方案
+  async loadAllPlansForAdmin() {
+    // 避免重复加载
+    if (this.data.loading && this.data.userPlans.length > 0) return;
+
+    this.setData({ loading: true, userPlans: [], allUserPlans: [], total: 0 });
+
+    const pageSize = 100; // 提高单页数量，减少请求次数
+    let page = 1;
+    let allPlans: any[] = [];
+    let hasMore = true;
+
+    try {
+      while (hasMore) {
+        const res: any = await new Promise((resolve, reject) => {
+          wx.cloud.callFunction({
+            name: 'getAllPlans',
+            data: { page, pageSize, status: this.data.adminStatusFilter },
+            success: (r: any) => resolve(r),
+            fail: (e: any) => reject(e)
+          });
+        });
+
+        if (res && res.result && res.result.success) {
+          const batch = (res.result.data.plans || []).map((plan: any) => ({
+            ...plan,
+            createTime: this.formatTime(plan.createTime)
+          }));
+          allPlans = allPlans.concat(batch);
+          hasMore = !!res.result.data.hasMore;
+          page += 1;
+        } else {
+          hasMore = false;
+          wx.showToast({ title: res?.result?.message || '获取方案失败', icon: 'none' });
+        }
+      }
+
+      this.setData({
+        userPlans: allPlans,
+        allUserPlans: allPlans,
+        total: allPlans.length,
+        hasMore: false,
+        loading: false
+      });
+
+      // 生成英雄分类
+      this.generateHeroCategories();
+    } catch (error) {
+      console.error('管理员模式获取方案失败:', error);
+      wx.showToast({ title: '获取方案失败', icon: 'none' });
+      this.setData({ loading: false, hasMore: false });
+    } finally {
+      wx.stopPullDownRefresh();
+    }
+  },
+
+  // 切换管理员状态筛选
+  switchAdminStatus(e: any) {
+    const status = e.currentTarget.dataset.status;
+    this.setData({ adminStatusFilter: status });
+    if (this.data.isAdminReview) {
+      this.loadAllPlansForAdmin();
+    }
+  },
+
   // 加载更多
   loadMore() {
+    // 管理员审核模式已全量加载，不再分页
+    if (this.data.isAdminReview) return;
     if (this.data.hasMore && !this.data.loading) {
       this.setData({
         page: this.data.page + 1
@@ -196,7 +282,8 @@ Page({
       name: 'updatePlanStatus',
       data: {
         planId: planId,
-        status: status
+        status: status,
+        admin: this.data.isAdminReview
       },
       success: (res: any) => {
         if (res.result.success) {
@@ -223,6 +310,49 @@ Page({
       },
       complete: () => {
         wx.hideLoading();
+      }
+    });
+  },
+
+  // 提交审核：将状态置为 pending
+  submitReview(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    const isRejected = plan.status === 'rejected';
+    wx.showModal({
+      title: isRejected ? '重新提交审核' : '提交审核',
+      content: isRejected ? '确定要重新提交该方案审核吗？' : '确定将该方案提交审核吗？',
+      success: (res) => {
+        if (res.confirm) {
+          this.updatePlanStatus(plan._id, 'pending');
+        }
+      }
+    });
+  },
+
+  // 审核通过：设为 published
+  approvePlan(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    wx.showModal({
+      title: '通过发布',
+      content: '确定要通过并发布该方案吗？',
+      success: (res) => {
+        if (res.confirm) {
+          this.updatePlanStatus(plan._id, 'published');
+        }
+      }
+    });
+  },
+
+  // 审核拒绝：设回 draft（或可扩展为 rejected）
+  rejectPlan(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    wx.showModal({
+      title: '拒绝审核',
+      content: '确定要拒绝该方案吗？',
+      success: (res) => {
+        if (res.confirm) {
+          this.updatePlanStatus(plan._id, 'rejected');
+        }
       }
     });
   },
@@ -272,9 +402,15 @@ Page({
     });
   },
 
-  // 图片加载错误处理
+  // 图片加载错误处理：切换到云端空状态图标或本地兜底
   onImageError() {
-    console.log('图片加载失败，使用默认图片');
+    try {
+      // 优先尝试云端空状态图标
+      this.setData({ emptyIcon: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/icons/empty-favorites.png' });
+    } catch (_e) {
+      // 本地兜底
+      this.setData({ emptyIcon: '/pages/images/unused/default-avatar.png' });
+    }
   },
 
   // 切换英雄选择器显示状态

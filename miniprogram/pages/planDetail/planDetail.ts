@@ -14,6 +14,49 @@ Page({
     // 支持id和planId两种参数名
     const planId = options.id || options.planId;
     const forceRefresh = options.forceRefresh === 'true';
+    // 如果从创建/编辑页传来初始数据，先展示，避免缓存延迟导致的不同步
+    if (options.initialPlan) {
+      try {
+        const initialPlan = JSON.parse(decodeURIComponent(options.initialPlan));
+        // 规范化优先字段，若已带 flags 则直接使用以优化首屏
+        const normalizedPlan = (function normalize(p: any) {
+          const skills = ['skillOne', 'skillTwo', 'skillThree'];
+          const n: any = { ...p };
+          skills.forEach((key) => {
+            if (n[key]) {
+              if (n[key].priorityCore !== undefined && n[key].priorityCore !== null) {
+                const coreNum = Number(n[key].priorityCore);
+                n[key].priorityCore = Number.isFinite(coreNum) ? coreNum : -1;
+              }
+              if (Array.isArray(n[key].priorityTalents)) {
+                n[key].priorityTalents = n[key].priorityTalents.map((v: any) => Number(v)).filter((v: any) => Number.isFinite(v));
+                // 先不直接生成 flags（plan.talents 是选中子集，priorityTalents 是全量索引）
+              }
+              if (!Array.isArray(n[key].priorityTalentsFlags)) {
+                const total = Array.isArray(n[key].talents) ? n[key].talents.length : 0;
+                n[key].priorityTalentsFlags = new Array(total).fill(false);
+              }
+            }
+          });
+          return n;
+        })(initialPlan);
+
+        this.setData({
+          plan: normalizedPlan,
+          loading: false
+        });
+        // 已带 flags 则首屏直接用；若为空再异步修正
+        const needCompute = ['skillOne','skillTwo','skillThree'].some((k) =>
+          Array.isArray((normalizedPlan as any)[k]?.priorityTalentsFlags) &&
+          (normalizedPlan as any)[k].priorityTalentsFlags.length === 0
+        );
+        if (needCompute && normalizedPlan.heroId) {
+          this.loadHeroSkillsAndComputeFlags(normalizedPlan.heroId, normalizedPlan);
+        }
+      } catch (e) {
+        console.warn('解析 initialPlan 失败:', e);
+      }
+    }
     
     if (planId) {
       this.setData({
@@ -39,6 +82,50 @@ Page({
     }
   },
 
+  // 基于全量英雄技能数据计算“选中子集”的优选 flags
+  computeFlagsForSkill(planSkill: any, heroSkillTalents: any[]): boolean[] {
+    if (!planSkill || !Array.isArray(planSkill.talents) || !Array.isArray(heroSkillTalents)) {
+      return new Array((planSkill?.talents || []).length).fill(false);
+    }
+    const flags = new Array(planSkill.talents.length).fill(false) as boolean[];
+    for (let i = 0; i < planSkill.talents.length; i++) {
+      const talentName = planSkill.talents[i]?.name;
+      if (!talentName) continue;
+      const absoluteIndex = heroSkillTalents.findIndex((t: any) => t?.name === talentName);
+      if (absoluteIndex > -1 && Array.isArray(planSkill.priorityTalents) && planSkill.priorityTalents.indexOf(absoluteIndex) > -1) {
+        flags[i] = true;
+      }
+    }
+    return flags;
+  },
+
+  async loadHeroSkillsAndComputeFlags(heroId: string, planObj?: any) {
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'getHeroSkills',
+        data: { heroId }
+      }) as any;
+      if (result.result && result.result.success) {
+        const skillsData = result.result.data?.skills;
+        if (!skillsData) return;
+        const plan: any = planObj || this.data.plan;
+        const updated: any = { ...plan };
+        if (updated.skillOne) {
+          updated.skillOne.priorityTalentsFlags = this.computeFlagsForSkill(updated.skillOne, skillsData.skillOne.talents || []);
+        }
+        if (updated.skillTwo) {
+          updated.skillTwo.priorityTalentsFlags = this.computeFlagsForSkill(updated.skillTwo, skillsData.skillTwo.talents || []);
+        }
+        if (updated.skillThree) {
+          updated.skillThree.priorityTalentsFlags = this.computeFlagsForSkill(updated.skillThree, skillsData.skillThree.talents || []);
+        }
+        this.setData({ plan: updated });
+      }
+    } catch (e) {
+      console.warn('加载英雄技能用于计算 flags 失败:', e);
+    }
+  },
+
   // 加载方案详情
   async loadPlanDetail(planId: string, forceRefresh: boolean = false) {
     this.setData({ loading: true });
@@ -54,13 +141,38 @@ Page({
         
         console.log('获取到的方案数据:', plan);
         
+        // 先规范化优先字段的类型，避免字符串与数字不一致导致前端 indexOf 失败
+        const normalizePlan = (p: any) => {
+          const skills = ['skillOne', 'skillTwo', 'skillThree'];
+          const normalized: any = { ...p };
+          skills.forEach((key) => {
+            if (normalized[key]) {
+              // 规范化 priorityCore
+              if (normalized[key].priorityCore !== undefined && normalized[key].priorityCore !== null) {
+                const coreNum = Number(normalized[key].priorityCore);
+                normalized[key].priorityCore = Number.isFinite(coreNum) ? coreNum : -1;
+              }
+              // 规范化 priorityTalents
+              if (Array.isArray(normalized[key].priorityTalents)) {
+                normalized[key].priorityTalents = normalized[key].priorityTalents
+                  .map((v: any) => Number(v))
+                  .filter((v: any) => Number.isFinite(v));
+              // 不在此处直接生成 flags，避免选中子集与全量索引错位
+              }
+            }
+          });
+          return normalized;
+        };
+
+        const normalizedPlan = normalizePlan(plan);
+
         // 先设置方案数据，避免页面空白
         // 保留传递过来的收藏状态，避免被服务器数据覆盖
         const currentIsFavorited = this.data.plan.isFavorited;
         this.setData({
           plan: {
-            ...plan,
-            isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : plan.isFavorited
+            ...normalizedPlan,
+            isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : normalizedPlan.isFavorited
           },
           loading: false
         });
@@ -72,6 +184,11 @@ Page({
         
         // 异步获取英雄头像，不阻塞页面显示
         this.getHeroAvatar(plan.heroName, plan.heroId);
+
+        // 依据全量技能数据映射 flags，避免覆盖 initialPlan 的正确显示
+        if (plan.heroId) {
+          this.loadHeroSkillsAndComputeFlags(plan.heroId, this.data.plan);
+        }
         
       } else {
         wx.showToast({

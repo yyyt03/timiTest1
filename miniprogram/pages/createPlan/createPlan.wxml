@@ -47,13 +47,24 @@
                 <view class="core-name">{{item.name}}</view>
                 <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅选择该核心后显示） -->
+                <view wx:if="{{selectedCores.skillOne === index}}"
+                  class="priority-btn {{priorityCores.skillOne === index ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityCore"
+                  data-skill-type="skillOne"
+                  data-index="{{index}}">
+                  <text class="priority-text">{{priorityCores.skillOne === index ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
           </view>
           
           <!-- 天赋选择 -->
           <view class="talent-section" wx:if="{{selectedCores.skillOne !== -1}}">
-            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-title-container">
+              <text class="talent-title">天赋加点</text>
+              <text class="talent-subtitle">优先加点-选中星号</text>
+            </view>
             <view class="talent-list">
               <view 
                 class="talent-item {{talentSelected.skillOne[index] ? 'selected' : ''}}" 
@@ -65,6 +76,15 @@
                 <view class="talent-name">{{item.name}}</view>
                 <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅天赋被选中后显示） -->
+                <view wx:if="{{talentSelected.skillOne[index]}}"
+                  class="priority-btn {{priorityTalentsFlags.skillOne[index] ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityTalent"
+                  data-skill-type="skillOne"
+                  data-index="{{index}}"
+                  data-force-update="{{forceUpdate}}">
+                  <text class="priority-text">{{priorityTalentsFlags.skillOne[index] ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
             <view class="talent-count">已选择 {{selectedTalents.skillOne.length}}/3</view>
@@ -89,13 +109,24 @@
                 <view class="core-name">{{item.name}}</view>
                 <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅选择该核心后显示） -->
+                <view wx:if="{{selectedCores.skillTwo === index}}"
+                  class="priority-btn {{priorityCores.skillTwo === index ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityCore"
+                  data-skill-type="skillTwo"
+                  data-index="{{index}}">
+                  <text class="priority-text">{{priorityCores.skillTwo === index ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
           </view>
           
           <!-- 天赋选择 -->
           <view class="talent-section" wx:if="{{selectedCores.skillTwo !== -1}}">
-            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-title-container">
+              <text class="talent-title">天赋加点</text>
+              <text class="talent-subtitle">优先加点-选中星号</text>
+            </view>
             <view class="talent-list">
               <view 
                 class="talent-item {{talentSelected.skillTwo[index] ? 'selected' : ''}}" 
@@ -107,6 +138,15 @@
                 <view class="talent-name">{{item.name}}</view>
                 <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅天赋被选中后显示） -->
+                <view wx:if="{{talentSelected.skillTwo[index]}}"
+                  class="priority-btn {{priorityTalentsFlags.skillTwo[index] ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityTalent"
+                  data-skill-type="skillTwo"
+                  data-index="{{index}}"
+                  data-force-update="{{forceUpdate}}">
+                  <text class="priority-text">{{priorityTalentsFlags.skillTwo[index] ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
             <view class="talent-count">已选择 {{selectedTalents.skillTwo.length}}/3</view>
@@ -131,13 +171,24 @@
                 <view class="core-name">{{item.name}}</view>
                 <view class="core-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="core-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅选择该核心后显示） -->
+                <view wx:if="{{selectedCores.skillThree === index}}"
+                  class="priority-btn {{priorityCores.skillThree === index ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityCore"
+                  data-skill-type="skillThree"
+                  data-index="{{index}}">
+                  <text class="priority-text">{{priorityCores.skillThree === index ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
           </view>
           
           <!-- 天赋选择 -->
           <view class="talent-section" wx:if="{{selectedCores.skillThree !== -1}}">
-            <view class="talent-title">选择天赋（必选3个）</view>
+            <view class="talent-title-container">
+              <text class="talent-title">天赋加点</text>
+              <text class="talent-subtitle">优先加点-选中星号</text>
+            </view>
             <view class="talent-list">
               <view 
                 class="talent-item {{talentSelected.skillThree[index] ? 'selected' : ''}}" 
@@ -149,6 +200,15 @@
                 <view class="talent-name">{{item.name}}</view>
                 <view class="talent-desc" wx:if="{{item.description}}">{{item.description}}</view>
                 <view class="talent-tag">{{item.tag}}</view>
+                <!-- 优先按钮（仅天赋被选中后显示） -->
+                <view wx:if="{{talentSelected.skillThree[index]}}"
+                  class="priority-btn {{priorityTalentsFlags.skillThree[index] ? 'priority-active' : 'priority-inactive'}}"
+                  catchtap="togglePriorityTalent"
+                  data-skill-type="skillThree"
+                  data-index="{{index}}"
+                  data-force-update="{{forceUpdate}}">
+                  <text class="priority-text">{{priorityTalentsFlags.skillThree[index] ? '★' : '☆'}}</text>
+                </view>
               </view>
             </view>
             <view class="talent-count">已选择 {{selectedTalents.skillThree.length}}/3</view>

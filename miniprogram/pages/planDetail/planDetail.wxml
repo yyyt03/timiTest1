@@ -16,6 +16,7 @@
       <!-- 天赋加点小标题 -->
       <view class="section-title">
         <text class="title-text">天赋加点</text>
+        <text class="subtitle-text">优先加点-蓝色框选</text>
       </view>
       
       <!-- 一技能 -->
@@ -28,21 +29,23 @@
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
             <!-- 核心技能 -->
-            <view class="skill-core" wx:if="{{plan.skillOne.core}}">
+            <view class="skill-core {{plan.skillOne.priorityCore !== undefined && plan.skillOne.priorityCore !== -1 ? 'priority-core' : ''}}" wx:if="{{plan.skillOne.core}}">
               <view class="skill-info">
                 <text class="skill-name">{{plan.skillOne.core.name}}</text>
                 <text class="skill-desc">{{plan.skillOne.core.description}}</text>
               </view>
               <text class="skill-tag skill-tag-top">{{plan.skillOne.core.tag}}</text>
+                             <!-- 优先标记 - 已移除，使用颜色区分 -->
             </view>
             <!-- 天赋列表 -->
             <view class="skill-talents">
-              <view class="talent-item" wx:for="{{plan.skillOne.talents}}" wx:key="index">
+              <view class="talent-item {{plan.skillOne.priorityTalentsFlags && plan.skillOne.priorityTalentsFlags[index] ? 'priority-talent' : ''}}" wx:for="{{plan.skillOne.talents}}" wx:key="index">
                 <view class="talent-info">
                   <text class="talent-name">{{item.name}}</text>
                   <text class="talent-desc">{{item.description}}</text>
                 </view>
                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+                                 <!-- 优先标记 - 已移除，使用颜色区分 -->
               </view>
             </view>
           </view>
@@ -59,21 +62,23 @@
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
             <!-- 核心技能 -->
-            <view class="skill-core" wx:if="{{plan.skillTwo.core}}">
+            <view class="skill-core {{plan.skillTwo.priorityCore !== undefined && plan.skillTwo.priorityCore !== -1 ? 'priority-core' : ''}}" wx:if="{{plan.skillTwo.core}}">
               <view class="skill-info">
                 <text class="skill-name">{{plan.skillTwo.core.name}}</text>
                 <text class="skill-desc">{{plan.skillTwo.core.description}}</text>
               </view>
               <text class="skill-tag skill-tag-top">{{plan.skillTwo.core.tag}}</text>
+                             <!-- 优先标记 - 已移除，使用颜色区分 -->
             </view>
             <!-- 天赋列表 -->
             <view class="skill-talents">
-              <view class="talent-item" wx:for="{{plan.skillTwo.talents}}" wx:key="index">
+              <view class="talent-item {{plan.skillTwo.priorityTalentsFlags && plan.skillTwo.priorityTalentsFlags[index] ? 'priority-talent' : ''}}" wx:for="{{plan.skillTwo.talents}}" wx:key="index">
                 <view class="talent-info">
                   <text class="talent-name">{{item.name}}</text>
                   <text class="talent-desc">{{item.description}}</text>
                 </view>
                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+                                 <!-- 优先标记 - 已移除，使用颜色区分 -->
               </view>
             </view>
           </view>
@@ -90,21 +95,23 @@
           <!-- 右侧：核心技能和天赋 -->
           <view class="skill-content-section">
             <!-- 核心技能 -->
-            <view class="skill-core" wx:if="{{plan.skillThree.core}}">
+            <view class="skill-core {{plan.skillThree.priorityCore !== undefined && plan.skillThree.priorityCore !== -1 ? 'priority-core' : ''}}" wx:if="{{plan.skillThree.core}}">
               <view class="skill-info">
                 <text class="skill-name">{{plan.skillThree.core.name}}</text>
                 <text class="skill-desc">{{plan.skillThree.core.description}}</text>
               </view>
               <text class="skill-tag skill-tag-top">{{plan.skillThree.core.tag}}</text>
+                             <!-- 优先标记 - 已移除，使用颜色区分 -->
             </view>
             <!-- 天赋列表 -->
             <view class="skill-talents">
-              <view class="talent-item" wx:for="{{plan.skillThree.talents}}" wx:key="index">
+              <view class="talent-item {{plan.skillThree.priorityTalentsFlags && plan.skillThree.priorityTalentsFlags[index] ? 'priority-talent' : ''}}" wx:for="{{plan.skillThree.talents}}" wx:key="index">
                 <view class="talent-info">
                   <text class="talent-name">{{item.name}}</text>
                   <text class="talent-desc">{{item.description}}</text>
                 </view>
                 <text class="talent-tag talent-tag-top">{{item.tag}}</text>
+                                 <!-- 优先标记 - 已移除，使用颜色区分 -->
               </view>
             </view>
           </view>

@@ -22,6 +22,23 @@ Page({
       skillTwo: [] as boolean[],
       skillThree: [] as boolean[]
     }, // 天赋是否被选中
+    // 优先标记数据
+    priorityCores: {
+      skillOne: -1,
+      skillTwo: -1,
+      skillThree: -1
+    }, // 优先核心索引
+    priorityTalents: {
+      skillOne: [] as number[],
+      skillTwo: [] as number[],
+      skillThree: [] as number[]
+    }, // 优先天赋索引数组
+    // 天赋优先布尔标记（用于 WXML 直接索引，避免使用不被支持的函数调用）
+    priorityTalentsFlags: {
+      skillOne: [] as boolean[],
+      skillTwo: [] as boolean[],
+      skillThree: [] as boolean[]
+    },
     equipment: '', // 出装推荐（保留兼容性）
     equipmentList: [
       { name: '', imageUrl: '', matched: false, suggestions: [] },
@@ -147,6 +164,24 @@ Page({
     return result;
   },
 
+  // 查找指定技能下的天赋索引（仅在该技能内匹配）
+  findTalentIndexesBySkill(skillKey: 'skillOne' | 'skillTwo' | 'skillThree', talentsData: any[] | undefined): number[] {
+    if (!talentsData || !Array.isArray(talentsData) || !this.data.heroSkills) {
+      return [];
+    }
+    const result: number[] = [];
+    const skill = this.data.heroSkills[skillKey];
+    if (skill && Array.isArray(skill.talents)) {
+      for (let i = 0; i < skill.talents.length; i++) {
+        const talent = skill.talents[i];
+        if (talent && talentsData.some(t => t.name === talent.name)) {
+          result.push(i);
+        }
+      }
+    }
+    return result;
+  },
+
   // 加载方案数据用于编辑
   async loadPlanForEdit(planId: string) {
     try {
@@ -187,27 +222,50 @@ Page({
             const skillThreeCoreIndex = this.findCoreIndex(plan.skillThree?.core);
             
             // 找到对应的天赋索引
-            const skillOneTalentIndexes = this.findTalentIndexes(plan.skillOne.talents);
-            const skillTwoTalentIndexes = this.findTalentIndexes(plan.skillTwo?.talents);
-            const skillThreeTalentIndexes = this.findTalentIndexes(plan.skillThree?.talents);
+            const skillOneTalentIndexes = this.findTalentIndexesBySkill('skillOne', plan.skillOne.talents);
+            const skillTwoTalentIndexes = this.findTalentIndexesBySkill('skillTwo', plan.skillTwo?.talents);
+            const skillThreeTalentIndexes = this.findTalentIndexesBySkill('skillThree', plan.skillThree?.talents);
             
             // 设置天赋选中状态
             const talentSelected = {
-              skillOne: new Array(9).fill(false),
-              skillTwo: new Array(9).fill(false),
-              skillThree: new Array(9).fill(false)
-            };
+              skillOne: new Array(this.data.heroSkills.skillOne.talents.length).fill(false),
+              skillTwo: new Array(this.data.heroSkills.skillTwo.talents.length).fill(false),
+              skillThree: new Array(this.data.heroSkills.skillThree.talents.length).fill(false)
+            } as { skillOne: boolean[]; skillTwo: boolean[]; skillThree: boolean[] };
             
             // 设置选中的天赋
             skillOneTalentIndexes.forEach(index => {
-              if (index >= 0 && index < 9) talentSelected.skillOne[index] = true;
+              if (index >= 0 && index < talentSelected.skillOne.length) talentSelected.skillOne[index] = true;
             });
             skillTwoTalentIndexes.forEach(index => {
-              if (index >= 0 && index < 9) talentSelected.skillTwo[index] = true;
+              if (index >= 0 && index < talentSelected.skillTwo.length) talentSelected.skillTwo[index] = true;
             });
             skillThreeTalentIndexes.forEach(index => {
-              if (index >= 0 && index < 9) talentSelected.skillThree[index] = true;
+              if (index >= 0 && index < talentSelected.skillThree.length) talentSelected.skillThree[index] = true;
             });
+            
+            // 设置优先标记数据
+            const priorityCores = {
+              skillOne: plan.skillOne?.priorityCore !== undefined ? Number(plan.skillOne.priorityCore) : -1,
+              skillTwo: plan.skillTwo?.priorityCore !== undefined ? Number(plan.skillTwo.priorityCore) : -1,
+              skillThree: plan.skillThree?.priorityCore !== undefined ? Number(plan.skillThree.priorityCore) : -1
+            } as { skillOne: number; skillTwo: number; skillThree: number };
+            
+            const priorityTalents = {
+              skillOne: Array.isArray(plan.skillOne?.priorityTalents) ? plan.skillOne.priorityTalents.map((v: any) => Number(v)).filter((v: any) => Number.isFinite(v)) : [],
+              skillTwo: Array.isArray(plan.skillTwo?.priorityTalents) ? plan.skillTwo.priorityTalents.map((v: any) => Number(v)).filter((v: any) => Number.isFinite(v)) : [],
+              skillThree: Array.isArray(plan.skillThree?.priorityTalents) ? plan.skillThree.priorityTalents.map((v: any) => Number(v)).filter((v: any) => Number.isFinite(v)) : []
+            } as { skillOne: number[]; skillTwo: number[]; skillThree: number[] };
+
+            // 生成优先布尔标记（用于 WXML 直接索引）
+            const priorityTalentsFlags = {
+              skillOne: new Array(this.data.heroSkills.skillOne.talents.length).fill(false) as boolean[],
+              skillTwo: new Array(this.data.heroSkills.skillTwo.talents.length).fill(false) as boolean[],
+              skillThree: new Array(this.data.heroSkills.skillThree.talents.length).fill(false) as boolean[]
+            };
+            priorityTalents.skillOne.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillOne.length) priorityTalentsFlags.skillOne[i] = true; });
+            priorityTalents.skillTwo.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillTwo.length) priorityTalentsFlags.skillTwo[i] = true; });
+            priorityTalents.skillThree.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillThree.length) priorityTalentsFlags.skillThree[i] = true; });
             
             this.setData({
               'selectedCores.skillOne': skillOneCoreIndex,
@@ -216,7 +274,10 @@ Page({
               'selectedTalents.skillOne': skillOneTalentIndexes,
               'selectedTalents.skillTwo': skillTwoTalentIndexes,
               'selectedTalents.skillThree': skillThreeTalentIndexes,
-              'talentSelected': talentSelected
+              'talentSelected': talentSelected,
+              'priorityCores': priorityCores,
+              'priorityTalents': priorityTalents,
+              'priorityTalentsFlags': priorityTalentsFlags
             });
           }
         }, 500); // 等待500ms确保技能数据已加载
@@ -312,6 +373,12 @@ Page({
         this.setData({
           heroSkills: skillsData.skills,
           talentSelected: talentSelected,
+          // 初始化优先布尔标记
+          priorityTalentsFlags: {
+            skillOne: new Array(skillsData.skills.skillOne.talents.length).fill(false),
+            skillTwo: new Array(skillsData.skills.skillTwo.talents.length).fill(false),
+            skillThree: new Array(skillsData.skills.skillThree.talents.length).fill(false)
+          },
           skillsLoading: false
         });
       } else {
@@ -574,6 +641,12 @@ Page({
     this.setData({
       heroSkills: sunshangxiangSkills,
       talentSelected: talentSelected,
+      // 初始化优先布尔标记
+      priorityTalentsFlags: {
+        skillOne: new Array(sunshangxiangSkills.skillOne.talents.length).fill(false),
+        skillTwo: new Array(sunshangxiangSkills.skillTwo.talents.length).fill(false),
+        skillThree: new Array(sunshangxiangSkills.skillThree.talents.length).fill(false)
+      },
       skillsLoading: false
     });
 
@@ -589,29 +662,39 @@ Page({
 
   // 选择核心技能
   selectCore(e: any) {
-    const { skillType, index } = e.currentTarget.dataset;
+    const { skillType } = e.currentTarget.dataset;
+    const indexNum = Number(e.currentTarget.dataset.index);
     const selectedCores = Object.assign({}, this.data.selectedCores);
-    selectedCores[skillType] = index;
+    const previousIndex = selectedCores[skillType];
+    selectedCores[skillType] = indexNum;
     
-    this.setData({
-      selectedCores: selectedCores
-    });
+    const updates: any = { selectedCores: selectedCores };
+    // 切换核心后清除原有核心的优选标记
+    if (this.data.priorityCores && this.data.priorityCores[skillType] !== undefined) {
+      updates[`priorityCores.${skillType}`] = -1;
+    }
+
+    this.setData(updates);
   },
 
   // 切换天赋选择
   toggleTalent(e: any) {
-    const { skillType, index } = e.currentTarget.dataset;
+    const { skillType } = e.currentTarget.dataset;
+    const indexNum = Number(e.currentTarget.dataset.index);
     const selectedTalents = Object.assign({}, this.data.selectedTalents);
     const talentSelected = Object.assign({}, this.data.talentSelected);
     
     const currentSelected = selectedTalents[skillType].slice();
     const currentTalentSelected = talentSelected[skillType].slice();
     
-    if (currentTalentSelected[index]) {
+    if (currentTalentSelected[indexNum]) {
       // 取消选择
-      currentTalentSelected[index] = false;
-      const newSelected = currentSelected.filter(i => i !== index);
+      currentTalentSelected[indexNum] = false;
+      const newSelected = currentSelected.filter(i => i !== indexNum);
       selectedTalents[skillType] = newSelected;
+      
+      // 同时取消优先标记
+      this.removePriorityTalent(skillType, indexNum);
     } else {
       // 选择天赋
       if (currentSelected.length >= 3) {
@@ -619,10 +702,12 @@ Page({
         const firstSelected = currentSelected.shift();
         if (firstSelected !== undefined) {
           currentTalentSelected[firstSelected] = false;
+          // 同时取消被移除天赋的优先标记
+          this.removePriorityTalent(skillType, firstSelected);
         }
       }
-      currentTalentSelected[index] = true;
-      currentSelected.push(index);
+      currentTalentSelected[indexNum] = true;
+      currentSelected.push(indexNum);
       selectedTalents[skillType] = currentSelected;
     }
     
@@ -632,6 +717,77 @@ Page({
       selectedTalents: selectedTalents,
       talentSelected: talentSelected
     });
+  },
+
+  // 切换核心优先标记
+  togglePriorityCore(e: any) {
+    const { skillType } = e.currentTarget.dataset;
+    const indexNum = Number(e.currentTarget.dataset.index);
+    
+    // 检查核心是否被选中，如果没有选中则不执行操作
+    if (this.data.selectedCores[skillType] !== indexNum) {
+      return;
+    }
+    
+    const currentPriority = this.data.priorityCores[skillType];
+    
+    const updates: any = {};
+    if (currentPriority === indexNum) {
+      updates[`priorityCores.${skillType}`] = -1;
+    } else {
+      updates[`priorityCores.${skillType}`] = indexNum;
+    }
+    updates.forceUpdate = Date.now();
+    this.setData(updates);
+  },
+
+  // 切换天赋优先标记
+  togglePriorityTalent(e: any) {
+    const { skillType } = e.currentTarget.dataset;
+    const indexNum = Number(e.currentTarget.dataset.index);
+    
+    // 检查天赋是否被选中，如果没有选中则不执行操作
+    if (!this.data.talentSelected[skillType][indexNum]) {
+      return;
+    }
+    
+    const currentPriority = [...this.data.priorityTalents[skillType]];
+    const talentIndex = currentPriority.indexOf(indexNum);
+    
+    if (talentIndex > -1) {
+      // 取消优先标记
+      currentPriority.splice(talentIndex, 1);
+    } else {
+      // 添加优先标记
+      currentPriority.push(indexNum);
+    }
+    
+    // 生成布尔标记数组，供 WXML 直接索引
+    const flags = new Array(this.data.talentSelected[skillType].length).fill(false) as boolean[];
+    currentPriority.forEach(i => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
+
+    this.setData({
+      [`priorityTalents.${skillType}`]: currentPriority,
+      [`priorityTalentsFlags.${skillType}`]: flags,
+      forceUpdate: Date.now()
+    });
+  },
+
+  // 移除天赋优先标记（当天赋被取消选择时调用）
+  removePriorityTalent(skillType: string, index: number) {
+    const currentPriority = [...this.data.priorityTalents[skillType]];
+    const talentIndex = currentPriority.indexOf(index);
+    
+    if (talentIndex > -1) {
+      currentPriority.splice(talentIndex, 1);
+      // 同步更新布尔标记
+      const flags = new Array(this.data.talentSelected[skillType].length).fill(false) as boolean[];
+      currentPriority.forEach(i => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
+      this.setData({
+        [`priorityTalents.${skillType}`]: currentPriority,
+        [`priorityTalentsFlags.${skillType}`]: flags
+      });
+    }
   },
 
   // 装备输入处理
@@ -968,15 +1124,21 @@ Page({
         // 修改数据格式以匹配方案详情页期望的格式
         skillOne: {
           core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
-          talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
+          talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index]),
+          priorityCore: this.data.priorityCores.skillOne,
+          priorityTalents: this.data.priorityTalents.skillOne
         },
         skillTwo: {
           core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
-          talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
+          talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index]),
+          priorityCore: this.data.priorityCores.skillTwo,
+          priorityTalents: this.data.priorityTalents.skillTwo
         },
         skillThree: {
           core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
-          talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
+          talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]),
+          priorityCore: this.data.priorityCores.skillThree,
+          priorityTalents: this.data.priorityTalents.skillThree
         },
         equipment: equipmentData,
         equipmentText: this.getEquipmentText(),
@@ -1002,10 +1164,31 @@ Page({
             icon: 'success'
           });
           
-          // 编辑模式保存成功后跳转到方案详情页，传递强制刷新参数
+          // 编辑模式保存成功后跳转到方案详情页，传递强制刷新参数与初始数据以避免缓存延迟
           setTimeout(() => {
+            // 预先计算选中子集的优选布尔标记，进入详情页首屏即显示
+            const flagsOne = (this.data.selectedTalents.skillOne || []).map((absIdx: number) => (this.data.priorityTalents.skillOne || []).indexOf(absIdx) > -1);
+            const flagsTwo = (this.data.selectedTalents.skillTwo || []).map((absIdx: number) => (this.data.priorityTalents.skillTwo || []).indexOf(absIdx) > -1);
+            const flagsThree = (this.data.selectedTalents.skillThree || []).map((absIdx: number) => (this.data.priorityTalents.skillThree || []).indexOf(absIdx) > -1);
+
+            const initialPlan = encodeURIComponent(JSON.stringify({
+              _id: this.data.planId,
+              heroId: this.data.heroId,
+              heroName: this.data.hero,
+              title: planData.title,
+              description: planData.description,
+              creatorName: this.data.authorName,
+              skillOne: { ...planData.skillOne, priorityTalentsFlags: flagsOne },
+              skillTwo: { ...planData.skillTwo, priorityTalentsFlags: flagsTwo },
+              skillThree: { ...planData.skillThree, priorityTalentsFlags: flagsThree },
+              equipment: planData.equipment,
+              equipmentText: planData.equipmentText,
+              strategy: planData.strategy,
+              authorName: planData.authorName,
+              isBetaPlan: planData.isBetaPlan
+            }));
             wx.redirectTo({
-              url: `../planDetail/planDetail?planId=${this.data.planId}&forceRefresh=true`
+              url: `../planDetail/planDetail?planId=${this.data.planId}&forceRefresh=true&initialPlan=${initialPlan}`
             });
           }, 1500);
         } else {
@@ -1035,15 +1218,21 @@ Page({
             authorName: this.data.authorName,
             skillOne: {
               core: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne],
-              talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index])
+              talents: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index]),
+              priorityCore: this.data.priorityCores.skillOne,
+              priorityTalents: this.data.priorityTalents.skillOne
             },
             skillTwo: {
               core: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo],
-              talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index])
+              talents: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index]),
+              priorityCore: this.data.priorityCores.skillTwo,
+              priorityTalents: this.data.priorityTalents.skillTwo
             },
             skillThree: {
               core: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree],
-              talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index])
+              talents: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]),
+              priorityCore: this.data.priorityCores.skillThree,
+              priorityTalents: this.data.priorityTalents.skillThree
             },
             equipment: equipmentData,
             strategy: this.data.planDescription

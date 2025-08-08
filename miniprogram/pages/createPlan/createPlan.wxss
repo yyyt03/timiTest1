@@ -265,6 +265,7 @@
   font-weight: 500;
   align-self: flex-end;
   margin-top: auto;
+  margin-right: 0; /* 完全贴合右下角 */
 }
 
 .core-item.selected .core-tag {
@@ -277,13 +278,29 @@
   margin-top: 15rpx;
 }
 
+.talent-title-container {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  margin-bottom: 12rpx;
+}
+
 .talent-title {
   font-size: 24rpx;
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 12rpx;
   padding-left: 8rpx;
   border-left: 3rpx solid #7db7f6;
+}
+
+.talent-subtitle {
+  font-size: 20rpx;
+  font-weight: 500;
+  color: #333333;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #7db7f6;
 }
 
 .talent-list {
@@ -356,6 +373,7 @@
   font-weight: 500;
   align-self: flex-end;
   margin-top: auto;
+  margin-right: 0; /* 完全贴合右下角 */
 }
 
 .talent-item.selected .talent-tag {
@@ -368,6 +386,87 @@
   color: #7db7f6;
   text-align: right;
   font-weight: 500;
+}
+
+/* 优先按钮样式 */
+.priority-btn {
+  position: absolute;
+  top: 6rpx;
+  right: 6rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6rpx;
+  width: 48rpx;
+  height: 36rpx;
+  box-shadow: 0 2rpx 6rpx rgba(102, 126, 234, 0.3);
+  border: 1rpx solid #5a6fd8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.priority-btn.priority-active {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  box-shadow: 0 2rpx 6rpx rgba(78, 205, 196, 0.4);
+  border: 1rpx solid #26a69a;
+  transform: scale(1.1);
+}
+
+/* 未激活（已选中但未设为优先）的灰色状态 */
+.priority-btn.priority-inactive {
+  background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+  border: 1rpx solid #999999;
+  opacity: 0.9;
+}
+
+/* 未选中时完全隐藏按钮 */
+.priority-hidden {
+  display: none;
+}
+
+.priority-text {
+  font-size: 20rpx;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+  line-height: 1;
+}
+
+.priority-btn.priority-active {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  box-shadow: 0 2rpx 6rpx rgba(78, 205, 196, 0.4);
+  border: 1rpx solid #26a69a;
+  transform: scale(1.1);
+}
+
+.priority-btn.priority-active .priority-text {
+  color: #ffffff;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
+.priority-btn.priority-disabled {
+  background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+  border: 1rpx solid #999999;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.priority-btn.priority-disabled .priority-text {
+  color: #666666;
+}
+
+/* 核心项和天赋项的优先按钮位置调整 */
+.core-item .priority-btn {
+  top: 6rpx;
+  right: 6rpx;
+}
+
+.talent-item .priority-btn {
+  top: 6rpx;
+  right: 6rpx;
 }
 
 /* 英雄选择器 */

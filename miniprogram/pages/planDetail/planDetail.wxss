@@ -157,10 +157,11 @@
   padding: 8rpx;
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border-radius: 12rpx;
-  border: 2rpx solid #667eea;
+  border: 1rpx solid #e9ecef;
   margin-bottom: 4rpx;
   position: relative;
-  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .skill-talents {
@@ -177,7 +178,7 @@
   border-radius: 10rpx;
   border: 1rpx solid #e9ecef;
   position: relative;
-  transition: all 0.2s ease;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .skill-info, .talent-info {
@@ -258,6 +259,42 @@
   white-space: nowrap;
 }
 
+/* 优先标记样式 */
+.priority-core {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important; /* Changed to light blue gradient */
+  border: 2rpx solid #7db7f6 !important; /* Changed to light blue border */
+  box-shadow: 0 4rpx 16rpx rgba(125, 183, 246, 0.3) !important; /* Adjusted shadow */
+}
+
+.priority-talent {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important; /* Changed to light blue gradient */
+  border: 2rpx solid #7db7f6 !important; /* Changed to light blue border */
+  box-shadow: 0 4rpx 16rpx rgba(125, 183, 246, 0.3) !important; /* Adjusted shadow */
+}
+
+.priority-indicator {
+  position: absolute;
+  top: 6rpx;
+  left: 6rpx;
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  border-radius: 50%;
+  width: 28rpx;
+  height: 28rpx;
+  box-shadow: 0 2rpx 6rpx rgba(78, 205, 196, 0.4);
+  border: 1rpx solid #26a69a;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.priority-indicator .priority-text {
+  font-size: 12rpx;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
 /* 装备出装 */
 .equipment-section {
   margin-top: 20rpx;
@@ -272,6 +309,19 @@
   margin-bottom: 25rpx;
   padding-left: 15rpx;
   border-left: 4rpx solid #667eea;
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.subtitle-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color:rgb(255, 12, 12); /* Changed to red */
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #7db7f6;
 }
 
 .equipment-grid {

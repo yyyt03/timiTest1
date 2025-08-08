@@ -171,7 +171,7 @@ Page({
   // 跳转到创作方案页面
   goToCreatePlan() {
     wx.navigateTo({
-      url: '../heroCategory/heroCategory'
+      url: '../heroCategory/heroCategory?source=createPlan'
     });
   },
 

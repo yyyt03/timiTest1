@@ -102,6 +102,35 @@
   font-weight: 500;
 }
 
+.logout-btn {
+  padding: 12rpx 24rpx;
+  background: rgba(239, 68, 68, 0.2);
+  border: 2rpx solid rgba(239, 68, 68, 0.3);
+  border-radius: 25rpx;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10rpx);
+  box-shadow: 0 2rpx 8rpx rgba(239, 68, 68, 0.1);
+}
+
+.logout-btn:active {
+  transform: translateY(1rpx) scale(0.98);
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 1rpx 4rpx rgba(239, 68, 68, 0.2);
+}
+
+.logout-text {
+  font-size: 24rpx;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .login-status-indicator {
   background: rgba(76, 175, 80, 0.2);
   border: 2rpx solid rgba(76, 175, 80, 0.3);

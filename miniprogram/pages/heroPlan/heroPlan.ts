@@ -178,29 +178,15 @@ Page({
   // 格式化时间
   formatTime(timeStr: string) {
     const date = new Date(timeStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor(diff / (1000 * 60));
     
-    if (days === 0) {
-      if (hours === 0) {
-        if (minutes === 0) {
-          return '刚刚';
-        } else {
-          return minutes + '分钟前';
-        }
-      } else {
-        return hours + '小时前';
-      }
-    } else if (days === 1) {
-      return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    } else if (days < 7) {
-      return days + '天前';
-    } else {
-      return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    }
+    // 标准格式：年月日+小时分钟
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   },
 
   // 查看方案详情

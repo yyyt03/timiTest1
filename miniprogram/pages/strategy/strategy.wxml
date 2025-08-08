@@ -48,7 +48,7 @@
         <view class="card-icon beta-icon">🔬</view>
         <view class="card-content">
           <text class="card-title">体验服方案</text>
-          <text class="card-desc">暂无</text>
+          <text class="card-desc">体验er</text>
         </view>
         <view class="card-arrow">→</view>
       </view>

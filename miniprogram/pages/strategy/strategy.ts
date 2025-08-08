@@ -12,12 +12,44 @@ Page({
       betaPlan: getBetaPlanIcon(),
       createPlan: getCreatePlanIcon(),
       favoritePlan: getFavoritePlanIcon()
-    }
+    },
+    // 环境控制
+    isDevelopment: false
   },
 
   onLoad() {
     this.getUserInfo();
     this.getPlans();
+    // 检测环境
+    this.detectEnvironment();
+  },
+
+  // 检测环境
+  detectEnvironment() {
+    try {
+      const accountInfo = wx.getAccountInfoSync();
+      const version = accountInfo.miniProgram?.version || '';
+      const envVersion = accountInfo.miniProgram?.envVersion || '';
+      
+      // 开发环境判断逻辑 - 只在develop环境下显示创作功能
+      const isDev = envVersion === 'develop';
+      
+      this.setData({
+        isDevelopment: isDev
+      });
+      
+      console.log('攻略页面环境检测结果:', {
+        version,
+        envVersion,
+        isDevelopment: isDev
+      });
+    } catch (error) {
+      console.error('环境检测失败:', error);
+      // 如果检测失败，默认设置为非开发环境
+      this.setData({
+        isDevelopment: false
+      });
+    }
   },
 
   // 获取用户信息

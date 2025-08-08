@@ -79,9 +79,8 @@ Page({
       const version = accountInfo.miniProgram?.version || '';
       const envVersion = accountInfo.miniProgram?.envVersion || '';
       
-      // 开发环境判断逻辑 - 只在真正的开发环境下显示
-      const isDev = envVersion === 'develop' || 
-                    envVersion === 'trial';
+      // 开发环境判断逻辑 - 只在develop环境下显示开发模式
+      const isDev = envVersion === 'develop';
       
       this.setData({
         isDevelopment: isDev

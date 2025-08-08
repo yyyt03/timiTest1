@@ -247,6 +247,7 @@
                           {{item.matched ? '✓' : '?'}}
                         </text>
                       </view>
+
                     </view>
                   </view>
                   <view class="equipment-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">

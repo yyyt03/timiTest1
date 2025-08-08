@@ -57,7 +57,9 @@ Page({
     skillsLoading: false,
     isDevelopment: false, // 是否为开发环境
     editMode: false, // 是否为编辑模式
-    planId: '' // 编辑时的方案ID
+    planId: '', // 编辑时的方案ID
+    
+
   },
 
   onLoad(options: any) {
@@ -964,24 +966,29 @@ Page({
 
   // 输入方案思路
   onDescriptionInput(e: any) {
+    const value = e.detail.value;
     this.setData({
-      planDescription: e.detail.value
+      planDescription: value
     });
   },
 
   // 输入方案名称
   onTitleInput(e: any) {
+    const value = e.detail.value;
     this.setData({
-      planTitle: e.detail.value
+      planTitle: value
     });
   },
 
   // 输入作者名称
   onAuthorInput(e: any) {
+    const value = e.detail.value;
     this.setData({
-      authorName: e.detail.value
+      authorName: value
     });
   },
+
+
 
   // 选择体验服选项
   selectBetaOption(e: any) {
@@ -1012,7 +1019,7 @@ Page({
   },
 
   // 验证技能选择
-  validateSkillSelection() {
+  async validateSkillSelection() {
     const { selectedCores, selectedTalents, equipmentList, planDescription, planTitle, authorName } = this.data;
     
     // 检查是否每个技能都选择了核心
@@ -1109,6 +1116,49 @@ Page({
       return false;
     }
     
+    // 敏感词检查（只在提交时检测一次）
+    const { checkMultipleFields } = require('../../utils/sensitiveWordCheck');
+    
+    // 构建检查字段对象
+    const checkFields: any = {
+      planDescription: planDescription.trim(),
+      planTitle: planTitle.trim(),
+      authorName: authorName.trim()
+    };
+    
+    // 添加装备字段
+    equipmentList.forEach((item, index) => {
+      if (item.name.trim()) {
+        checkFields[`equipment${index}`] = item.name.trim();
+      }
+    });
+    
+    const checkResult = await checkMultipleFields(checkFields);
+    
+    if (!checkResult.isAllPass) {
+      const fieldNames = {
+        planDescription: '方案思路',
+        planTitle: '方案名称',
+        authorName: '作者名称',
+        equipment0: '装备1',
+        equipment1: '装备2',
+        equipment2: '装备3',
+        equipment3: '装备4',
+        equipment4: '装备5',
+        equipment5: '装备6'
+      };
+      
+      const failedField = checkResult.failedFields[0];
+      const fieldName = fieldNames[failedField as keyof typeof fieldNames];
+      const result = checkResult.results[failedField];
+      
+      wx.showToast({
+        title: `${fieldName}${result.suggest}`,
+        icon: 'none'
+      });
+      return false;
+    }
+    
     return true;
   },
 
@@ -1116,7 +1166,7 @@ Page({
   async generatePlan() {
     try {
       // 验证技能选择
-      if (!this.validateSkillSelection()) {
+      if (!(await this.validateSkillSelection())) {
         return;
       }
 

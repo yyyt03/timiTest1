@@ -1,12 +1,11 @@
-/* 整体容器 */
+/* 用户页面样式 */
 .container {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 0;
   box-sizing: border-box;
 }
 
-/* 内容区域 */
 .content-section {
   padding: 20rpx 30rpx 40rpx;
   box-sizing: border-box;
@@ -35,6 +34,7 @@
 
 .avatar-container {
   margin-right: 20rpx;
+  position: relative;
 }
 
 .avatar {
@@ -74,6 +74,14 @@
   font-size: 24rpx;
   color: #64748b;
   font-weight: 400;
+  margin-bottom: 4rpx;
+}
+
+.login-status {
+  font-size: 20rpx;
+  opacity: 0.8;
+  color: #ffd700;
+  font-weight: 500;
 }
 
 .login-btn {
@@ -91,6 +99,20 @@
 .login-text {
   font-size: 24rpx;
   color: #ffffff;
+  font-weight: 500;
+}
+
+.login-status-indicator {
+  background: rgba(76, 175, 80, 0.2);
+  border: 2rpx solid rgba(76, 175, 80, 0.3);
+  border-radius: 25rpx;
+  padding: 12rpx 24rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.status-text {
+  color: #4caf50;
+  font-size: 24rpx;
   font-weight: 500;
 }
 
@@ -207,16 +229,19 @@
   height: 100%;
 }
 
-/* 联系信息样式 */
+/* 联系信息样式 - 保留优化 */
 .contact-info {
   text-align: center;
-  padding: 40rpx 30rpx;
-  margin-top: 20rpx;
+  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16rpx;
+  backdrop-filter: blur(10rpx);
+  margin: 20rpx 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
 
 .contact-text {
   font-size: 24rpx;
-  color: #94a3b8;
-  font-weight: 400;
-  opacity: 0.8;
+  color: #666;
+  line-height: 1.5;
 } 

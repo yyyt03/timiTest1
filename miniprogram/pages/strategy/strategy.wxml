@@ -9,6 +9,12 @@
           <view class="welcome-text">
             <text class="main-title">觉醒天赋推荐</text>
             <text class="sub-title">梦也许会流泪，但是永远不会倒下。</text>
+            <text class="sub-title">
+              正式服：周五18点至周日结束，终极觉醒常驻开放
+              <br/>（当前赛季下）
+              体验服：全天开放，每周二、周五更新。
+              
+            </text>
           </view>
         </view>
       </swiper-item>

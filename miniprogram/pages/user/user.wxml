@@ -4,16 +4,26 @@
     <view class="user-card">
       <view class="user-info">
         <view class="avatar-container">
-          <image wx:if="{{hasUserInfo}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-          <view wx:else class="avatar-placeholder">👤</view>
+          <image wx:if="{{hasUserInfo && userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          <view wx:else class="avatar-placeholder">
+            <text wx:if="{{isLoggedIn}}">👤</text>
+            <text wx:else>🔒</text>
+          </view>
         </view>
         <view class="user-details">
           <text wx:if="{{hasUserInfo}}" class="nickname">{{userInfo.nickName}}</text>
           <text wx:else class="nickname">微信用户</text>
-          <text class="user-status">王者荣耀天赋助手</text>
+          <text class="user-status">
+            <text wx:if="{{isLoggedIn}}">登录成功</text>
+            <text wx:else>点击登录</text>
+          </text>
+          <text wx:if="{{loginStatus !== '未登录'}}" class="login-status">{{loginStatus}}</text>
         </view>
-        <view wx:if="{{!hasUserInfo}}" class="login-btn" bindtap="getUserInfo">
+        <view wx:if="{{!isLoggedIn}}" class="login-btn" bindtap="getUserInfo">
           <text class="login-text">登录</text>
+        </view>
+        <view wx:else class="login-status-indicator">
+          <text class="status-text">已登录</text>
         </view>
       </view>
     </view>

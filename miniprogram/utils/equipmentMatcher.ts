@@ -269,7 +269,7 @@ export async function getEquipmentImageUrl(equipmentName: string): Promise<strin
   }
 
   // 如果匹配失败或获取图片失败，返回默认图片
-  return '../images/unused/default-avatar.png';
+  return '../../pages/images/unused/default-avatar.png';
 }
 
 import { equipmentCache } from './equipmentCache';
@@ -287,7 +287,7 @@ export async function processEquipmentList(equipmentList: any[]): Promise<any[]>
   const processedList = [];
   
   for (const equipment of equipmentList) {
-    const processedEquipment = { ...equipment };
+    const processedEquipment = Object.assign({}, equipment);
     
     // 查找装备信息
     const foundEquipment = findEquipmentByName(equipment.name);

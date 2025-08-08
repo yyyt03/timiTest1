@@ -186,9 +186,28 @@
                         placeholder="输入装备名称..." 
                         value="{{item.name}}" 
                         bindinput="onEquipmentInput" 
+                        bindblur="onEquipmentBlur"
                         data-index="{{index}}"
                         maxlength="10">
                       </input>
+                      <view class="equipment-match-status" wx:if="{{item.name && item.name.length >= 2}}">
+                        <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
+                          {{item.matched ? '✓' : '?'}}
+                        </text>
+                      </view>
+                    </view>
+                  </view>
+                  <view class="equipment-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
+                    <view 
+                      class="suggestion-item" 
+                      wx:for="{{item.suggestions}}" 
+                      wx:for-item="suggestion" 
+                      wx:key="suggestion.name"
+                      bindtap="selectEquipmentSuggestion" 
+                      data-main-index="{{index}}"
+                      data-suggestion-name="{{suggestion.name}}">
+                      <image class="suggestion-icon" src="{{suggestion.imageUrl || '../images/unused/default-avatar.png'}}" mode="aspectFit"></image>
+                      <text class="suggestion-name">{{suggestion.name}}</text>
                     </view>
                   </view>
                 </view>

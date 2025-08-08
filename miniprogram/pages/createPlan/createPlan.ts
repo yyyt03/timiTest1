@@ -590,7 +590,7 @@ Page({
   // 选择核心技能
   selectCore(e: any) {
     const { skillType, index } = e.currentTarget.dataset;
-    const selectedCores = { ...this.data.selectedCores };
+    const selectedCores = Object.assign({}, this.data.selectedCores);
     selectedCores[skillType] = index;
     
     this.setData({
@@ -601,8 +601,8 @@ Page({
   // 切换天赋选择
   toggleTalent(e: any) {
     const { skillType, index } = e.currentTarget.dataset;
-    const selectedTalents = { ...this.data.selectedTalents };
-    const talentSelected = { ...this.data.talentSelected };
+    const selectedTalents = Object.assign({}, this.data.selectedTalents);
+    const talentSelected = Object.assign({}, this.data.talentSelected);
     
     const currentSelected = selectedTalents[skillType].slice();
     const currentTalentSelected = talentSelected[skillType].slice();
@@ -640,8 +640,161 @@ Page({
     const value = e.detail.value;
     
     // 更新装备名称
+    const equipmentList = this.data.equipmentList.slice();
+    equipmentList[index].name = value;
+
+    // 如果输入为空，清空相关数据
+    if (!value.trim()) {
+      equipmentList[index].imageUrl = '';
+      equipmentList[index].matched = false;
+      equipmentList[index].suggestions = [];
+    } else {
+      // 实时匹配装备
+      this.matchEquipment(index, value);
+    }
+
     this.setData({
-      [`equipmentList[${index}].name`]: value
+      equipmentList: equipmentList
+    });
+
+    // 保持兼容性
+    this.setData({
+      equipment: this.getEquipmentText()
+    });
+  },
+
+  // 装备失焦处理
+  onEquipmentBlur(e: any) {
+    const index = e.currentTarget.dataset.index;
+    const value = e.detail.value;
+
+    if (value.trim()) {
+      // 失焦时进行最终匹配
+      this.finalizeEquipmentMatch(index, value);
+    }
+  },
+
+  // 实时装备匹配
+  async matchEquipment(index: number, equipmentName: string) {
+    if (!equipmentName.trim()) return;
+
+    try {
+      const equipmentList = this.data.equipmentList.slice();
+
+      // 如果输入少于2个字符，不进行匹配，但显示提示
+      if (equipmentName.trim().length < 2) {
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = [];
+        this.setData({
+          equipmentList: equipmentList
+        });
+        return;
+      }
+
+      // 导入装备匹配功能
+      const { findEquipmentByName, getEquipmentImageUrl } = require('../../utils/equipmentMatcher');
+
+      // 查找匹配的装备
+      const matchedEquipment = findEquipmentByName(equipmentName);
+
+      if (matchedEquipment) {
+        // 找到匹配的装备
+        equipmentList[index].matched = true;
+        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
+        equipmentList[index].suggestions = [];
+      } else {
+        // 未找到匹配，生成建议
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = this.generateEquipmentSuggestions(equipmentName);
+      }
+
+      this.setData({
+        equipmentList: equipmentList
+      });
+    } catch (error) {
+      console.error('装备匹配失败:', error);
+    }
+  },
+
+  // 最终装备匹配
+  async finalizeEquipmentMatch(index: number, equipmentName: string) {
+    if (!equipmentName.trim()) return;
+
+    try {
+      // 导入装备匹配功能
+      const { findEquipmentByName, getEquipmentImageUrl } = require('../../utils/equipmentMatcher');
+
+      const matchedEquipment = findEquipmentByName(equipmentName);
+
+      const equipmentList = this.data.equipmentList.slice();
+
+      if (matchedEquipment) {
+        equipmentList[index].matched = true;
+        equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
+        equipmentList[index].suggestions = [];
+      } else {
+        equipmentList[index].matched = false;
+        equipmentList[index].imageUrl = '';
+        equipmentList[index].suggestions = [];
+      }
+
+      this.setData({
+        equipmentList: equipmentList
+      });
+    } catch (error) {
+      console.error('最终装备匹配失败:', error);
+    }
+  },
+
+  // 生成装备建议
+  generateEquipmentSuggestions(input: string): any[] {
+    if (!input || input.trim().length < 2) return [];
+
+    // 导入装备建议功能
+    const { getEquipmentSuggestions } = require('../../utils/equipmentMatcher');
+
+    try {
+      const suggestions = getEquipmentSuggestions(input, 3); // 最多显示3个建议
+      return suggestions.map(equipment => ({
+        name: equipment.name,
+        imageUrl: '../images/unused/default-avatar.png'      
+      }));
+    } catch (error) {
+      console.error('生成装备建议失败:', error);
+      return [];
+    }
+  },
+
+  // 选择装备建议
+  selectEquipmentSuggestion(e: any) {
+    const mainIndex = e.currentTarget.dataset.mainIndex;
+    const suggestionName = e.currentTarget.dataset.suggestionName;
+
+    const equipmentList = this.data.equipmentList.slice();
+    equipmentList[mainIndex].name = suggestionName;
+    equipmentList[mainIndex].matched = true;
+    equipmentList[mainIndex].suggestions = [];
+
+    // 导入装备匹配功能
+    const { getEquipmentImageUrl } = require('../../utils/equipmentMatcher');
+
+    // 获取装备图片
+    getEquipmentImageUrl(suggestionName).then(imageUrl => {
+      equipmentList[mainIndex].imageUrl = imageUrl;
+      this.setData({
+        equipmentList: equipmentList
+      });
+    });
+
+    this.setData({
+      equipmentList: equipmentList
+    });
+
+    // 保持兼容性
+    this.setData({
+      equipment: this.getEquipmentText()
     });
   },
 
@@ -946,6 +1099,16 @@ Page({
         icon: 'error'
       });
     }
+  },
+
+  // 显示装备提示
+  showEquipmentHint() {
+    wx.showModal({
+      title: '装备匹配规则',
+      content: '1. 输入装备名称即可自动匹配\n\n2. 输入至少2个字符开始匹配\n\n3. 如果2个字符匹配不到，请继续输入更多字符\n\n4. 匹配成功会显示装备图标\n\n5. 每个装备最多输入10个字符',
+      showCancel: false,
+      confirmText: '知道了'
+    });
   },
 
   // 从英雄分类中选择

@@ -315,4 +315,38 @@
       <button class="generate-btn" bindtap="generatePlan">创建方案</button>
     </view>
   </block>
+  
+  <!-- 敏感词检测加载界面 -->
+  <view class="sensitive-check-overlay" wx:if="{{sensitiveCheckLoading}}">
+    <view class="sensitive-check-modal">
+      <view class="check-header">
+        <view class="check-icon">🔒</view>
+        <view class="check-title">内容安全检查</view>
+        <view class="check-subtitle">正在检测内容安全性，请稍候...</view>
+      </view>
+      
+      <view class="check-progress-container">
+        <view class="progress-bar">
+          <view class="progress-fill {{progressWidthClass}}"></view>
+        </view>
+        <view class="progress-text">{{sensitiveCheckProgress}}%</view>
+      </view>
+      
+      <view class="check-step-container">
+        <view class="step-indicator">
+          <view class="step-dot {{sensitiveCheckProgress >= 20 ? 'active' : ''}}"></view>
+          <view class="step-dot {{sensitiveCheckProgress >= 40 ? 'active' : ''}}"></view>
+          <view class="step-dot {{sensitiveCheckProgress >= 60 ? 'active' : ''}}"></view>
+          <view class="step-dot {{sensitiveCheckProgress >= 80 ? 'active' : ''}}"></view>
+          <view class="step-dot {{sensitiveCheckProgress >= 100 ? 'active' : ''}}"></view>
+        </view>
+        <view class="current-step">{{sensitiveCheckStep}}</view>
+        <view class="step-status">{{sensitiveCheckStatus}}</view>
+      </view>
+      
+      <view class="check-animation">
+        <view class="scan-line"></view>
+      </view>
+    </view>
+  </view>
 </view> 

@@ -51,15 +51,18 @@ Page({
 
     planDescription: '', // 方案思路描述
     planTitle: '', // 方案名称
-    authorName: '', // 作者名称
-    isBetaPlan: false, // 是否为体验服方案，默认选择否
-    loading: true,
-    skillsLoading: false,
-    isDevelopment: false, // 是否为开发环境
+    authorName: '',
+    isBetaPlan: false, // 是否为体验服方案
     editMode: false, // 是否为编辑模式
-    planId: '', // 编辑时的方案ID
+    planId: '', // 编辑模式下的方案ID
+    skillsLoading: false, // 技能数据加载状态
     
-
+    // 敏感词检测状态管理
+    sensitiveCheckLoading: false, // 敏感词检测加载状态
+    sensitiveCheckProgress: 0, // 检测进度 (0-100)
+    sensitiveCheckStep: '', // 当前检测步骤
+    sensitiveCheckStatus: '', // 检测状态提示
+    progressWidthClass: 'progress-width-0', // 进度条宽度类
   },
 
   onLoad(options: any) {
@@ -334,8 +337,7 @@ Page({
     });
 
     that.setData({
-      heroCategories: heroCategories,
-      loading: false
+      heroCategories: heroCategories
     });
   },
 
@@ -663,8 +665,8 @@ Page({
   },
 
   // 选择核心技能
-  selectCore(e: any) {
-    const { skillType } = e.currentTarget.dataset;
+  selectCore(e: WechatMiniprogram.TouchEvent) {
+    const { skillType } = e.currentTarget.dataset as { skillType: 'skillOne' | 'skillTwo' | 'skillThree' };
     const indexNum = Number(e.currentTarget.dataset.index);
     const selectedCores = Object.assign({}, this.data.selectedCores);
     const previousIndex = selectedCores[skillType];
@@ -680,8 +682,8 @@ Page({
   },
 
   // 切换天赋选择
-  toggleTalent(e: any) {
-    const { skillType } = e.currentTarget.dataset;
+  toggleTalent(e: WechatMiniprogram.TouchEvent) {
+    const { skillType } = e.currentTarget.dataset as { skillType: 'skillOne' | 'skillTwo' | 'skillThree' };
     const indexNum = Number(e.currentTarget.dataset.index);
     const selectedTalents = Object.assign({}, this.data.selectedTalents);
     const talentSelected = Object.assign({}, this.data.talentSelected);
@@ -692,7 +694,7 @@ Page({
     if (currentTalentSelected[indexNum]) {
       // 取消选择
       currentTalentSelected[indexNum] = false;
-      const newSelected = currentSelected.filter(i => i !== indexNum);
+      const newSelected = currentSelected.filter((i: number) => i !== indexNum);
       selectedTalents[skillType] = newSelected;
       
       // 同时取消优先标记
@@ -722,8 +724,8 @@ Page({
   },
 
   // 切换核心优先标记
-  togglePriorityCore(e: any) {
-    const { skillType } = e.currentTarget.dataset;
+  togglePriorityCore(e: WechatMiniprogram.TouchEvent) {
+    const { skillType } = e.currentTarget.dataset as { skillType: 'skillOne' | 'skillTwo' | 'skillThree' };
     const indexNum = Number(e.currentTarget.dataset.index);
     
     // 检查核心是否被选中，如果没有选中则不执行操作
@@ -744,8 +746,8 @@ Page({
   },
 
   // 切换天赋优先标记
-  togglePriorityTalent(e: any) {
-    const { skillType } = e.currentTarget.dataset;
+  togglePriorityTalent(e: WechatMiniprogram.TouchEvent) {
+    const { skillType } = e.currentTarget.dataset as { skillType: 'skillOne' | 'skillTwo' | 'skillThree' };
     const indexNum = Number(e.currentTarget.dataset.index);
     
     // 检查天赋是否被选中，如果没有选中则不执行操作
@@ -766,7 +768,7 @@ Page({
     
     // 生成布尔标记数组，供 WXML 直接索引
     const flags = new Array(this.data.talentSelected[skillType].length).fill(false) as boolean[];
-    currentPriority.forEach(i => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
+    currentPriority.forEach((i: number) => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
 
     this.setData({
       [`priorityTalents.${skillType}`]: currentPriority,
@@ -776,7 +778,7 @@ Page({
   },
 
   // 移除天赋优先标记（当天赋被取消选择时调用）
-  removePriorityTalent(skillType: string, index: number) {
+  removePriorityTalent(skillType: 'skillOne' | 'skillTwo' | 'skillThree', index: number) {
     const currentPriority = [...this.data.priorityTalents[skillType]];
     const talentIndex = currentPriority.indexOf(index);
     
@@ -784,7 +786,7 @@ Page({
       currentPriority.splice(talentIndex, 1);
       // 同步更新布尔标记
       const flags = new Array(this.data.talentSelected[skillType].length).fill(false) as boolean[];
-      currentPriority.forEach(i => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
+      currentPriority.forEach((i: number) => { if (typeof i === 'number' && i >= 0 && i < flags.length) flags[i] = true; });
       this.setData({
         [`priorityTalents.${skillType}`]: currentPriority,
         [`priorityTalentsFlags.${skillType}`]: flags
@@ -926,7 +928,7 @@ Page({
     const { getEquipmentImageUrl } = require('../../utils/equipmentMatcher');
 
     // 获取装备图片
-    getEquipmentImageUrl(suggestionName).then(imageUrl => {
+    getEquipmentImageUrl(suggestionName).then((imageUrl: string) => {
       equipmentList[mainIndex].imageUrl = imageUrl;
       this.setData({
         equipmentList: equipmentList
@@ -1106,6 +1108,24 @@ Page({
     // 敏感词检查（只在提交时检测一次）
     const { checkMultipleFields } = require('../../utils/sensitiveWordCheck');
     
+    // 显示敏感词检测加载界面
+    this.setData({
+      sensitiveCheckLoading: true,
+      sensitiveCheckProgress: 0,
+      sensitiveCheckStep: '准备检测...',
+      sensitiveCheckStatus: '正在初始化敏感词检测系统',
+      progressWidthClass: 'progress-width-0'
+    });
+    
+    // 模拟检测进度，让用户看到检测过程
+    const progressSteps = [
+      { progress: 20, step: '检查方案思路', status: '正在检测方案思路描述...' },
+      { progress: 40, step: '检查方案名称', status: '正在检测方案名称...' },
+      { progress: 60, step: '检查作者信息', status: '正在检测作者名称...' },
+      { progress: 80, step: '检查装备信息', status: '正在检测装备名称...' },
+      { progress: 100, step: '完成检测', status: '敏感词检测完成' }
+    ];
+    
     // 构建检查字段对象
     const checkFields: any = {
       planDescription: planDescription.trim(),
@@ -1120,9 +1140,31 @@ Page({
       }
     });
     
+    // 逐步显示检测进度
+    for (let i = 0; i < progressSteps.length; i++) {
+      const step = progressSteps[i];
+      await new Promise(resolve => {
+        setTimeout(() => {
+          this.setData({
+            sensitiveCheckProgress: step.progress,
+            sensitiveCheckStep: step.step,
+            sensitiveCheckStatus: step.status,
+            progressWidthClass: `progress-width-${Math.floor(step.progress / 10) * 10}`
+          });
+          resolve(true);
+        }, 300); // 每个步骤间隔300ms
+      });
+    }
+    
+    // 执行实际的敏感词检测
     const checkResult = await checkMultipleFields(checkFields);
     
     if (!checkResult.isAllPass) {
+      // 隐藏敏感词检测加载界面
+      this.setData({
+        sensitiveCheckLoading: false
+      });
+      
       const fieldNames = {
         planDescription: '方案思路',
         planTitle: '方案名称',
@@ -1145,6 +1187,11 @@ Page({
       });
       return false;
     }
+    
+    // 敏感词检测通过，隐藏加载界面
+    this.setData({
+      sensitiveCheckLoading: false
+    });
     
     return true;
   },

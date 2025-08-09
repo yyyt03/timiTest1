@@ -63,10 +63,10 @@ export function getCurrentEnvironment(): Environment {
     // 如果无法检测到环境，根据其他特征判断
     // 开发工具中通常会有一些特殊的全局变量
     // @ts-ignore
-    if (typeof wx !== 'undefined' && wx.getSystemInfoSync) {
-      const systemInfo = wx.getSystemInfoSync();
+    if (typeof wx !== 'undefined' && wx.getAppBaseInfo) {
+      const appBaseInfo = wx.getAppBaseInfo();
       // 开发工具中 platform 通常是 'devtools'
-      if (systemInfo.platform === 'devtools') {
+      if (appBaseInfo.platform === 'devtools') {
         return Environment.DEVELOP;
       }
     }

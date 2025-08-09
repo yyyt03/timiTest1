@@ -46,6 +46,26 @@ declare namespace WechatMiniprogram {
         /** 插件帐号信息（仅在插件中调用时包含这一项） */
         plugin: Plugin
     }
+    /** 小程序基础信息 */
+    interface AppBaseInfo {
+        /** 客户端基础库版本 */
+        SDKVersion: string
+        /** 客户端版本 */
+        version: string
+        /** 语言 */
+        language: string
+        /** 平台 */
+        platform: string
+        /** 宿主环境 */
+        host: Host
+    }
+    /** 宿主环境 */
+    interface Host {
+        /** 宿主环境名称 */
+        name: string
+        /** 宿主环境版本 */
+        version: string
+    }
     interface AddCardOption {
         /** 需要添加的卡券列表 */
         cardList: AddCardRequestInfo[]
@@ -11647,6 +11667,12 @@ console.log(extConfig)
          *
          * 最低基础库： `2.1.2` */
         getLaunchOptionsSync(): LaunchOptionsApp
+        /** [Object wx.getAppBaseInfo()](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getAppBaseInfo.html)
+         *
+         * 获取小程序基础信息
+         *
+         * 最低基础库： `2.11.0` */
+        getAppBaseInfo(): AppBaseInfo
         /** [Object wx.getMenuButtonBoundingClientRect()](https://developers.weixin.qq.com/miniprogram/dev/api/ui/menu/wx.getMenuButtonBoundingClientRect.html)
          *
          * 获取菜单按钮（右上角胶囊按钮）的布局位置信息。坐标信息以屏幕左上角为原点。
@@ -11715,7 +11741,9 @@ try {
 } catch (e) {
   // Do something when catch error
 }
-``` */
+``` 
+* @deprecated 基础库版本 [2.11.0](https://developers.weixin.qq.com/miniprogram/dev/framework/compatibility.html) 起已废弃，请使用 [wx.getAppBaseInfo](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getAppBaseInfo.html) 替换
+*  */
         getSystemInfoSync(): SystemInfo
         /** [[Animation](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/Animation.html) wx.createAnimation(Object object)](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/wx.createAnimation.html)
          *

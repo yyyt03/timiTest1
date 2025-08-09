@@ -2,6 +2,7 @@
 import { heroCache } from '../../utils/heroCache';
 import { getTempFileURLs } from '../../utils/cloud';
 import { getHeroesByCategory } from '../../data/localHeroData';
+import { log } from '../../utils/config';
 
 // 英雄分类页面
 Page({
@@ -18,9 +19,46 @@ Page({
         source: options.source
       });
     }
-    // 清除缓存以确保获取最新数据
-    heroCache.clearCache();
-    this.getHeroList();
+    // 智能缓存检查，只在必要时清除缓存
+    this.checkAndUpdateCache().then(() => {
+      this.getHeroList();
+    }).catch((error) => {
+      log('缓存检查失败，直接获取数据:', error);
+      this.getHeroList();
+    });
+  },
+
+  // 智能缓存检查和更新
+  async checkAndUpdateCache() {
+    const cacheInfo = heroCache.getCacheInfo();
+    
+    // 如果缓存不存在，清除缓存
+    if (!cacheInfo.hasCache) {
+      log('缓存不存在，清除旧缓存');
+      heroCache.clearCache();
+      return;
+    }
+
+    // 检查缓存是否过期
+    if (cacheInfo.age > 10 * 60 * 1000) { // 10分钟
+      log('缓存已过期，清除旧缓存');
+      heroCache.clearCache();
+      return;
+    }
+
+    // 检查数据版本是否有变化
+    try {
+      const needsRefresh = await heroCache.checkDataVersion();
+      if (needsRefresh) {
+        log('数据版本已变化，清除旧缓存');
+        heroCache.clearCache();
+        return;
+      }
+    } catch (error) {
+      log('版本检查失败，保留现有缓存:', error);
+    }
+
+    log('缓存有效，保留现有缓存');
   },
 
   // 获取英雄列表（本地化版本）
@@ -33,7 +71,7 @@ Page({
       // 优先使用本地数据
       const cachedData = heroCache.getCache();
       if (cachedData) {
-        console.log('使用本地英雄数据');
+        log('使用本地英雄数据');
         
         // 获取本地数据
         const localData = getHeroesByCategory();
@@ -76,7 +114,7 @@ Page({
         });
         
         // 缓存数据
-        heroCache.setCache(localData, avatarURLs);
+        await heroCache.setCache(localData, avatarURLs);
         
         that.setData({
           heroCategories: categoriesData,

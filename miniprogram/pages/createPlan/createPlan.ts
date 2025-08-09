@@ -839,7 +839,7 @@ Page({
     try {
       const equipmentList = this.data.equipmentList.slice();
 
-      // 如果输入少于2个字符，不进行匹配，但显示提示
+      // 如果输入少于2个字符，不进行匹配
       if (equipmentName.trim().length < 2) {
         equipmentList[index].matched = false;
         equipmentList[index].imageUrl = '';
@@ -860,12 +860,12 @@ Page({
         // 找到匹配的装备
         equipmentList[index].matched = true;
         equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
-        equipmentList[index].suggestions = [];
+        equipmentList[index].suggestions = []; // 清空建议
       } else {
-        // 未找到匹配，生成建议
+        // 未找到匹配，不显示建议，只标记为未匹配
         equipmentList[index].matched = false;
         equipmentList[index].imageUrl = '';
-        equipmentList[index].suggestions = this.generateEquipmentSuggestions(equipmentName);
+        equipmentList[index].suggestions = []; // 不显示建议
       }
 
       this.setData({
@@ -891,11 +891,11 @@ Page({
       if (matchedEquipment) {
         equipmentList[index].matched = true;
         equipmentList[index].imageUrl = await getEquipmentImageUrl(equipmentName);
-        equipmentList[index].suggestions = [];
+        equipmentList[index].suggestions = []; // 清空建议
       } else {
         equipmentList[index].matched = false;
         equipmentList[index].imageUrl = '';
-        equipmentList[index].suggestions = [];
+        equipmentList[index].suggestions = []; // 不显示建议
       }
 
       this.setData({
@@ -906,23 +906,10 @@ Page({
     }
   },
 
-  // 生成装备建议
+  // 生成装备建议 - 已禁用，不再使用
   generateEquipmentSuggestions(input: string): any[] {
-    if (!input || input.trim().length < 2) return [];
-
-    // 导入装备建议功能
-    const { getEquipmentSuggestions } = require('../../utils/equipmentMatcher');
-
-    try {
-      const suggestions = getEquipmentSuggestions(input, 3); // 最多显示3个建议
-      return suggestions.map(equipment => ({
-        name: equipment.name,
-        imageUrl: '../images/unused/default-avatar.png'      
-      }));
-    } catch (error) {
-      console.error('生成装备建议失败:', error);
-      return [];
-    }
+    // 直接返回空数组，不再生成建议
+    return [];
   },
 
   // 选择装备建议

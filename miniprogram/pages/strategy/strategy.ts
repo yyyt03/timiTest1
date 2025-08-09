@@ -1,27 +1,45 @@
-import { getRecommendPlanIcon, getHeroCategoryIcon, getBetaPlanIcon, getCreatePlanIcon, getFavoritePlanIcon } from '../../utils/iconManager';
+// 攻略页面
+import { callFunction } from '../../utils/cloud';
 
-// pages/strategy/strategy.ts
 Page({
   data: {
-    userInfo: null as any,
-    plans: [] as any[],
+    userInfo: null,
+    plans: [],
     loading: false,
-    iconUrls: {
-      recommendPlan: getRecommendPlanIcon(),
-      heroCategory: getHeroCategoryIcon(),
-      betaPlan: getBetaPlanIcon(),
-      createPlan: getCreatePlanIcon(),
-      favoritePlan: getFavoritePlanIcon()
-    },
-    // 环境控制
     isDevelopment: false
   },
 
   onLoad() {
-    this.getUserInfo();
-    this.getPlans();
-    // 检测环境
-    this.detectEnvironment();
+    // 确保云开发已初始化
+    this.ensureCloudInitialized();
+  },
+
+  // 确保云开发已初始化
+  async ensureCloudInitialized() {
+    try {
+      // 等待云开发初始化完成
+      if (!wx.cloud || !wx.cloud.init) {
+        console.error('云开发未初始化');
+        return;
+      }
+
+      // 直接初始化云开发（如果还没有初始化）
+      if (!(wx.cloud as any).inited) {
+        wx.cloud.init({
+          env: 'cloudbase-1gk9t6w2d1d090af',
+          traceUser: true
+        });
+        (wx.cloud as any).inited = true;
+        console.log('云开发初始化完成');
+      }
+
+      // 开始获取数据
+      this.getUserInfo();
+      this.getPlans();
+      this.detectEnvironment();
+    } catch (error) {
+      console.error('云开发初始化检查失败:', error);
+    }
   },
 
   // 检测环境
@@ -53,40 +71,47 @@ Page({
   },
 
   // 获取用户信息
-  getUserInfo() {
-    wx.cloud.callFunction({
-      name: 'getUserInfo',
-      success: (res: any) => {
-        this.setData({
-          userInfo: res.result.data
+  async getUserInfo() {
+    try {
+      const result = await callFunction('getUserInfo') as any;
+      this.setData({
+        userInfo: result.data
+      });
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      // 使用统一的错误处理
+      if (typeof wx !== 'undefined' && wx.showToast) {
+        wx.showToast({
+          title: '获取用户信息失败',
+          icon: 'none'
         });
-      },
-      fail: (err) => {
-        console.error('获取用户信息失败:', err);
       }
-    });
+    }
   },
 
   // 获取方案列表
-  getPlans() {
+  async getPlans() {
     this.setData({ loading: true });
-    wx.cloud.callFunction({
-      name: 'getHeroPlans',
-      data: {
+    try {
+      const result = await callFunction('getHeroPlans', {
         limit: 10,
         status: 'active'
-      },
-      success: (res: any) => {
-        this.setData({
-          plans: res.result.data || [],
-          loading: false
+      }) as any;
+      this.setData({
+        plans: result.data || [],
+        loading: false
+      });
+    } catch (error) {
+      console.error('获取方案列表失败:', error);
+      this.setData({ loading: false });
+      // 使用统一的错误处理
+      if (typeof wx !== 'undefined' && wx.showToast) {
+        wx.showToast({
+          title: '获取方案列表失败',
+          icon: 'none'
         });
-      },
-      fail: (err) => {
-        console.error('获取方案列表失败:', err);
-        this.setData({ loading: false });
       }
-    });
+    }
   },
 
   // 页面跳转函数

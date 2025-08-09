@@ -1545,9 +1545,9 @@
 4. 优化其他页面的代码质量 
 
 ### 🔧 API弃用警告和用户信息获取修复 (2025-08-02 16:36)
-              - ✅ **wx.getSystemInfoSync弃用修复**: 替换为新的API (2025-08-09 13:03)
-                - **问题原因**: wx.getSystemInfoSync已被弃用，需要使用新的API
-                - **解决方案**: 使用wx.getAppBaseInfo API替代已弃用的wx.getSystemInfoSync，完全移除对旧API的依赖
+              - ✅ **wx.getSystemInfoSync弃用修复**: 替换为新的API (2025-08-09 13:40)
+- **问题原因**: wx.getSystemInfoSync已被弃用，需要使用新的API
+- **解决方案**: 使用wx.getAppBaseInfo + wx.getDeviceInfo API替代已弃用的wx.getSystemInfoSync，完全移除对旧API的依赖，并实现向后兼容性
                 - **技术实现**:
                   - 更新miniprogram/utils/config.ts中的API调用
                   - 添加AppBaseInfo和Host接口类型定义

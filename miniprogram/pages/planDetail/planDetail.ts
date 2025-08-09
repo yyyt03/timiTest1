@@ -1,9 +1,30 @@
 // 方案详情页面 - 优化头像获取
 import { getHeroById, getHeroByName } from '../../data/localHeroData';
+import { callFunction } from '../../utils/cloud';
+
+interface PlanData {
+  _id?: string;
+  title?: string;
+  heroName?: string;
+  heroId?: string;
+  heroAvatar?: string;
+  skillOne?: any;
+  skillTwo?: any;
+  skillThree?: any;
+  isFavorited?: boolean;
+  [key: string]: any;
+}
+
+interface CloudFunctionResult {
+  success?: boolean;
+  data?: any;
+  message?: string;
+  [key: string]: any;
+}
 
 Page({
   data: {
-    plan: {},
+    plan: {} as PlanData,
     loading: true,
     planId: ''
   },
@@ -259,15 +280,12 @@ Page({
     const isFavorited = !plan.isFavorited;
     
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'toggleFavorite',
-        data: {
-          planId: plan._id,
-          action: isFavorited ? 'add' : 'remove'
-        }
-      }) as any;
+      const result = await callFunction('toggleFavorite', {
+        planId: plan._id,
+        action: isFavorited ? 'add' : 'remove'
+      }) as CloudFunctionResult;
       
-      if (result.result && result.result.success) {
+      if (result && result.success) {
         this.setData({
           'plan.isFavorited': isFavorited
         });

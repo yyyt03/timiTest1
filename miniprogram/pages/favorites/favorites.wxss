@@ -214,10 +214,17 @@
   margin-bottom: 16rpx;
 }
 
+/* 方案描述文本样式，最多显示4行，超出部分省略号显示 */
 .description-text {
   font-size: 26rpx;
   color: #888888;
   line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .plan-stats-row {

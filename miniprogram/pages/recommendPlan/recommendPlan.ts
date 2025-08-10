@@ -33,7 +33,7 @@ Page({
     total: 0,
     
     // 推荐方案列表
-    recommendPlans: []
+    recommendPlans: [] as any[]
   },
  
   // 生命周期函数--监听页面加载
@@ -110,23 +110,42 @@ Page({
   },
 
   // 根据英雄筛选推荐方案
-  filterRecommendPlansByHero() {
+  async filterRecommendPlansByHero() {
     const { allRecommendPlans, selectedHero } = this.data;
     
     if (selectedHero === 'all') {
-      // 显示全部推荐方案
+      // 显示全部推荐方案，按点赞收藏总和降序排序
+      const sortedPlans = this.sortPlansByLikeAndFavorite(allRecommendPlans);
+      
+      // 确保全部方案数据包含英雄头像
+      const processedPlans = await this.processPlansWithAvatars(sortedPlans);
+      
       this.setData({
-        recommendPlans: allRecommendPlans,
-        total: allRecommendPlans.length
+        recommendPlans: processedPlans,
+        total: processedPlans.length
       });
     } else {
-      // 筛选指定英雄的推荐方案
+      // 筛选指定英雄的推荐方案，按点赞收藏总和降序排序
       const filteredPlans = allRecommendPlans.filter(plan => plan.heroName === selectedHero);
+      const sortedPlans = this.sortPlansByLikeAndFavorite(filteredPlans);
+      
+      // 确保筛选后的方案数据包含英雄头像
+      const processedPlans = await this.processPlansWithAvatars(sortedPlans);
+      
       this.setData({
-        recommendPlans: filteredPlans,
-        total: filteredPlans.length
+        recommendPlans: processedPlans,
+        total: processedPlans.length
       });
     }
+  },
+
+  // 按点赞收藏总和降序排序方案
+  sortPlansByLikeAndFavorite(plans: any[]) {
+    return plans.sort((a, b) => {
+      const aScore = (a.likeCount || 0) + (a.favoriteCount || 0);
+      const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
+      return bScore - aScore;
+    });
   },
 
   // 生成英雄分类列表
@@ -372,8 +391,14 @@ Page({
         // 处理方案数据，添加英雄头像
         const processedPlans = await this.processPlansWithAvatars(plans);
         
+        // 如果是精选方案，按点赞收藏总和降序排序
+        let sortedPlans = processedPlans;
+        if (this.data.currentFilter === 'featured') {
+          sortedPlans = this.sortPlansByLikeAndFavorite(processedPlans);
+        }
+        
         // 格式化时间
-        const formattedPlans = processedPlans.map((plan: any) => ({
+        const formattedPlans = sortedPlans.map((plan: any) => ({
           ...plan,
           createTime: this.formatTime(plan.createTime)
         }));
@@ -485,5 +510,22 @@ Page({
   async onReachBottom() {
     console.log('上拉加载更多');
     await this.loadMorePlans();
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '推荐攻略方案 - 觉醒天赋推荐',
+      path: '/pages/recommendPlan/recommendPlan',
+      imageUrl: '/pages/images/share-recommend-plan.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '推荐攻略方案 - 觉醒天赋推荐',
+      imageUrl: '/pages/images/share-recommend-plan.png'
+    };
   }
 });

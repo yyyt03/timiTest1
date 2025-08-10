@@ -135,7 +135,24 @@ Page({
 
   goToCreatePlan() {
     wx.navigateTo({
-      url: '/pages/heroCategory/heroCategory?source=createPlan'
+      url: '/pages/createPlan/createPlan'
     });
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '觉醒天赋推荐 - 英雄攻略大全',
+      path: '/pages/strategy/strategy',
+      imageUrl: '/pages/images/share-strategy.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '觉醒天赋推荐 - 英雄攻略大全',
+      imageUrl: '/pages/images/share-strategy.png'
+    };
   }
 }); 

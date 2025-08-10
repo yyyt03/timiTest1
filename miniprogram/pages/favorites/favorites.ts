@@ -283,5 +283,22 @@ Page({
     this.setData({
       heroCategories
     });
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '我的收藏方案 - 觉醒天赋推荐',
+      path: '/pages/favorites/favorites',
+      imageUrl: '/pages/images/share-favorites.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '我的收藏方案 - 觉醒天赋推荐',
+      imageUrl: '/pages/images/share-favorites.png'
+    };
   }
 }); 

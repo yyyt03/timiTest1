@@ -90,16 +90,22 @@ Page({
         // 处理方案数据，添加英雄头像（保留云端返回的 isLiked/isFavorited）
         const processedPlans = await this.processPlansWithAvatars(plans);
 
+        // 如果是精选方案，按点赞收藏总和降序排序
+        let sortedPlans = processedPlans;
+        if (this.data.currentFilter === 'featured') {
+          sortedPlans = this.sortPlansByLikeAndFavorite(processedPlans);
+        }
+
         // 统计英雄分类
-        const heroCategories = this.calculateHeroCategories(plans);
+        const heroCategories = this.calculateHeroCategories(sortedPlans);
 
         this.setData({
-          betaPlans: processedPlans,
-          allBetaPlans: processedPlans,
+          betaPlans: sortedPlans,
+          allBetaPlans: sortedPlans,
           heroCategories,
-          total: processedPlans.length,
+          total: sortedPlans.length,
           loading: false,
-          hasMore: plans.length >= 20 // 假设每页20条
+          hasMore: sortedPlans.length >= 20 // 假设每页20条
         });
       } else {
         console.error('加载体验服方案失败:', result.result);
@@ -121,6 +127,15 @@ Page({
         loading: false
       });
     }
+  },
+
+  // 按点赞收藏总和降序排序方案
+  sortPlansByLikeAndFavorite(plans: any[]) {
+    return plans.sort((a, b) => {
+      const aScore = (a.likeCount || 0) + (a.favoriteCount || 0);
+      const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
+      return bScore - aScore;
+    });
   },
 
   // 处理方案数据，添加英雄头像
@@ -381,5 +396,22 @@ Page({
       console.error('加载更多失败:', error);
       this.setData({ loadingMore: false });
     }
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '体验服攻略方案 - 觉醒天赋推荐',
+      path: '/pages/betaPlan/betaPlan',
+      imageUrl: '/pages/images/share-beta-plan.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '体验服攻略方案 - 觉醒天赋推荐',
+      imageUrl: '/pages/images/share-beta-plan.png'
+    };
   }
 }); 

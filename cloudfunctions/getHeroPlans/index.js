@@ -145,6 +145,13 @@ exports.main = async function(event, context) {
       favoriteCount: favoriteCountMap[plan._id] || 0
     }));
     
+    // 按点赞收藏总和降序排序
+    plans.sort((a, b) => {
+      const aScore = a.likeCount + a.favoriteCount;
+      const bScore = b.likeCount + b.favoriteCount;
+      return bScore - aScore;
+    });
+    
     const resultData = {
       plans: plans,
       total: countResult.total,

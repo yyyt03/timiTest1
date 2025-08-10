@@ -3,6 +3,16 @@
 ## 项目概述
 微信小程序，为王者荣耀觉醒之战模式提供英雄攻略推荐和方案创作功能。
 
+## 更新日志
+
+### 2025-08-09 分享功能修复
+- **问题**: 小程序缺少分享功能
+- **修复内容**: 
+  - 为所有主要页面添加了 `onShareAppMessage` 分享给朋友功能
+  - 为所有主要页面添加了 `onShareTimeline` 分享到朋友圈功能
+  - 修复的页面包括：strategy、user、heroCategory、heroPlan、createPlan、myPlans、favorites、recommendPlan、betaPlan
+- **技术实现**: 使用微信小程序原生分享API，支持自定义分享标题、路径和图片
+
 ## 技术架构
 
 ### 前端架构

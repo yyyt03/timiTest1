@@ -60,8 +60,8 @@ exports.main = async function(event, context) {
     let orderByDirection = 'desc';
     
     if (filter === 'featured') {
-      // 精选方案：按点赞数和收藏数排序
-      // 由于云数据库不支持复合排序，我们先按创建时间排序，然后在应用层处理
+      // 精选方案：需要先获取所有方案，然后按点赞数和收藏数排序
+      // 由于云数据库不支持复合排序，我们需要获取所有方案后在应用层处理
       orderByField = 'createTime';
       orderByDirection = 'desc';
     } else if (filter === 'latest') {
@@ -70,18 +70,33 @@ exports.main = async function(event, context) {
       orderByDirection = 'desc';
     }
     
-    // 并行查询方案列表和总数
-    const [plansResult, countResult] = await Promise.all([
-      db.collection('plans')
-        .where(whereCondition)
-        .orderBy(orderByField, orderByDirection)
-        .skip(skip)
-        .limit(pageSize)
-        .get(),
-      db.collection('plans')
-        .where(whereCondition)
-        .count()
-    ]);
+    // 对于精选方案，需要获取所有方案来计算排序
+    let plansResult, countResult;
+    
+    if (filter === 'featured') {
+      // 精选方案：获取所有方案用于排序
+      [plansResult, countResult] = await Promise.all([
+        db.collection('plans')
+          .where(whereCondition)
+          .get(),
+        db.collection('plans')
+          .where(whereCondition)
+          .count()
+      ]);
+    } else {
+      // 最新方案：按时间排序分页获取
+      [plansResult, countResult] = await Promise.all([
+        db.collection('plans')
+          .where(whereCondition)
+          .orderBy(orderByField, orderByDirection)
+          .skip(skip)
+          .limit(pageSize)
+          .get(),
+        db.collection('plans')
+          .where(whereCondition)
+          .count()
+      ]);
+    }
     
     // 获取所有方案的点赞和收藏数量
     const planIds = plansResult.data.map(plan => plan._id);
@@ -155,10 +170,13 @@ exports.main = async function(event, context) {
     // 如果是精选方案，按点赞数和收藏数重新排序
     if (filter === 'featured') {
       plans.sort((a, b) => {
-        const aScore = (a.likeCount * 2) + a.favoriteCount;
-        const bScore = (b.likeCount * 2) + b.favoriteCount;
+        const aScore = a.likeCount + a.favoriteCount;
+        const bScore = b.likeCount + b.favoriteCount;
         return bScore - aScore;
       });
+      
+      // 排序后应用分页
+      plans = plans.slice(skip, skip + pageSize);
     }
     
     const resultData = {

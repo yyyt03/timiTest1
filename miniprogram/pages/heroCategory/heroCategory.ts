@@ -228,5 +228,22 @@ Page({
         url: '../heroPlan/heroPlan?hero=' + hero.name + '&heroId=' + hero.id
       });
     }
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '觉醒天赋推荐 - 英雄分类',
+      path: '/pages/heroCategory/heroCategory',
+      imageUrl: '/pages/images/share-hero-category.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '觉醒天赋推荐 - 英雄分类',
+      imageUrl: '/pages/images/share-hero-category.png'
+    };
   }
 }); 

@@ -140,8 +140,11 @@ Page({
       if (result.result && result.result.success) {
         const { plans, total, page, hasMore } = result.result.data;
         
+        // 按点赞收藏总和降序排序
+        const sortedPlans = this.sortPlansByLikeAndFavorite(plans);
+        
         // 格式化时间
-        const formattedPlans = plans.map((plan: any) => ({
+        const formattedPlans = sortedPlans.map((plan: any) => ({
           ...plan,
           createTime: this.formatTime(plan.createTime)
         }));
@@ -173,6 +176,15 @@ Page({
         loadingMore: false
       });
     }
+  },
+
+  // 按点赞收藏总和降序排序方案
+  sortPlansByLikeAndFavorite(plans: any[]) {
+    return plans.sort((a, b) => {
+      const aScore = (a.likeCount || 0) + (a.favoriteCount || 0);
+      const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
+      return bScore - aScore;
+    });
   },
 
   // 格式化时间
@@ -336,5 +348,24 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    const hero = this.data.hero || '英雄';
+    return {
+      title: `${hero}的攻略方案 - 觉醒天赋推荐`,
+      path: `/pages/heroPlan/heroPlan?hero=${hero}`,
+      imageUrl: '/pages/images/share-hero-plan.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    const hero = this.data.hero || '英雄';
+    return {
+      title: `${hero}的攻略方案 - 觉醒天赋推荐`,
+      imageUrl: '/pages/images/share-hero-plan.png'
+    };
   }
 }); 

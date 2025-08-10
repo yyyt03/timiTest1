@@ -1347,5 +1347,24 @@ Page({
     wx.navigateTo({
       url: '../heroCategory/heroCategory?source=createPlan'
     });
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    const hero = this.data.hero || '英雄';
+    return {
+      title: `${hero}方案创作 - 觉醒天赋推荐`,
+      path: `/pages/createPlan/createPlan?hero=${hero}`,
+      imageUrl: '/pages/images/share-create-plan.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    const hero = this.data.hero || '英雄';
+    return {
+      title: `${hero}方案创作 - 觉醒天赋推荐`,
+      imageUrl: '/pages/images/share-create-plan.png'
+    };
   }
 }); 

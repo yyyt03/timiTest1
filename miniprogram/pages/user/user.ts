@@ -140,5 +140,22 @@ Page({
       // 如果获取失败，使用本地默认头像
       return '../../pages/images/unused/default-avatar.png';
     }
+  },
+
+  // 页面分享给朋友
+  onShareAppMessage() {
+    return {
+      title: '觉醒天赋推荐 - 个人中心',
+      path: '/pages/user/user',
+      imageUrl: '/pages/images/share-user.png'
+    };
+  },
+
+  // 页面分享到朋友圈
+  onShareTimeline() {
+    return {
+      title: '觉醒天赋推荐 - 个人中心',
+      imageUrl: '/pages/images/share-user.png'
+    };
   }
 }); 

@@ -2,7 +2,7 @@
 import { heroCache } from '../../utils/heroCache';
 import { getTempFileURLs } from '../../utils/cloud';
 import { getHeroesByCategory } from '../../data/localHeroData';
-import { log } from '../../utils/config';
+import { log } from '../../utils/logger';
 
 // 英雄分类页面
 Page({

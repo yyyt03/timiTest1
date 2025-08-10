@@ -49,7 +49,7 @@ export async function checkSensitiveWord(content: string): Promise<SensitiveChec
 }
 
 // 实时敏感词检查函数（带防抖）
-let checkTimer: NodeJS.Timeout | null = null;
+let checkTimer: ReturnType<typeof setTimeout> | null = null;
 
 export async function checkSensitiveWordRealtime(
   content: string, 

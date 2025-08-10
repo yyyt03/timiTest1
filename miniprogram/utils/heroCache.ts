@@ -1,6 +1,7 @@
 // 英雄数据缓存工具类
 import { getHeroesByCategory, getHeroById as getLocalHeroById, getHeroByName as getLocalHeroByName } from '../data/localHeroData';
-import { getCurrentConfig, log } from './config';
+import { getCurrentConfig } from './config';
+import { log } from './logger';
 
 interface HeroCacheData {
   categories: any;

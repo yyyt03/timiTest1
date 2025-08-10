@@ -1,5 +1,6 @@
 // 统一错误处理机制
-import { getCurrentConfig, log } from './config';
+import { getCurrentConfig } from './config';
+import { log } from './logger';
 
 // 错误类型枚举
 export enum ErrorType {
@@ -48,7 +49,8 @@ class ErrorHandler {
 
   constructor() {
     this.config = {
-      enableErrorReporting: true,
+      // 默认关闭远程错误上报，避免未配置云函数时报错
+      enableErrorReporting: false,
       enableConsoleLogging: true,
       enableUserNotification: true,
       maxErrorHistory: 100,
@@ -80,8 +82,7 @@ class ErrorHandler {
         this.handleError({
           type: ErrorType.UNKNOWN,
           severity: ErrorSeverity.HIGH,
-          message: error,
-          timestamp: Date.now()
+          message: error
         });
       });
 
@@ -91,8 +92,7 @@ class ErrorHandler {
           type: ErrorType.UNKNOWN,
           severity: ErrorSeverity.MEDIUM,
           message: `Promise rejected: ${res.reason}`,
-          details: res,
-          timestamp: Date.now()
+          details: res
         });
       });
     }

@@ -1109,6 +1109,15 @@ Page({
       return false;
     }
 
+                    // 检查方案思路字数是否超过500字
+                if (planDescription.length > 500) {
+                  wx.showToast({
+                    title: '方案思路描述不能超过500字',
+                    icon: 'none'
+                  });
+                  return false;
+                }
+
     // 检查方案名称是否填写
     if (!planTitle.trim()) {
       wx.showToast({

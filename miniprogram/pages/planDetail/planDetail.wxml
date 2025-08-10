@@ -137,6 +137,7 @@
         <view class="section-title">玩法说明</view>
         <view class="strategy-content">
           <text class="strategy-text">{{plan.description}}</text>
+                              <view class="char-count-display">{{plan.description.length}}/500字</view>
         </view>
       </view>
 

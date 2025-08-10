@@ -980,6 +980,15 @@
   color: #333333;
 }
 
+/* 字数显示 */
+.char-count {
+  text-align: right;
+  font-size: 24rpx;
+  color: #6c757d;
+  margin-top: 8rpx;
+  font-style: italic;
+}
+
 /* 方案名称输入 */
 .plan-title-input {
   width: 100%;

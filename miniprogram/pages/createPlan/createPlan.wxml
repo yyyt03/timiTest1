@@ -282,7 +282,8 @@
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
       <view class="step-title">第四步：方案思路描述</view>
-      <textarea class="plan-desc-input" placeholder="推荐3个必点核心? 强势期是前期还是后期? 如何快速发育? 具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput"></textarea>
+                        <textarea class="plan-desc-input" placeholder="推荐3个必点核心? 强势期是前期还是后期? 如何快速发育? 具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput" maxlength="500"></textarea>
+                  <view class="char-count">{{planDescription.length}}/500</view>
     </view>
   </block>
 

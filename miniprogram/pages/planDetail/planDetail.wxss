@@ -454,6 +454,17 @@
   white-space: normal;
 }
 
+/* 字数显示 */
+.char-count-display {
+  text-align: right;
+  font-size: 24rpx;
+  color: #6c757d;
+  margin-top: 15rpx;
+  font-style: italic;
+  padding-top: 10rpx;
+  border-top: 1rpx solid #e9ecef;
+}
+
 /* 底部信息 */
 .footer {
   text-align: center;

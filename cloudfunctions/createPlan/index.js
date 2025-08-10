@@ -76,6 +76,19 @@ exports.main = async (event, context) => {
     }
     console.log('=== 验证通过 ===');
     
+                  // 验证方案思路字数
+              if (strategy && strategy.length > 500) {
+                console.log('=== 字数验证失败 ===');
+                console.log('方案思路字数:', strategy.length, '超过500字限制');
+
+                return {
+                  success: false,
+                  data: null,
+                  message: '方案思路描述不能超过500字'
+                };
+              }
+              console.log('=== 字数验证通过 ===');
+    
     const db = cloud.database();
     const wxContext = cloud.getWXContext();
     const currentUserId = wxContext.OPENID;

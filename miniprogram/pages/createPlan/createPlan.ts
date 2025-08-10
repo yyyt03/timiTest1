@@ -64,6 +64,9 @@ Page({
     sensitiveCheckStep: '', // 当前检测步骤
     sensitiveCheckStatus: '', // 检测状态提示
     progressWidthClass: 'progress-width-0', // 进度条宽度类
+    
+    // 环境检测
+    isDevelopment: false, // 是否为开发环境
   },
 
   onLoad(options: any) {
@@ -1124,7 +1127,13 @@ Page({
       return false;
     }
     
-    // 敏感词检查（只在提交时检测一次）
+    // 环境判断：develop环境下跳过敏感词检查
+    if (this.data.isDevelopment) {
+      console.log('开发环境，跳过敏感词检查');
+      return true;
+    }
+    
+    // 敏感词检查（只在trial和release环境下检测）
     const { checkMultipleFields } = require('../../utils/sensitiveWordCheck');
     
     // 显示敏感词检测加载界面

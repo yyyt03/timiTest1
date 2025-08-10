@@ -145,6 +145,34 @@
   color: #666666;
 }
 
+/* 开发环境提示样式 */
+.dev-environment-tip {
+  width: 100%;
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(78, 205, 196, 0.3);
+  border: 2rpx solid #26a69a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15rpx;
+}
+
+.dev-tip-icon {
+  font-size: 32rpx;
+  color: #ffffff;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
+.dev-tip-text {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
 /* 敏感词检测加载界面样式 */
 .sensitive-check-overlay {
   position: fixed;

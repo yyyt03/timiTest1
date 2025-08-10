@@ -325,6 +325,12 @@
     </view>
   </block>
   
+  <!-- 开发环境提示 -->
+  <view class="dev-environment-tip" wx:if="{{isDevelopment}}">
+    <view class="dev-tip-icon">🔧</view>
+    <view class="dev-tip-text">开发环境：敏感词检查已跳过</view>
+  </view>
+  
   <!-- 敏感词检测加载界面 -->
   <view class="sensitive-check-overlay" wx:if="{{sensitiveCheckLoading}}">
     <view class="sensitive-check-modal">

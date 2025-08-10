@@ -3,3 +3,9 @@ node_modules
 # 装备图片文件
 playground/equipment/
 miniprogram/pages/images/equipment/
+
+# 测试用文件夹 - 不推送到生产仓库
+docs/
+json_make/
+images_backup/
+playground/

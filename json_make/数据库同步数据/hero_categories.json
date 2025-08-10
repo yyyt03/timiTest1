@@ -1,5 +1,0 @@
-{"_id":"c8872b64688771ca00d73619317545b0","key":"shooter","name":"射手","order":1,"createTime":{"$date":"2025-07-28T20:25:00.882Z"},"updateTime":{"$date":"2025-07-28T20:25:00.882Z"}}
-{"_id":"c8872b64688771ca00d7361a6eb82a85","key":"support","name":"辅助","order":2,"createTime":{"$date":"2025-07-28T20:25:00.882Z"},"updateTime":{"$date":"2025-07-28T20:25:00.882Z"}}
-{"_id":"c8872b64688771ca00d7361b32513ab0","key":"assassin","name":"刺客","order":3,"createTime":{"$date":"2025-07-28T20:25:00.882Z"},"updateTime":{"$date":"2025-07-28T20:25:00.882Z"}}
-{"_id":"c8872b64688771ca00d7361c28b61a38","key":"warrior","name":"战士","order":4,"createTime":{"$date":"2025-07-28T20:25:00.882Z"},"updateTime":{"$date":"2025-07-28T20:25:00.882Z"}}
-{"_id":"c8872b64688771ca00d7361d4623001a","key":"mage","name":"法师","order":5,"createTime":{"$date":"2025-07-28T20:25:00.882Z"},"updateTime":{"$date":"2025-07-28T20:25:00.882Z"}}

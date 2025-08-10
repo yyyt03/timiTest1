@@ -100,7 +100,7 @@ exports.main = async (event, context) => {
       likeCount: 0,
       favoriteCount: 0,
       views: 0,
-      status: 'draft', // 用户创建的方案默认为草稿状态
+      status: 'pending', // 用户创建的方案自动提交审核，变为待审核状态
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     };

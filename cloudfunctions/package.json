@@ -1,0 +1,34 @@
+{
+  "name": "timi-cloud-functions",
+  "version": "1.0.0",
+  "description": "王者荣耀英雄方案小程序云函数集合",
+  "scripts": {
+    "install:all": "npm run install:createPlan && npm run install:deletePlan && npm run install:getAllPlans && npm run install:getHeroPlans && npm run install:getHeroSkills && npm run install:getPlanDetail && npm run install:getRecommendPlans && npm run install:getUserFavorites && npm run install:getUserInfo && npm run install:getUserPlans && npm run install:msgSecCheck && npm run install:toggleFavorite && npm run install:toggleLike && npm run install:updatePlan && npm run install:updatePlanStatus",
+    "install:createPlan": "cd createPlan && npm install",
+    "install:deletePlan": "cd deletePlan && npm install",
+    "install:getAllPlans": "cd getAllPlans && npm install",
+    "install:getHeroPlans": "cd getHeroPlans && npm install",
+    "install:getHeroSkills": "cd getHeroSkills && npm install",
+    "install:getPlanDetail": "cd getPlanDetail && npm install",
+    "install:getRecommendPlans": "cd getRecommendPlans && npm install",
+    "install:getUserFavorites": "cd getUserFavorites && npm install",
+    "install:getUserInfo": "cd getUserInfo && npm install",
+    "install:getUserPlans": "cd getUserPlans && npm install",
+    "install:msgSecCheck": "cd msgSecCheck && npm install",
+    "install:toggleFavorite": "cd toggleFavorite && npm install",
+    "install:toggleLike": "cd toggleLike && npm install",
+    "install:updatePlan": "cd updatePlan && npm install",
+    "install:updatePlanStatus": "cd updatePlanStatus && npm install",
+    "deploy:all": "echo '请在微信开发者工具中右键云函数选择上传部署'",
+    "update:deps": "npm run update:wx-server-sdk",
+    "update:wx-server-sdk": "echo '更新所有云函数的wx-server-sdk版本...' && node ../scripts/update-cloud-deps.js",
+    "check:versions": "echo '检查云函数依赖版本一致性...' && node ../scripts/check-versions.js"
+  },
+  "dependencies": {
+    "wx-server-sdk": "^3.0.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

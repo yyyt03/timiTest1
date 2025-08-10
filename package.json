@@ -2,7 +2,17 @@
   "name": "miniprogram-ts-quickstart",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "dev": "echo '请在微信开发者工具中运行项目'",
+    "build": "echo '微信小程序无需构建，直接编译即可'",
+    "clean": "echo '清理临时文件...' && rimraf .temp dist",
+    "update:cloud-deps": "echo '更新云函数依赖版本...' && node scripts/update-cloud-deps.js",
+    "install:cloud": "echo '安装所有云函数依赖...' && cd cloudfunctions && npm run install:all",
+    "deploy:cloud": "echo '部署云函数到云端...' && cd cloudfunctions && npm run deploy:all",
+    "check:versions": "echo '检查依赖版本一致性...' && node scripts/check-versions.js",
+    "lint": "echo '代码检查...' && eslint miniprogram/**/*.ts",
+    "format": "echo '代码格式化...' && prettier --write miniprogram/**/*.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "",

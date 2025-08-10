@@ -1,4 +1,15 @@
-node_modules
+# 依赖
+node_modules/
+miniprogram_npm/
+
+# 构建输出
+dist/
+build/
+.temp/
+
+# 云函数构建
+cloudfunctions/*/node_modules/
+cloudfunctions/*/package-lock.json
 
 # 装备图片文件
 playground/equipment/
@@ -9,3 +20,24 @@ docs/
 json_make/
 images_backup/
 playground/
+
+# 日志
+*.log
+logs/
+
+# 缓存
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境配置
+.env
+.env.local

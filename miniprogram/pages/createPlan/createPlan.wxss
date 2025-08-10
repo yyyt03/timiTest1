@@ -85,6 +85,53 @@
   font-weight: bold;
 }
 
+/* 忽略出装选项样式 */
+.skip-equipment-container {
+  margin-bottom: 20rpx;
+  padding: 15rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12rpx;
+  border: 2rpx solid #dee2e6;
+}
+
+.skip-equipment-option {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 10rpx;
+  border-radius: 8rpx;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8rpx;
+}
+
+.skip-equipment-option:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.skip-equipment-option.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.skip-equipment-icon {
+  font-size: 24rpx;
+  width: 32rpx;
+  text-align: center;
+}
+
+.skip-equipment-text {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.skip-equipment-desc {
+  font-size: 22rpx;
+  color: #6c757d;
+  padding-left: 44rpx;
+  line-height: 1.4;
+}
+
 /* 加载状态 */
 .loading-container {
   display: flex;
@@ -456,9 +503,10 @@
   line-height: 1.3;
   width: 100%;
   margin-bottom: 6rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
 }
 
 .core-item.selected .core-desc {
@@ -564,9 +612,10 @@
   line-height: 1.2;
   width: 100%;
   margin-bottom: 4rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
 }
 
 .talent-item.selected .talent-desc {

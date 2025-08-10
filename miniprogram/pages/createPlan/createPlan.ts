@@ -48,6 +48,7 @@ Page({
       { name: '', imageUrl: '', matched: false, suggestions: [] },
       { name: '', imageUrl: '', matched: false, suggestions: [] }
     ], // 新的装备列表数据结构
+    skipEquipment: false, // 是否忽略出装
 
     planDescription: '', // 方案思路描述
     planTitle: '', // 方案名称
@@ -239,13 +240,13 @@ Page({
             } as { skillOne: boolean[]; skillTwo: boolean[]; skillThree: boolean[] };
             
             // 设置选中的天赋
-            skillOneTalentIndexes.forEach(index => {
+            skillOneTalentIndexes.forEach((index: number) => {
               if (index >= 0 && index < talentSelected.skillOne.length) talentSelected.skillOne[index] = true;
             });
-            skillTwoTalentIndexes.forEach(index => {
+            skillTwoTalentIndexes.forEach((index: number) => {
               if (index >= 0 && index < talentSelected.skillTwo.length) talentSelected.skillTwo[index] = true;
             });
-            skillThreeTalentIndexes.forEach(index => {
+            skillThreeTalentIndexes.forEach((index: number) => {
               if (index >= 0 && index < talentSelected.skillThree.length) talentSelected.skillThree[index] = true;
             });
             
@@ -268,9 +269,9 @@ Page({
               skillTwo: new Array(this.data.heroSkills.skillTwo.talents.length).fill(false) as boolean[],
               skillThree: new Array(this.data.heroSkills.skillThree.talents.length).fill(false) as boolean[]
             };
-            priorityTalents.skillOne.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillOne.length) priorityTalentsFlags.skillOne[i] = true; });
-            priorityTalents.skillTwo.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillTwo.length) priorityTalentsFlags.skillTwo[i] = true; });
-            priorityTalents.skillThree.forEach(i => { if (i >= 0 && i < priorityTalentsFlags.skillThree.length) priorityTalentsFlags.skillThree[i] = true; });
+            priorityTalents.skillOne.forEach((i: number) => { if (i >= 0 && i < priorityTalentsFlags.skillOne.length) priorityTalentsFlags.skillOne[i] = true; });
+            priorityTalents.skillTwo.forEach((i: number) => { if (i >= 0 && i < priorityTalentsFlags.skillTwo.length) priorityTalentsFlags.skillTwo[i] = true; });
+            priorityTalents.skillThree.forEach((i: number) => { if (i >= 0 && i < priorityTalentsFlags.skillThree.length) priorityTalentsFlags.skillThree[i] = true; });
             
             this.setData({
               'selectedCores.skillOne': skillOneCoreIndex,
@@ -288,7 +289,7 @@ Page({
         }, 500); // 等待500ms确保技能数据已加载
         
         // 设置装备数据
-        if (plan.equipment && Array.isArray(plan.equipment)) {
+        if (plan.equipment && Array.isArray(plan.equipment) && plan.equipment.length > 0) {
           const equipmentList = plan.equipment.map((item: any, index: number) => ({
             name: item.name || '',
             imageUrl: item.imageUrl || '',
@@ -297,7 +298,13 @@ Page({
           }));
           
           this.setData({
-            equipmentList: equipmentList
+            equipmentList: equipmentList,
+            skipEquipment: false
+          });
+        } else {
+          // 如果没有装备数据，设置为忽略出装状态
+          this.setData({
+            skipEquipment: true
           });
         }
         
@@ -987,6 +994,13 @@ Page({
     });
   },
 
+  // 切换忽略出装选项
+  toggleSkipEquipment() {
+    this.setData({
+      skipEquipment: !this.data.skipEquipment
+    });
+  },
+
   // 下一步
   nextStep() {
     var currentStep = this.data.currentStep;
@@ -1029,51 +1043,56 @@ Page({
       return false;
     }
     
-    // 检查装备是否填写
-    const equipmentNames = equipmentList
-      .map(item => item.name)
-      .filter(name => name.trim());
-    
-    if (equipmentNames.length === 0) {
-      wx.showToast({
-        title: '请输入出装推荐',
-        icon: 'none'
-      });
-      return false;
-    }
-    
-    // 检查装备名称是否有效
-    // 1. 检查是否有重复的装备名称
-    const uniqueNames = Array.from(new Set(equipmentNames)) as string[];
-    if (uniqueNames.length === 1) {
-      // 如果只有一个唯一名称，检查是否是有效的装备名称
-      const equipmentName = uniqueNames[0];
+    // 检查装备是否填写（如果选择忽略出装则跳过检查）
+    let equipmentNames: string[] = [];
+    if (!this.data.skipEquipment) {
+      equipmentNames = equipmentList
+        .map(item => item.name)
+        .filter(name => name.trim());
       
-      // 导入装备匹配功能
-      const { findEquipmentByName } = require('../../utils/equipmentMatcher');
-      const matchedEquipment = findEquipmentByName(equipmentName);
-      
-      if (!matchedEquipment) {
+      if (equipmentNames.length === 0) {
         wx.showToast({
-          title: '请输入有效的装备名称',
+          title: '请输入出装推荐',
           icon: 'none'
         });
         return false;
       }
     }
     
-    // 2. 检查每个装备名称是否都是有效的
-    for (const equipmentName of equipmentNames) {
-      if (equipmentName.trim()) {
+    // 检查装备名称是否有效（如果选择忽略出装则跳过检查）
+    if (!this.data.skipEquipment && equipmentNames.length > 0) {
+      // 1. 检查是否有重复的装备名称
+      const uniqueNames = Array.from(new Set(equipmentNames)) as string[];
+      if (uniqueNames.length === 1) {
+        // 如果只有一个唯一名称，检查是否是有效的装备名称
+        const equipmentName = uniqueNames[0];
+        
+        // 导入装备匹配功能
         const { findEquipmentByName } = require('../../utils/equipmentMatcher');
         const matchedEquipment = findEquipmentByName(equipmentName);
         
         if (!matchedEquipment) {
           wx.showToast({
-            title: `装备"${equipmentName}"无效，请输入正确的装备名称`,
+            title: '请输入有效的装备名称',
             icon: 'none'
           });
           return false;
+        }
+      }
+      
+      // 2. 检查每个装备名称是否都是有效的
+      for (const equipmentName of equipmentNames) {
+        if (equipmentName.trim()) {
+          const { findEquipmentByName } = require('../../utils/equipmentMatcher');
+          const matchedEquipment = findEquipmentByName(equipmentName);
+          
+          if (!matchedEquipment) {
+            wx.showToast({
+              title: `装备"${equipmentName}"无效，请输入正确的装备名称`,
+              icon: 'none'
+            });
+            return false;
+          }
         }
       }
     }
@@ -1118,7 +1137,12 @@ Page({
     });
     
     // 模拟检测进度，让用户看到检测过程
-    const progressSteps = [
+    const progressSteps = this.data.skipEquipment ? [
+      { progress: 25, step: '检查方案思路', status: '正在检测方案思路描述...' },
+      { progress: 50, step: '检查方案名称', status: '正在检测方案名称...' },
+      { progress: 75, step: '检查作者信息', status: '正在检测作者名称...' },
+      { progress: 100, step: '完成检测', status: '敏感词检测完成' }
+    ] : [
       { progress: 20, step: '检查方案思路', status: '正在检测方案思路描述...' },
       { progress: 40, step: '检查方案名称', status: '正在检测方案名称...' },
       { progress: 60, step: '检查作者信息', status: '正在检测作者名称...' },
@@ -1133,12 +1157,14 @@ Page({
       authorName: authorName.trim()
     };
     
-    // 添加装备字段
-    equipmentList.forEach((item, index) => {
-      if (item.name.trim()) {
-        checkFields[`equipment${index}`] = item.name.trim();
-      }
-    });
+    // 添加装备字段（如果选择忽略出装则跳过）
+    if (!this.data.skipEquipment) {
+      equipmentList.forEach((item: any, index: number) => {
+        if (item.name.trim()) {
+          checkFields[`equipment${index}`] = item.name.trim();
+        }
+      });
+    }
     
     // 逐步显示检测进度
     for (let i = 0; i < progressSteps.length; i++) {
@@ -1218,8 +1244,8 @@ Page({
         skillThree: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]?.name || '')
       };
       
-      // 获取装备数据
-      const equipmentData = this.data.equipmentList.map(item => ({
+      // 获取装备数据（如果选择忽略出装则设置为空）
+      const equipmentData = this.data.skipEquipment ? [] : this.data.equipmentList.map(item => ({
         name: item.name,
         imageUrl: item.imageUrl
       }));

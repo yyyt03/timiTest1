@@ -222,11 +222,9 @@
   font-size: 22rpx;
   color: #34495e;
   line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
   word-break: break-all;
   flex: 1;
 }
@@ -354,6 +352,24 @@
   color: #333;
   text-align: center;
   line-height: 1.2;
+}
+
+/* 无出装推荐提示样式 */
+.no-equipment-tip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 20rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12rpx;
+  border: 2rpx dashed #dee2e6;
+}
+
+.no-equipment-text {
+  font-size: 26rpx;
+  color: #6c757d;
+  font-weight: 500;
+  text-align: center;
 }
 
 

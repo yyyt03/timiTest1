@@ -135,7 +135,7 @@ Page({
 
   goToCreatePlan() {
     wx.navigateTo({
-      url: '/pages/createPlan/createPlan'
+      url: '/pages/heroCategory/heroCategory?source=createPlan'
     });
   },
 

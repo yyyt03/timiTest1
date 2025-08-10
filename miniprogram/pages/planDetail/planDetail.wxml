@@ -119,13 +119,16 @@
       </view>
 
       <!-- 装备部分 -->
-      <view class="equipment-section" wx:if="{{plan.equipment}}">
+      <view class="equipment-section">
         <view class="section-title">出装推荐</view>
-        <view class="equipment-grid">
+        <view wx:if="{{plan.equipment && plan.equipment.length > 0}}" class="equipment-grid">
           <view class="equipment-item" wx:for="{{plan.equipment}}" wx:key="index">
             <image class="equipment-icon" src="{{item.imageUrl}}" mode="aspectFit" wx:if="{{item.imageUrl}}"></image>
             <text class="equipment-name">{{item.name}}</text>
           </view>
+        </view>
+        <view wx:else class="no-equipment-tip">
+          <text class="no-equipment-text">无出装推荐</text>
         </view>
       </view>
 

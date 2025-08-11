@@ -1136,7 +1136,7 @@
 .picker-category-scroll { white-space: nowrap; width: 100%; }
 .picker-category-item { display: inline-flex; padding: 12rpx 20rpx; margin: 0 8rpx; border-radius: 22rpx; background: #f1f3f5; color: #2c3e50; font-size: 26rpx; font-weight: 700; }
 .picker-category-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
-.picker-category-text { }
+.picker-category-text { display: block; }
 
 .picker-grid-scroll { flex: 1; }
 .picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12rpx; padding: 16rpx; }

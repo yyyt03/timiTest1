@@ -17,7 +17,7 @@ Page({
     selectedHero: 'all', // 当前选中的英雄，'all'表示全部
     showHeroSelector: false, // 是否显示英雄选择器
     // 管理筛选
-    adminStatusFilter: 'all' // all | draft | published
+    adminStatusFilter: 'all' // all | draft | pending | published | offline | rejected
   },
 
   onLoad(options?: any) {
@@ -317,7 +317,52 @@ Page({
       success: (res: any) => {
         if (res.result.success) {
           wx.showToast({
-            title: status === 'published' ? '发布成功' : '更新成功',
+            title: status === 'published' ? '发布成功' : (status === 'offline' ? '下架成功' : (status === 'rejected' ? '拒绝成功' : '更新成功')),
+            icon: 'success'
+          });
+          // 刷新列表
+          if (this.data.isAdminReview) {
+            this.loadAllPlansForAdmin();
+          } else {
+            this.setData({ page: 1 });
+            this.loadUserPlans();
+          }
+        } else {
+          wx.showToast({
+            title: res.result.message,
+            icon: 'none'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('更新方案状态失败:', err);
+        wx.showToast({
+          title: '操作失败',
+          icon: 'none'
+        });
+      },
+      complete: () => {
+        wx.hideLoading();
+      }
+    });
+  },
+
+  // 更新方案状态（带拒绝原因）
+  updatePlanStatusWithReason(planId: string, status: string, reason: string) {
+    wx.showLoading({ title: '处理中...' });
+    
+    wx.cloud.callFunction({
+      name: 'updatePlanStatus',
+      data: {
+        planId: planId,
+        status: status,
+        reason: reason, // 传递拒绝原因
+        admin: this.data.isAdminReview || this.data.isDevelopment
+      },
+      success: (res: any) => {
+        if (res.result.success) {
+          wx.showToast({
+            title: status === 'rejected' ? '返回成功' : '更新成功',
             icon: 'success'
           });
           // 刷新列表
@@ -376,15 +421,51 @@ Page({
     });
   },
 
-  // 审核拒绝：设回 draft（或可扩展为 rejected）
+  // 审核返回：设回 draft（或可扩展为 rejected）
   rejectPlan(e: any) {
     const plan = e.currentTarget.dataset.plan;
     wx.showModal({
-      title: '拒绝审核',
-      content: '确定要拒绝该方案吗？',
+      title: '返回审核',
+      content: '',
+      editable: true,
+      placeholderText: '请输入返回原因（必填）...',
+      success: (res) => {
+        if (res.confirm && res.content && res.content.trim()) {
+          // 调用带返回原因的更新方法
+          this.updatePlanStatusWithReason(plan._id, 'rejected', res.content.trim());
+        } else if (res.confirm && (!res.content || !res.content.trim())) {
+          wx.showToast({
+            title: '请输入返回原因',
+            icon: 'none'
+          });
+        }
+      }
+    });
+  },
+
+  // 下架方案：将已发布的方案设为下架状态
+  offlinePlan(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    wx.showModal({
+      title: '下架方案',
+      content: '确定要下架该方案吗？下架后其他用户将无法看到。',
       success: (res) => {
         if (res.confirm) {
-          this.updatePlanStatus(plan._id, 'rejected');
+          this.updatePlanStatus(plan._id, 'offline');
+        }
+      }
+    });
+  },
+
+  // 重新发布方案：将已下架的方案重新设为已发布状态
+  republishPlan(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    wx.showModal({
+      title: '重新发布方案',
+      content: '确定要重新发布该方案吗？重新发布后其他用户将可以再次看到。',
+      success: (res) => {
+        if (res.confirm) {
+          this.updatePlanStatus(plan._id, 'published');
         }
       }
     });

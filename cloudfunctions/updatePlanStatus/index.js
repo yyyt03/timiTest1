@@ -11,13 +11,22 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId, status, admin = false } = event;
+    const { planId, status, reason, admin = false } = event;
     
     if (!planId || !status) {
       return {
         success: false,
         data: null,
         message: '方案ID和状态不能为空'
+      };
+    }
+
+    // 如果是返回状态，必须提供返回原因
+    if (status === 'rejected' && (!reason || !reason.trim())) {
+      return {
+        success: false,
+        data: null,
+        message: '返回方案时必须提供返回原因'
       };
     }
     
@@ -83,13 +92,25 @@ exports.main = async function(event, context) {
     }
     
     // 更新方案状态
+    const updateData = {
+      status: status,
+      updateTime: new Date().toISOString()
+    };
+
+    // 如果是返回状态，保存返回原因
+    if (status === 'rejected' && reason) {
+      updateData.rejectionReason = reason.trim();
+    }
+
+    // 如果是其他状态，清除返回原因
+    if (status !== 'rejected') {
+      updateData.rejectionReason = null;
+    }
+
     await db.collection('plans')
       .doc(planId)
       .update({
-        data: {
-          status: status,
-          updateTime: new Date().toISOString()
-        }
+        data: updateData
       });
     
     return {

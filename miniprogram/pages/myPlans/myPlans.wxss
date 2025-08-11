@@ -20,7 +20,7 @@
 .admin-filters {
   display: flex;
   flex-direction: row;
-  gap: 16rpx;
+  gap: 12rpx; /* 减小间距 */
   margin: 10rpx 0 20rpx 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -29,18 +29,30 @@
   border-radius: 16rpx;
   background: rgba(255,255,255,0.2);
   box-sizing: border-box;
+  /* 添加弹性布局，让按钮能够自适应 */
+  flex-wrap: nowrap;
 }
 
 .admin-filters .filter-btn {
   flex: 0 0 auto; /* 防止自动换行填充 */
-  min-width: 140rpx; /* 减小最小宽度，避免两端溢出 */
+  min-width: 110rpx; /* 进一步减小最小宽度 */
+  max-width: 140rpx; /* 减小最大宽度限制 */
   text-align: center;
-  padding: 14rpx 24rpx;
+  padding: 10rpx 16rpx; /* 进一步减小内边距 */
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.85);
   color: #333;
   border: 1rpx solid rgba(255,255,255,0.6);
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+  /* 添加文字溢出处理 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 22rpx; /* 进一步减小字体大小 */
+  /* 确保按钮内容居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 隐藏横向滚动条 */
@@ -48,11 +60,54 @@
   display: none;
 }
 
+/* 添加滚动指示器 */
+.admin-filters::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20rpx;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.2));
+  pointer-events: none;
+  z-index: 1;
+}
+
 .admin-filters .filter-btn.active {
   background: linear-gradient(135deg, #ffd43b 0%, #ffa94d 100%);
   color: #222;
   border-color: #ffc078;
   font-weight: 700;
+}
+
+/* 响应式优化：在不同屏幕尺寸下调整按钮尺寸 */
+@media screen and (max-width: 375px) {
+  .admin-filters .filter-btn {
+    min-width: 90rpx;
+    padding: 8rpx 12rpx;
+    font-size: 20rpx;
+  }
+  
+  .admin-filters {
+    gap: 6rpx;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .admin-filters .filter-btn {
+    min-width: 80rpx;
+    padding: 6rpx 10rpx;
+    font-size: 18rpx;
+  }
+  
+  .admin-filters {
+    gap: 4rpx;
+  }
+}
+
+/* 确保状态筛选器容器有正确的定位 */
+.admin-filters {
+  position: relative;
 }
 
 .page-title {
@@ -286,9 +341,15 @@
 }
 
 .status-badge.rejected {
-  background: linear-gradient(135deg, #ffe3e3 0%, #ffc9c9 100%);
-  border: 1rpx solid #ff8787;
-  color: #c92a2a;
+  background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 100%);
+  border: 1rpx solid #ffd43b;
+  color: #856404;
+}
+
+.status-badge.offline {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1rpx solid #6c757d;
+  color: #495057;
 }
 
 .status-icon {
@@ -299,6 +360,32 @@
 .status-text {
   font-size: 22rpx;
   font-weight: 500;
+}
+
+/* 返回原因标签样式 */
+.rejection-reason {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 100%);
+  border: 1rpx solid #ffd43b;
+  border-radius: 12rpx;
+  gap: 8rpx;
+}
+
+.reason-label {
+  font-size: 22rpx;
+  color: #856404;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.reason-text {
+  font-size: 22rpx;
+  color: #856404;
+  line-height: 1.4;
+  word-break: break-all;
 }
 
 .stat-badge {
@@ -437,6 +524,30 @@
 .delete-btn:active {
   transform: translateY(2rpx);
   box-shadow: 0 1rpx 4rpx rgba(220, 53, 69, 0.4);
+}
+
+.offline-btn {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  color: #ffffff;
+  border: 2rpx solid #495057;
+  box-shadow: 0 2rpx 8rpx rgba(108, 117, 125, 0.3);
+}
+
+.offline-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(108, 117, 125, 0.4);
+}
+
+.republish-btn {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: #ffffff;
+  border: 2rpx solid #138496;
+  box-shadow: 0 2rpx 8rpx rgba(23, 162, 184, 0.3);
+}
+
+.republish-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(23, 162, 184, 0.4);
 }
 
 .btn-text {

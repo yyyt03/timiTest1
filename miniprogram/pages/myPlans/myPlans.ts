@@ -1,8 +1,8 @@
 // 我的方案页面
 Page({
   data: {
-    userPlans: [],
-    allUserPlans: [], // 存储所有方案数据
+    userPlans: [] as any[],
+    allUserPlans: [] as any[], // 存储所有方案数据
     loading: true,
     page: 1,
     pageSize: 10,
@@ -238,10 +238,25 @@ Page({
   editPlan(e: any) {
     const plan = e.currentTarget.dataset.plan;
     
-    // 跳转到方案创作页面，传递方案数据用于编辑
-    wx.navigateTo({
-      url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
-    });
+    // 管理员审核模式或开发环境下，允许编辑所有方案
+    if (this.data.isAdminReview || this.data.isDevelopment) {
+      // 跳转到方案创作页面，传递方案数据用于编辑
+      wx.navigateTo({
+        url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
+      });
+    } else {
+      // 普通用户只能编辑自己的草稿方案
+      if (plan.status === 'draft') {
+        wx.navigateTo({
+          url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
+        });
+      } else {
+        wx.showToast({
+          title: '只能编辑草稿状态的方案',
+          icon: 'none'
+        });
+      }
+    }
   },
 
   // 发布方案
@@ -263,15 +278,29 @@ Page({
   deletePlan(e: any) {
     const plan = e.currentTarget.dataset.plan;
     
-    wx.showModal({
-      title: '删除方案',
-      content: '确定要删除这个方案吗？删除后无法恢复。',
-      success: (res) => {
-        if (res.confirm) {
-          this.deletePlanConfirm(plan._id);
+    // 管理员审核模式或开发环境下，允许删除所有方案
+    if (this.data.isAdminReview || this.data.isDevelopment) {
+      wx.showModal({
+        title: '删除方案',
+        content: '确定要删除这个方案吗？删除后无法恢复。',
+        success: (res) => {
+          if (res.confirm) {
+            this.deletePlanConfirm(plan._id);
+          }
         }
-      }
-    });
+      });
+    } else {
+      // 普通用户只能删除自己的方案
+      wx.showModal({
+        title: '删除方案',
+        content: '确定要删除这个方案吗？删除后无法恢复。',
+        success: (res) => {
+          if (res.confirm) {
+            this.deletePlanConfirm(plan._id);
+          }
+        }
+      });
+    }
   },
 
   // 更新方案状态
@@ -283,7 +312,7 @@ Page({
       data: {
         planId: planId,
         status: status,
-        admin: this.data.isAdminReview
+        admin: this.data.isAdminReview || this.data.isDevelopment
       },
       success: (res: any) => {
         if (res.result.success) {
@@ -292,8 +321,12 @@ Page({
             icon: 'success'
           });
           // 刷新列表
-          this.setData({ page: 1 });
-          this.loadUserPlans();
+          if (this.data.isAdminReview) {
+            this.loadAllPlansForAdmin();
+          } else {
+            this.setData({ page: 1 });
+            this.loadUserPlans();
+          }
         } else {
           wx.showToast({
             title: res.result.message,
@@ -364,7 +397,8 @@ Page({
     wx.cloud.callFunction({
       name: 'deletePlan',
       data: {
-        planId: planId
+        planId: planId,
+        admin: this.data.isAdminReview || this.data.isDevelopment // 传递管理员权限标识
       },
       success: (res: any) => {
         if (res.result && res.result.success) {
@@ -373,8 +407,12 @@ Page({
             icon: 'success'
           });
           // 刷新列表
-          this.setData({ page: 1 });
-          this.loadUserPlans();
+          if (this.data.isAdminReview) {
+            this.loadAllPlansForAdmin();
+          } else {
+            this.setData({ page: 1 });
+            this.loadUserPlans();
+          }
         } else {
           wx.showToast({
             title: res.result ? res.result.message : '删除失败',

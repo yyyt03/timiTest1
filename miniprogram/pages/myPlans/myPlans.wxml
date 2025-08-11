@@ -71,9 +71,13 @@
           <view class="action-btn preview-btn" catchtap="viewPlan" data-plan="{{item}}">
             <text class="btn-text">预览</text>
           </view>
-          <view class="action-btn edit-btn" catchtap="editPlan" data-plan="{{item}}">
+          <!-- 编辑按钮：管理员审核模式或开发环境下对所有方案可见，普通用户只对草稿可见 -->
+          <view class="action-btn edit-btn" 
+                wx:if="{{isAdminReview || isDevelopment || item.status === 'draft'}}" 
+                catchtap="editPlan" data-plan="{{item}}">
             <text class="btn-text">编辑</text>
           </view>
+          <!-- 发布按钮：仅开发环境下对草稿可见 -->
           <view class="action-btn publish-btn" wx:if="{{item.status === 'draft' && isDevelopment}}" catchtap="publishPlan" data-plan="{{item}}">
             <text class="btn-text">发布</text>
           </view>
@@ -92,7 +96,10 @@
           <view class="action-btn delete-btn" wx:if="{{isAdminReview && item.status === 'pending'}}" catchtap="rejectPlan" data-plan="{{item}}">
             <text class="btn-text">拒绝</text>
           </view>
-          <view class="action-btn delete-btn" catchtap="deletePlan" data-plan="{{item}}">
+          <!-- 删除按钮：管理员审核模式或开发环境下对所有方案可见 -->
+          <view class="action-btn delete-btn" 
+                wx:if="{{isAdminReview || isDevelopment}}" 
+                catchtap="deletePlan" data-plan="{{item}}">
             <text class="btn-text">删除</text>
           </view>
         </view>

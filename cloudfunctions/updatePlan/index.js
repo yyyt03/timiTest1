@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId, planData } = event;
+    const { planId, planData, admin = false } = event;
     
     if (!planId || !planData) {
       console.error('参数验证失败:', { planId, planData });
@@ -37,7 +37,7 @@ exports.main = async function(event, context) {
     console.log('当前用户ID:', currentUserId);
     console.log('要更新的方案ID:', planId);
     
-    // 验证方案是否属于当前用户
+    // 验证方案是否存在
     const planResult = await db.collection('plans')
       .doc(planId)
       .get();
@@ -52,17 +52,35 @@ exports.main = async function(event, context) {
         message: '方案不存在'
       };
     }
+
+    // 环境检测：develop环境下或管理员模式下跳过权限验证
+    let isDev = false;
+    if (admin) {
+      isDev = true;
+    } else {
+      try {
+        const accountInfo = wxContext.ACCOUNT_INFO || {};
+        const envVersion = accountInfo.envVersion || '';
+        const version = accountInfo.version || '';
+        isDev = envVersion === 'develop' || envVersion === 'trial' || version.includes('dev') || version.includes('test');
+        console.log('updatePlan云函数环境检测结果:', { envVersion, version, isDevelopment: isDev });
+      } catch (e) {
+        isDev = false;
+      }
+    }
     
-    // 检查权限
-    if (planResult.data.creatorId !== currentUserId) {
-      console.error('无权限修改此方案');
-      console.error('当前用户ID:', currentUserId);
-      console.error('方案创建者ID:', planResult.data.creatorId);
-      return {
-        success: false,
-        data: null,
-        message: '无权限修改此方案'
-      };
+    // 如果不是开发环境且不是管理员模式，需要验证方案是否属于当前用户
+    if (!isDev && !admin) {
+      if (planResult.data.creatorId !== currentUserId) {
+        console.error('无权限修改此方案');
+        console.error('当前用户ID:', currentUserId);
+        console.error('方案创建者ID:', planResult.data.creatorId);
+        return {
+          success: false,
+          data: null,
+          message: '无权限修改此方案'
+        };
+      }
     }
     
     // 准备更新数据
@@ -84,16 +102,16 @@ exports.main = async function(event, context) {
     
     console.log('准备更新的数据:', updateData);
     
-                  // 验证方案思路字数
-              if (updateData.strategy && updateData.strategy.length > 500) {
-                console.error('字数验证失败:', updateData.strategy.length, '超过500字限制');
-                return {
-                  success: false,
-                  data: null,
-                  message: '方案思路描述不能超过500字'
-                };
-              }
-              console.log('字数验证通过');
+    // 验证方案思路字数
+    if (updateData.strategy && updateData.strategy.length > 500) {
+      console.error('字数验证失败:', updateData.strategy.length, '超过500字限制');
+      return {
+        success: false,
+        data: null,
+        message: '方案思路描述不能超过500字'
+      };
+    }
+    console.log('字数验证通过');
     
     // 执行更新
     const updateResult = await db.collection('plans')

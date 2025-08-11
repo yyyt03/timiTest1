@@ -1308,7 +1308,8 @@ Page({
           name: 'updatePlan',
           data: {
             planId: this.data.planId,
-            planData: planData
+            planData: planData,
+            admin: this.data.isDevelopment // 开发环境下传递管理员权限
           }
         }) as any;
 

@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId } = event;
+    const { planId, admin = false } = event;
     
     if (!planId) {
       return {
@@ -31,21 +31,39 @@ exports.main = async function(event, context) {
         message: '用户未登录'
       };
     }
+
+    // 环境检测：develop环境下或管理员模式下跳过权限验证
+    let isDev = false;
+    if (admin) {
+      isDev = true;
+    } else {
+      try {
+        const accountInfo = wxContext.ACCOUNT_INFO || {};
+        const envVersion = accountInfo.envVersion || '';
+        const version = accountInfo.version || '';
+        isDev = envVersion === 'develop' || envVersion === 'trial' || version.includes('dev') || version.includes('test');
+        console.log('deletePlan云函数环境检测结果:', { envVersion, version, isDevelopment: isDev });
+      } catch (e) {
+        isDev = false;
+      }
+    }
     
-    // 验证方案是否属于当前用户
-    const planResult = await db.collection('plans')
-      .where({
-        _id: planId,
-        creatorId: currentUserId
-      })
-      .get();
-    
-    if (planResult.data.length === 0) {
-      return {
-        success: false,
-        data: null,
-        message: '方案不存在或无权限删除'
-      };
+    // 如果不是开发环境且不是管理员模式，需要验证方案是否属于当前用户
+    if (!isDev && !admin) {
+      const planResult = await db.collection('plans')
+        .where({
+          _id: planId,
+          creatorId: currentUserId
+        })
+        .get();
+      
+      if (planResult.data.length === 0) {
+        return {
+          success: false,
+          data: null,
+          message: '方案不存在或无权限删除'
+        };
+      }
     }
     
     // 删除方案

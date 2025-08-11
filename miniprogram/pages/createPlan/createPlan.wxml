@@ -244,7 +244,7 @@
                     <view class="equipment-input-wrapper">
                       <input 
                         class="equipment-input" 
-                        placeholder="输入装备名称..." 
+                        placeholder="输入装备名......" 
                         value="{{item.name}}" 
                         bindinput="onEquipmentInput" 
                         bindblur="onEquipmentBlur"
@@ -252,11 +252,9 @@
                         maxlength="10">
                       </input>
                       <view class="equipment-match-status" wx:if="{{item.name && item.name.length >= 2}}">
-                        <text class="match-status {{item.matched ? 'matched' : 'unmatched'}}">
-                          {{item.matched ? '✓' : '?'}}
-                        </text>
+                        <view class="match-status {{item.matched ? 'matched' : 'unmatched'}}"></view>
                       </view>
-
+                    <view role="button" class="equipment-pick-btn" bindtap="openEquipmentPicker" data-index="{{index}}">选择</view>
                     </view>
                   </view>
                   <view class="equipment-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
@@ -282,15 +280,24 @@
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
       <view class="step-title">第四步：方案思路描述</view>
-                        <textarea class="plan-desc-input" placeholder="推荐3个必点核心? 强势期是前期还是后期? 如何快速发育? 具体玩法?" value="{{planDescription}}" bindinput="onDescriptionInput" maxlength="500"></textarea>
-                  <view class="char-count">{{planDescription.length}}/500</view>
+      <view class="textarea-container">
+        <textarea class="plan-desc-input" placeholder="" value="{{planDescription}}" bindinput="onDescriptionInput" maxlength="500"></textarea>
+        <view class="placeholder-text" wx:if="{{!planDescription}}">
+          <view class="placeholder-line">1.如有推荐铭文搭配,请写在第一行,然后换行。</view>
+          <view class="placeholder-line">2.推荐开局点哪个核心，哪个天赋？</view>
+          <view class="placeholder-line">3.替补天赋有哪些？（上方没选择的）</view>
+          <view class="placeholder-line">4.连招思路是什么？</view>
+          <view class="placeholder-line">5.强势期在前期还是后期？</view>
+        </view>
+      </view>
+      <view class="char-count">{{planDescription.length}}/500</view>
     </view>
   </block>
 
   <block wx:if="{{selectedHero}}">
     <view class="step-container">
       <view class="step-title">第五步：方案名称</view>
-      <input class="plan-title-input" placeholder="请输入方案名称，如：爆发流妲己、坦克流亚瑟等" value="{{planTitle}}" bindinput="onTitleInput"></input>
+      <input class="plan-title-input" placeholder="请输入方案名称，如：自爆流程咬金、肘击流劳大等" value="{{planTitle}}" bindinput="onTitleInput"></input>
     </view>
   </block>
 
@@ -363,6 +370,34 @@
       <view class="check-animation">
         <view class="scan-line"></view>
       </view>
+    </view>
+  </view>
+
+  <!-- 装备选择弹窗 -->
+  <view class="equipment-picker-mask" wx:if="{{showEquipmentPicker}}" catchtouchmove="true" bindtap="closeEquipmentPicker">
+    <view class="equipment-picker-modal" catchtap="true">
+      <view class="picker-header">
+        <text class="picker-title">选择装备</text>
+        <text class="picker-close" bindtap="closeEquipmentPicker">关闭</text>
+      </view>
+      
+      <view class="picker-category-row">
+        <scroll-view class="picker-category-scroll" scroll-x="true">
+          <view class="picker-category-item {{equipmentPickerActiveCategory === cat ? 'active' : ''}}" wx:for="{{equipmentCategoryList}}" wx:key="cat" data-category="{{item}}" bindtap="chooseEquipmentCategory">
+            <text class="picker-category-text">{{item}}</text>
+          </view>
+        </scroll-view>
+      </view>
+      <scroll-view class="picker-grid-scroll" scroll-y="true" enable-flex="{{true}}">
+        <view class="picker-grid picker-grid-flow">
+          <block wx:for="{{currentEquipmentOptions}}" wx:key="id">
+            <view class="picker-item" bindtap="pickEquipmentFromPicker" data-name="{{item.name}}">
+              <image class="picker-item-img round" src="{{equipmentPickerImages[item.name] || '../images/unused/default-avatar.png'}}" mode="aspectFill" />
+              <text class="picker-item-name">{{item.name}}</text>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
     </view>
   </view>
 </view> 

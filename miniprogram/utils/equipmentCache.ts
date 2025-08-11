@@ -65,17 +65,14 @@ class EquipmentCacheManager {
             fileList: imagePaths
           });
 
-          tempURLs.fileList.forEach((file: any, index: number) => {
-            const imagePath = imagePaths[index];
-            const equipmentName = Object.keys(nameToImageMap).find(name => 
-              nameToImageMap[name] === imagePath.split('/').pop()
-            );
-            
+          tempURLs.fileList.forEach((file: any) => {
+            const fileId = file.fileID || '';
+            const fileName = fileId.split('/').pop();
+            const equipmentName = Object.keys(nameToImageMap).find(name => nameToImageMap[name] === fileName);
             if (equipmentName) {
               if (file.tempFileURL) {
                 this.cache!.imageUrls[equipmentName] = file.tempFileURL;
               } else {
-                // 如果获取失败，使用默认图片
                 this.cache!.imageUrls[equipmentName] = this.DEFAULT_AVATAR_PATH;
               }
             }

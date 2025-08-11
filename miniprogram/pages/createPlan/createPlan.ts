@@ -50,6 +50,16 @@ Page({
     ], // 新的装备列表数据结构
     skipEquipment: false, // 是否忽略出装
 
+    // 装备选择弹窗数据
+    showEquipmentPicker: false,
+    equipmentCategoryList: [] as string[],
+    equipmentMapByCategory: {} as Record<string, any[]>,
+    equipmentPickerImages: {} as Record<string, string>, // name->imageUrl
+    equipmentPickerActiveCategory: '',
+    equipmentPickerSearch: '', // 将被废弃
+    currentPickIndex: -1,
+    currentEquipmentOptions: [] as any[],
+
     planDescription: '', // 方案思路描述
     planTitle: '', // 方案名称
     authorName: '',
@@ -68,6 +78,22 @@ Page({
     // 环境检测
     isDevelopment: false, // 是否为开发环境
   },
+
+  // 仅用于装备选择器的隐藏列表（不影响输入匹配和已有数据）
+  equipmentPickerBlacklist: [
+    // 物理
+    '铁剑','匕首','搏击拳套','吸血之镰','雷鸣刃','风暴巨剑','日冕','狂暴双刃','陨星','速击之枪','血魂刃','附魔之羽','精钢锻刀','迅捷长矛','穿云弓','蜀·节杖','吴·令牌',
+    // 法术
+    '咒术典籍','蓝宝石','圣者法典','大棒','血族之书','魔道之石','云灵木','秘法残页','元流结晶',
+    // 防御
+    '红玛瑙','布甲','抗魔披风','力量腰带','神隐斗篷','雪山圆盾','守护者之铠','荆棘护手','原初遗珠','急速铠甲','天地石','玛瑙护心镜','魏·虎符',
+    // 鞋子
+    '神速之靴',
+    // 打野
+    '狩猎宽刃','游击弯刀','巡守利斧','追击刀锋',
+    // 辅助
+    '学识宝石'
+  ],
 
   onLoad(options: any) {
     // 检测环境
@@ -96,6 +122,8 @@ Page({
       this.loadHeroSkills();
     }
     this.loadHeroData();
+    // 预加载装备分类
+    this.prepareEquipmentPickerData();
   },
 
   // 检测环境
@@ -293,7 +321,7 @@ Page({
         
         // 设置装备数据
         if (plan.equipment && Array.isArray(plan.equipment) && plan.equipment.length > 0) {
-          const equipmentList = plan.equipment.map((item: any, index: number) => ({
+          const equipmentList = plan.equipment.map((item: any) => ({
             name: item.name || '',
             imageUrl: item.imageUrl || '',
             matched: true,
@@ -669,9 +697,9 @@ Page({
   },
 
   // 处理技能数据，转换为页面需要的格式
-  processSkillsData(rawData: any[]) {
+  processSkillsData(_rawData: any[]) {
     // 这个方法现在不需要了，因为云函数直接返回正确的格式
-    return rawData;
+    return _rawData;
   },
 
   // 选择核心技能
@@ -679,7 +707,6 @@ Page({
     const { skillType } = e.currentTarget.dataset as { skillType: 'skillOne' | 'skillTwo' | 'skillThree' };
     const indexNum = Number(e.currentTarget.dataset.index);
     const selectedCores = Object.assign({}, this.data.selectedCores);
-    const previousIndex = selectedCores[skillType];
     selectedCores[skillType] = indexNum;
     
     const updates: any = { selectedCores: selectedCores };
@@ -833,6 +860,114 @@ Page({
     });
   },
 
+  // 打开装备选择器
+  openEquipmentPicker(e: any) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (!Number.isFinite(index)) return;
+    // 默认选中第一个分类
+    const categories = this.data.equipmentCategoryList;
+    this.setData({
+      showEquipmentPicker: true,
+      currentPickIndex: index,
+      equipmentPickerActiveCategory: categories && categories.length ? categories[0] : ''
+    });
+    this.updateEquipmentPickerList();
+  },
+
+  // 关闭装备选择器
+  closeEquipmentPicker() {
+    this.setData({
+      showEquipmentPicker: false,
+      currentPickIndex: -1,
+      equipmentPickerSearch: ''
+    });
+  },
+
+  // 选择分类
+  chooseEquipmentCategory(e: any) {
+    const cat = e.currentTarget.dataset.category as string;
+    if (!cat) return;
+    this.setData({ equipmentPickerActiveCategory: cat });
+    this.updateEquipmentPickerList();
+  },
+
+  // 废弃：不再支持搜索
+  onEquipmentPickerSearch(_e: any) {},
+
+  // 从弹窗中选择某个装备
+  async pickEquipmentFromPicker(e: any) {
+    const name = e.currentTarget.dataset.name as string;
+    if (!name) return;
+    const index = this.data.currentPickIndex;
+    if (index < 0) return;
+    try {
+      const { getEquipmentImageUrl } = require('../../utils/equipmentMatcher');
+      const imageUrl = await getEquipmentImageUrl(name);
+      const equipmentList = this.data.equipmentList.slice();
+      equipmentList[index] = {
+        name,
+        imageUrl,
+        matched: true,
+        suggestions: []
+      };
+      this.setData({
+        equipmentList,
+        equipment: this.getEquipmentText()
+      });
+    } catch (err) {
+      // ignore
+    } finally {
+      this.closeEquipmentPicker();
+    }
+  },
+
+  // 准备装备选择器所需的数据
+  async prepareEquipmentPickerData() {
+    try {
+      const { getEquipmentCategories, getEquipmentByCategory } = require('../../utils/equipmentMatcher');
+      const categories: string[] = getEquipmentCategories();
+      const equipmentMapByCategory: Record<string, any[]> = {};
+      const urlMapAggregate: Record<string, string> = {};
+      categories.forEach((c: string) => {
+        const list = getEquipmentByCategory(c);
+        equipmentMapByCategory[c] = list;
+      });
+      // 批量拉取图片
+      const { equipmentCache: eqCache } = require('../../utils/equipmentCache');
+      for (const c of categories) {
+        const names = (equipmentMapByCategory[c] || []).map((eq: any) => eq.name).filter((n: string) => !!n);
+        if (names.length) {
+          const part = await eqCache.getEquipmentImageUrls(names);
+          Object.assign(urlMapAggregate, part);
+        }
+      }
+      const initCat = categories && categories.length ? categories[0] : '';
+      this.setData({
+        equipmentCategoryList: categories,
+        equipmentMapByCategory,
+        equipmentPickerImages: urlMapAggregate,
+        equipmentPickerActiveCategory: this.data.equipmentPickerActiveCategory || initCat
+      });
+      this.updateEquipmentPickerList();
+    } catch (error) {
+      // 静默失败
+    }
+  },
+
+  // 根据当前分类与搜索关键字更新弹窗列表
+  updateEquipmentPickerList() {
+    const active = this.data.equipmentPickerActiveCategory;
+    if (!active) {
+      this.setData({ currentEquipmentOptions: [] });
+      return;
+    }
+    const full = (this.data.equipmentMapByCategory && this.data.equipmentMapByCategory[active]) || [];
+    const filteredRaw = full;
+    const blacklist: string[] = (this as any).equipmentPickerBlacklist || [];
+    const filtered = filteredRaw.filter((x: any) => !blacklist.includes(x.name));
+    this.setData({ currentEquipmentOptions: filtered });
+  },
+
   // 装备失焦处理
   onEquipmentBlur(e: any) {
     const index = e.currentTarget.dataset.index;
@@ -919,7 +1054,7 @@ Page({
   },
 
   // 生成装备建议 - 已禁用，不再使用
-  generateEquipmentSuggestions(input: string): any[] {
+  generateEquipmentSuggestions(_input: string): any[] {
     // 直接返回空数组，不再生成建议
     return [];
   },
@@ -1248,19 +1383,9 @@ Page({
         return;
       }
 
-      // 获取核心技能名称
-      const coreNames = {
-        skillOne: this.data.heroSkills.skillOne.cores[this.data.selectedCores.skillOne]?.name || '',
-        skillTwo: this.data.heroSkills.skillTwo.cores[this.data.selectedCores.skillTwo]?.name || '',
-        skillThree: this.data.heroSkills.skillThree.cores[this.data.selectedCores.skillThree]?.name || ''
-      };
-      
-      // 获取天赋名称
-      const talentNames = {
-        skillOne: this.data.selectedTalents.skillOne.map(index => this.data.heroSkills.skillOne.talents[index]?.name || ''),
-        skillTwo: this.data.selectedTalents.skillTwo.map(index => this.data.heroSkills.skillTwo.talents[index]?.name || ''),
-        skillThree: this.data.selectedTalents.skillThree.map(index => this.data.heroSkills.skillThree.talents[index]?.name || '')
-      };
+      // 名字映射仅用于日志与调试，实际不使用，避免未使用告警
+      // const coreNames = { ... };
+      // const talentNames = { ... };
       
       // 获取装备数据（如果选择忽略出装则设置为空）
       const equipmentData = this.data.skipEquipment ? [] : this.data.equipmentList.map(item => ({

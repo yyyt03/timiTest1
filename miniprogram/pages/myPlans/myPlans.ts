@@ -240,24 +240,18 @@ Page({
   editPlan(e: any) {
     const plan = e.currentTarget.dataset.plan;
     
-    // 管理员审核模式或开发环境下，允许编辑所有方案
-    if (this.data.isAdminReview || this.data.isDevelopment) {
+    // 管理员审核模式、开发环境下或普通用户模式下，允许编辑所有方案
+    if (this.data.isAdminReview || this.data.isDevelopment || !this.data.isAdminReview) {
       // 跳转到方案创作页面，传递方案数据用于编辑
       wx.navigateTo({
         url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
       });
     } else {
-      // 普通用户只能编辑自己的下架方案
-      if (plan.status === 'offline') {
-        wx.navigateTo({
-          url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
-        });
-      } else {
-        wx.showToast({
-          title: '只能编辑下架状态的方案',
-          icon: 'none'
-        });
-      }
+      // 其他情况下，显示提示信息
+      wx.showToast({
+        title: '无法编辑此方案',
+        icon: 'none'
+      });
     }
   },
 

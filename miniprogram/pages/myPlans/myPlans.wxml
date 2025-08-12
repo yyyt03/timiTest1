@@ -83,9 +83,9 @@
           <view class="action-btn preview-btn" catchtap="viewPlan" data-plan="{{item}}">
             <text class="btn-text">预览</text>
           </view>
-          <!-- 编辑按钮：管理员审核模式或开发环境下对所有方案可见，普通用户对下架方案可见 -->
+          <!-- 编辑按钮：管理员审核模式或开发环境下对所有方案可见，普通用户对所有方案可见 -->
           <view class="action-btn edit-btn" 
-                wx:if="{{isAdminReview || isDevelopment || item.status === 'offline'}}" 
+                wx:if="{{isAdminReview || isDevelopment || !isAdminReview}}" 
                 catchtap="editPlan" data-plan="{{item}}">
             <text class="btn-text">编辑</text>
           </view>
@@ -118,9 +118,9 @@
           <view class="action-btn republish-btn" wx:if="{{isAdminReview && item.status === 'offline'}}" catchtap="republishPlan" data-plan="{{item}}">
             <text class="btn-text">重新发布</text>
           </view>
-          <!-- 删除按钮：管理员审核模式或开发环境下对所有方案可见 -->
+          <!-- 删除按钮：管理员审核模式、开发环境下对所有方案可见，普通用户对所有方案可见 -->
           <view class="action-btn delete-btn" 
-                wx:if="{{isAdminReview || isDevelopment}}" 
+                wx:if="{{isAdminReview || isDevelopment || !isAdminReview}}" 
                 catchtap="deletePlan" data-plan="{{item}}">
             <text class="btn-text">删除</text>
           </view>

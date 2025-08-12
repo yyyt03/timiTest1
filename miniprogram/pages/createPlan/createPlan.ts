@@ -1,4 +1,15 @@
 // 方案创作页面
+import { cacheManager } from '../../utils/cacheManager';
+
+// 英雄技能缓存数据接口
+interface HeroSkillsCacheData {
+  skills: any;
+  timestamp: number;
+  heroId: string;
+  version: string; // 数据版本号，用于检测变动
+  lastModified?: number; // 最后修改时间
+}
+
 Page({
   data: {
     hero: '',
@@ -389,6 +400,31 @@ Page({
       return;
     }
 
+    // 先尝试从缓存获取数据
+    const cacheKey = `hero_skills_${this.data.heroId}`;
+    const cachedData = cacheManager.get<HeroSkillsCacheData>(cacheKey);
+    
+    if (cachedData && cachedData.skills) {
+      console.log('使用缓存的英雄技能数据:', this.data.heroId);
+      
+      // 检查缓存数据是否需要更新
+      const needsUpdate = await this.checkSkillsDataUpdate(cachedData);
+      
+      if (!needsUpdate) {
+        // 缓存数据仍然有效，直接使用
+        this.setData({
+          heroSkills: cachedData.skills,
+          skillsLoading: false
+        });
+        
+        // 初始化天赋选择状态
+        this.initializeTalentSelection(cachedData.skills);
+        return;
+      } else {
+        console.log('缓存数据需要更新，从服务器获取最新数据');
+      }
+    }
+
     this.setData({
       skillsLoading: true
     });
@@ -405,24 +441,26 @@ Page({
         // 直接使用返回的技能数据结构
         const skillsData = result.result.data;
         
-        // 初始化天赋选择状态
-        const talentSelected = {
-          skillOne: new Array(skillsData.skills.skillOne.talents.length).fill(false),
-          skillTwo: new Array(skillsData.skills.skillTwo.talents.length).fill(false),
-          skillThree: new Array(skillsData.skills.skillThree.talents.length).fill(false)
+        // 缓存英雄技能数据
+        const cacheData: HeroSkillsCacheData = {
+          skills: skillsData.skills,
+          timestamp: Date.now(),
+          heroId: this.data.heroId,
+          version: this.generateSkillsVersion(skillsData.skills),
+          lastModified: Date.now()
         };
+        
+        // 使用较长的TTL（30分钟），因为英雄技能数据相对稳定
+        cacheManager.set(cacheKey, cacheData, 30 * 60 * 1000);
+        console.log('英雄技能数据已缓存:', this.data.heroId);
 
         this.setData({
           heroSkills: skillsData.skills,
-          talentSelected: talentSelected,
-          // 初始化优先布尔标记
-          priorityTalentsFlags: {
-            skillOne: new Array(skillsData.skills.skillOne.talents.length).fill(false),
-            skillTwo: new Array(skillsData.skills.skillTwo.talents.length).fill(false),
-            skillThree: new Array(skillsData.skills.skillThree.talents.length).fill(false)
-          },
           skillsLoading: false
         });
+        
+        // 初始化天赋选择状态
+        this.initializeTalentSelection(skillsData.skills);
       } else {
         // 如果云函数失败，使用本地数据作为回退方案
         console.log('云函数返回失败，使用本地数据:', result.result?.error);
@@ -434,6 +472,140 @@ Page({
       this.loadLocalHeroSkills();
     }
   },
+
+  // 检查技能数据是否需要更新
+  async checkSkillsDataUpdate(cachedData: HeroSkillsCacheData): Promise<boolean> {
+    try {
+      // 方法1：检查版本号变化（通过数据内容生成）
+      const currentVersion = this.generateSkillsVersion(cachedData.skills);
+      if (currentVersion !== cachedData.version) {
+        console.log('技能数据版本发生变化，需要更新');
+        return true;
+      }
+
+      // 方法2：检查最后修改时间
+      if (cachedData.lastModified) {
+        const timeSinceLastUpdate = Date.now() - cachedData.lastModified;
+        const maxCacheAge = 2 * 60 * 60 * 1000; // 2小时，更频繁地检查更新
+        
+        if (timeSinceLastUpdate > maxCacheAge) {
+          console.log('缓存数据过期，需要更新');
+          return true;
+        }
+      }
+
+      // 方法3：每次访问时都进行轻量级的服务器检查
+      // 通过比较当前缓存版本与新获取数据的版本来检测变化
+      try {
+        const result = await wx.cloud.callFunction({
+          name: 'getHeroSkills',
+          data: {
+            heroId: this.data.heroId
+          }
+        }) as any;
+
+        if (result.result && result.result.success && result.result.data.skills) {
+          const serverVersion = this.generateSkillsVersion(result.result.data.skills);
+          if (serverVersion !== cachedData.version) {
+            console.log('服务器数据版本更新，需要刷新缓存');
+            return true;
+          }
+        }
+      } catch (error) {
+        // 服务器检查失败，使用缓存数据
+        console.log('服务器检查失败，使用缓存数据:', error);
+      }
+
+      return false; // 缓存数据仍然有效
+    } catch (error) {
+      console.error('检查技能数据更新失败:', error);
+      return true; // 出错时保守地选择更新
+    }
+  },
+
+  // 生成技能数据版本号
+  generateSkillsVersion(skills: any): string {
+    try {
+      if (!skills) return 'unknown';
+      
+      // 基于技能数据的详细内容生成版本号，包括技能名称、描述等关键信息
+      const versionData = {
+        skillOne: {
+          cores: skills.skillOne?.cores?.map((core: any) => ({
+            id: core.id,
+            name: core.name,
+            description: core.description
+          })) || [],
+          talents: skills.skillOne?.talents?.map((talent: any) => ({
+            id: talent.id,
+            name: talent.name,
+            description: talent.description
+          })) || []
+        },
+        skillTwo: {
+          cores: skills.skillTwo?.cores?.map((core: any) => ({
+            id: core.id,
+            name: core.name,
+            description: core.description
+          })) || [],
+          talents: skills.skillTwo?.talents?.map((talent: any) => ({
+            id: talent.id,
+            name: talent.name,
+            description: talent.description
+          })) || []
+        },
+        skillThree: {
+          cores: skills.skillThree?.cores?.map((core: any) => ({
+            id: core.id,
+            name: core.name,
+            description: core.description
+          })) || [],
+          talents: skills.skillThree?.talents?.map((talent: any) => ({
+            id: talent.id,
+            name: talent.name,
+            description: talent.description
+          })) || []
+        }
+      };
+      
+      // 生成更精确的哈希值作为版本号
+      const versionString = JSON.stringify(versionData);
+      let hash = 0;
+      for (let i = 0; i < versionString.length; i++) {
+        const char = versionString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 转换为32位整数
+      }
+      
+      return Math.abs(hash).toString(36);
+    } catch (error) {
+      console.error('生成技能数据版本号失败:', error);
+      return 'unknown';
+    }
+  },
+
+  // 初始化天赋选择状态
+  initializeTalentSelection(skills: any) {
+    if (!skills) return;
+    
+    const talentSelected = {
+      skillOne: new Array(skills.skillOne?.talents?.length || 0).fill(false),
+      skillTwo: new Array(skills.skillTwo?.talents?.length || 0).fill(false),
+      skillThree: new Array(skills.skillThree?.talents?.length || 0).fill(false)
+    };
+
+    this.setData({
+      talentSelected: talentSelected,
+      // 初始化优先布尔标记
+      priorityTalentsFlags: {
+        skillOne: new Array(skills.skillOne?.talents?.length || 0).fill(false),
+        skillTwo: new Array(skills.skillTwo?.talents?.length || 0).fill(false),
+        skillThree: new Array(skills.skillThree?.talents?.length || 0).fill(false)
+      }
+    });
+  },
+
+
 
   // 加载本地英雄技能数据（临时方案）
   loadLocalHeroSkills() {

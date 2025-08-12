@@ -2,6 +2,7 @@
 import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getAllHeroes, getHeroById, getHeroByName } from '../../data/localHeroData';
 import { getTempFileURLs } from '../../utils/cloud';
+import { cacheManager } from '../../utils/cacheManager';
 
 Page({
   data: {
@@ -275,6 +276,24 @@ Page({
     }
 
     try {
+      // 如果不是加载更多，先尝试从缓存获取数据
+      if (!isLoadMore) {
+        const cacheKey = `beta_plans_${this.data.currentMode}_${this.data.selectedHero}`;
+        const cachedData = cacheManager.get<any>(cacheKey);
+        
+        if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
+          console.log('使用缓存的体验服方案数据:', cacheKey);
+          this.setData({
+            betaPlans: cachedData.plans,
+            page: cachedData.page || 1,
+            hasMore: cachedData.hasMore !== undefined ? cachedData.hasMore : true,
+            loading: false,
+            loadingMore: false
+          });
+          return;
+        }
+      }
+
       const result = await wx.cloud.callFunction({
         name: 'getRecommendPlans',
         data: {
@@ -316,8 +335,20 @@ Page({
           loadingMore: false
         });
 
-        // 如果不是加载更多，则更新当前模式的缓存数据
+        // 如果不是加载更多，则缓存数据并更新当前模式的缓存数据
         if (!isLoadMore) {
+          // 缓存当前筛选结果
+          const cacheKey = `beta_plans_${this.data.currentMode}_${this.data.selectedHero}`;
+          const cacheData = {
+            plans: formattedPlans,
+            page: page,
+            hasMore: hasMore,
+            timestamp: Date.now(),
+            mode: this.data.currentMode,
+            heroId: this.data.selectedHero
+          };
+          cacheManager.set(cacheKey, cacheData, 3 * 60 * 1000); // 3分钟TTL
+          
           // 获取当前模式的完整数据用于更新缓存
           const fullResult = await wx.cloud.callFunction({
             name: 'getRecommendPlans',
@@ -866,11 +897,20 @@ Page({
   },
 
   // 下拉刷新
-  onPullDownRefresh() {
-    this.setData({ page: 1 }); // 重置页码
-    this.loadBetaPlans().then(() => {
+  async onPullDownRefresh() {
+    try {
+      // 清除当前模式的缓存数据
+      const cacheKey = `beta_plans_${this.data.currentMode}_${this.data.selectedHero}`;
+      cacheManager.delete(cacheKey);
+      console.log('下拉刷新，已清除体验服方案缓存:', cacheKey);
+      
+      this.setData({ page: 1 }); // 重置页码
+      await this.loadBetaPlans();
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+    } finally {
       wx.stopPullDownRefresh();
-    });
+    }
   },
 
   // 上拉加载更多

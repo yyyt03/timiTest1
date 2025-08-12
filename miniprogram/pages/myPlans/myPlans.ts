@@ -1,5 +1,16 @@
 // 我的方案页面
 import { getHeroByName } from '../../data/localHeroData';
+import { cacheManager } from '../../utils/cacheManager';
+
+// 缓存数据接口
+interface PlansCacheData {
+  plans: any[];
+  timestamp: number;
+  source: string;
+  mode: string; // 'user' | 'admin'
+  statusFilter?: string; // 管理员状态筛选
+  heroFilter?: string; // 英雄筛选
+}
 
 Page({
   data: {
@@ -66,6 +77,17 @@ Page({
   },
 
   onPullDownRefresh() {
+    // 清除相关缓存
+    if (this.data.isAdminReview) {
+      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      cacheManager.delete(adminCacheKey);
+      console.log('下拉刷新，已清除管理员审核缓存:', adminCacheKey);
+    } else {
+      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      cacheManager.delete(userCacheKey);
+      console.log('下拉刷新，已清除用户方案缓存:', userCacheKey);
+    }
+    
     this.setData({
       page: 1,
       hasMore: true
@@ -97,6 +119,25 @@ Page({
     // 如果已经在加载中，则返回
     if (this.data.loading && this.data.userPlans.length > 0) return;
     
+    // 先尝试从缓存获取数据
+    const cacheKey = `my_plans_user_${this.data.selectedHero}`;
+    const cachedData = cacheManager.get<PlansCacheData>(cacheKey);
+    
+    if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
+      console.log('使用缓存的用户方案数据');
+      this.setData({
+        userPlans: cachedData.plans,
+        allUserPlans: cachedData.plans,
+        total: cachedData.plans.length,
+        hasMore: false, // 缓存数据通常包含所有数据
+        loading: false
+      });
+      
+      // 生成英雄分类
+      this.generateHeroCategories();
+      return;
+    }
+    
     this.setData({ loading: true });
     
     console.log('开始调用getUserPlans云函数');
@@ -125,6 +166,19 @@ Page({
             hasMore: res.result.data.hasMore,
             loading: false
           });
+          
+          // 缓存用户方案数据
+          if (this.data.page === 1) {
+            const cacheData: PlansCacheData = {
+              plans: newPlans,
+              timestamp: Date.now(),
+              source: 'myPlans',
+              mode: 'user',
+              heroFilter: this.data.selectedHero
+            };
+            cacheManager.set(cacheKey, cacheData, 5 * 60 * 1000); // 5分钟TTL
+            console.log('用户方案数据已缓存');
+          }
           
           // 生成英雄分类
           this.generateHeroCategories();
@@ -155,6 +209,25 @@ Page({
   async loadAllPlansForAdmin() {
     // 避免重复加载
     if (this.data.loading && this.data.userPlans.length > 0) return;
+
+    // 先尝试从缓存获取数据
+    const cacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+    const cachedData = cacheManager.get<PlansCacheData>(cacheKey);
+    
+    if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
+      console.log('使用缓存的管理员审核方案数据');
+      this.setData({
+        userPlans: cachedData.plans,
+        allUserPlans: cachedData.plans,
+        total: cachedData.plans.length,
+        hasMore: false,
+        loading: false
+      });
+      
+      // 生成英雄分类
+      this.generateHeroCategories();
+      return;
+    }
 
     this.setData({ loading: true, userPlans: [], allUserPlans: [], total: 0 });
 
@@ -196,6 +269,18 @@ Page({
         loading: false
       });
 
+      // 缓存管理员审核方案数据
+      const cacheData: PlansCacheData = {
+        plans: allPlans,
+        timestamp: Date.now(),
+        source: 'myPlans',
+        mode: 'admin',
+        statusFilter: this.data.adminStatusFilter,
+        heroFilter: this.data.selectedHero
+      };
+      cacheManager.set(cacheKey, cacheData, 3 * 60 * 1000); // 3分钟TTL，审核数据需要更频繁更新
+      console.log('管理员审核方案数据已缓存');
+
       // 生成英雄分类
       this.generateHeroCategories();
     } catch (error) {
@@ -211,6 +296,12 @@ Page({
   switchAdminStatus(e: any) {
     const status = e.currentTarget.dataset.status;
     this.setData({ adminStatusFilter: status });
+    
+    // 清除相关缓存
+    const oldCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+    cacheManager.delete(oldCacheKey);
+    console.log('切换管理员状态筛选，已清除旧缓存:', oldCacheKey);
+    
     if (this.data.isAdminReview) {
       this.loadAllPlansForAdmin();
     }
@@ -303,6 +394,17 @@ Page({
   updatePlanStatus(planId: string, status: string) {
     wx.showLoading({ title: '处理中...' });
     
+    // 清除相关缓存
+    if (this.data.isAdminReview) {
+      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      cacheManager.delete(adminCacheKey);
+      console.log('更新方案状态，已清除管理员审核缓存:', adminCacheKey);
+    } else {
+      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      cacheManager.delete(userCacheKey);
+      console.log('更新方案状态，已清除用户方案缓存:', userCacheKey);
+    }
+    
     wx.cloud.callFunction({
       name: 'updatePlanStatus',
       data: {
@@ -346,6 +448,17 @@ Page({
   // 更新方案状态（带拒绝原因）
   updatePlanStatusWithReason(planId: string, status: string, reason: string) {
     wx.showLoading({ title: '处理中...' });
+    
+    // 清除相关缓存
+    if (this.data.isAdminReview) {
+      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      cacheManager.delete(adminCacheKey);
+      console.log('更新方案状态（带原因），已清除管理员审核缓存:', adminCacheKey);
+    } else {
+      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      cacheManager.delete(userCacheKey);
+      console.log('更新方案状态（带原因），已清除用户方案缓存:', userCacheKey);
+    }
     
     wx.cloud.callFunction({
       name: 'updatePlanStatus',
@@ -471,6 +584,17 @@ Page({
   deletePlanConfirm(planId: string) {
     wx.showLoading({ title: '删除中...' });
     
+    // 清除相关缓存
+    if (this.data.isAdminReview) {
+      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      cacheManager.delete(adminCacheKey);
+      console.log('删除方案，已清除管理员审核缓存:', adminCacheKey);
+    } else {
+      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      cacheManager.delete(userCacheKey);
+      console.log('删除方案，已清除用户方案缓存:', userCacheKey);
+    }
+    
     wx.cloud.callFunction({
       name: 'deletePlan',
       data: {
@@ -538,6 +662,18 @@ Page({
   // 选择英雄分类
   selectHero(e: any) {
     const heroName = e.currentTarget.dataset.hero;
+    
+    // 清除相关缓存
+    if (this.data.isAdminReview) {
+      const oldAdminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      cacheManager.delete(oldAdminCacheKey);
+      console.log('切换英雄筛选，已清除管理员审核缓存:', oldAdminCacheKey);
+    } else {
+      const oldUserCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      cacheManager.delete(oldUserCacheKey);
+      console.log('切换英雄筛选，已清除用户方案缓存:', oldUserCacheKey);
+    }
+    
     this.setData({
       selectedHero: heroName,
       showHeroSelector: false

@@ -1,6 +1,7 @@
 // 方案详情页面 - 优化头像获取
 import { getHeroById, getHeroByName } from '../../data/localHeroData';
 import { callFunction } from '../../utils/cloud';
+import { cacheManager } from '../../utils/cacheManager';
 
 interface PlanData {
   _id?: string;
@@ -20,6 +21,13 @@ interface CloudFunctionResult {
   data?: any;
   message?: string;
   [key: string]: any;
+}
+
+// 方案详情缓存数据接口
+interface PlanDetailCacheData {
+  plan: PlanData;
+  timestamp: number;
+  planId: string;
 }
 
 Page({
@@ -152,6 +160,37 @@ Page({
     this.setData({ loading: true });
     
     try {
+      // 如果不是强制刷新，先尝试从缓存获取数据
+      if (!forceRefresh) {
+        const cacheKey = `plan_detail_${planId}`;
+        const cachedData = cacheManager.get<PlanDetailCacheData>(cacheKey);
+        
+        if (cachedData && cachedData.plan && cachedData.plan._id === planId) {
+          console.log('使用缓存的方案详情数据:', planId);
+          // 保留传递过来的收藏状态，避免被缓存数据覆盖
+          const currentIsFavorited = this.data.plan.isFavorited;
+          const cachedPlan = {
+            ...cachedData.plan,
+            isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : cachedData.plan.isFavorited
+          };
+          
+          this.setData({
+            plan: cachedPlan,
+            loading: false
+          });
+          
+          // 设置导航栏标题
+          wx.setNavigationBarTitle({
+            title: cachedPlan.title || cachedPlan.heroName + '的方案'
+          });
+          
+          // 异步获取英雄头像，不阻塞页面显示
+          this.getHeroAvatar(cachedPlan.heroName, cachedPlan.heroId);
+          
+          return;
+        }
+      }
+
       const result = await wx.cloud.callFunction({
         name: 'getPlanDetail',
         data: { planId, forceRefresh }
@@ -190,13 +229,25 @@ Page({
         // 先设置方案数据，避免页面空白
         // 保留传递过来的收藏状态，避免被服务器数据覆盖
         const currentIsFavorited = this.data.plan.isFavorited;
+        const finalPlan = {
+          ...normalizedPlan,
+          isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : normalizedPlan.isFavorited
+        };
+        
         this.setData({
-          plan: {
-            ...normalizedPlan,
-            isFavorited: currentIsFavorited !== undefined ? currentIsFavorited : normalizedPlan.isFavorited
-          },
+          plan: finalPlan,
           loading: false
         });
+        
+        // 缓存方案详情数据
+        const cacheKey = `plan_detail_${planId}`;
+        const cacheData: PlanDetailCacheData = {
+          plan: finalPlan,
+          timestamp: Date.now(),
+          planId: planId
+        };
+        cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
+        console.log('方案详情数据已缓存:', planId);
         
         // 设置导航栏标题
         wx.setNavigationBarTitle({
@@ -290,6 +341,17 @@ Page({
           'plan.isFavorited': isFavorited
         });
         
+        // 更新缓存中的收藏状态
+        if (plan._id) {
+          const cacheKey = `plan_detail_${plan._id}`;
+          const cachedData = cacheManager.get<PlanDetailCacheData>(cacheKey);
+          if (cachedData) {
+            cachedData.plan.isFavorited = isFavorited;
+            cacheManager.set(cacheKey, cachedData, 10 * 60 * 1000); // 保持原有TTL
+            console.log('缓存中的收藏状态已更新:', isFavorited);
+          }
+        }
+        
         wx.showToast({
           title: isFavorited ? '收藏成功' : '取消收藏',
           icon: 'success'
@@ -316,5 +378,26 @@ Page({
       title: `${plan.heroName} - ${plan.title}`,
       path: `/pages/planDetail/planDetail?planId=${plan._id}`
     };
+  },
+
+  // 页面卸载时缓存方案详情数据
+  onUnload() {
+    try {
+      // 缓存当前方案详情数据，供其他页面使用
+      const plan = this.data.plan;
+      if (plan && plan._id) {
+        const cacheKey = `plan_detail_${plan._id}`;
+        const cacheData: PlanDetailCacheData = {
+          plan: plan,
+          timestamp: Date.now(),
+          planId: plan._id
+        };
+        
+        cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
+        console.log('方案详情页面卸载，已缓存方案详情数据:', plan._id);
+      }
+    } catch (error) {
+      console.warn('缓存方案详情数据失败:', error);
+    }
   }
 }); 

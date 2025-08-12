@@ -52,7 +52,12 @@
     
     <!-- 方案列表 -->
     <view class="plans-grid" wx:else>
-      <view class="plan-card" wx:for="{{recommendPlans}}" wx:key="_id" bindtap="viewPlan" data-plan="{{item}}">
+      <view class="plan-card" 
+            wx:for="{{recommendPlans}}" 
+            wx:key="_id" 
+            bindtap="viewPlan" 
+            data-plan="{{item}}"
+            data-filter="{{currentFilter}}">
         <!-- 方案头部 -->
         <view class="plan-header">
           <image class="plan-hero-avatar" src="{{item.heroAvatar}}" mode="aspectFit"></image>

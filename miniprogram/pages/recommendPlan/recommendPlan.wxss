@@ -1,6 +1,9 @@
 .container {
   background-color: #f5f7fa;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* 防止横向滚动 */
+  box-sizing: border-box;
 }
 
 
@@ -15,8 +18,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  width: 100vw;
-  left: 0;
+  width: 100%; /* 改为100%而不是100vw */
+  box-sizing: border-box;
 }
 
 .filter-tabs {
@@ -26,11 +29,12 @@
   justify-content: center;
   gap: 0;
   padding: 16rpx 20rpx 16rpx 20rpx;
-  width: 100vw;
+  width: 100%; /* 改为100%而不是100vw */
   min-height: 80rpx;
   position: relative;
   background: transparent;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .filter-tab {
@@ -102,6 +106,8 @@
   overflow: hidden;
   border: 1rpx solid #e1e5e9;
   width: calc(100% - 40rpx);
+  box-sizing: border-box;
+  max-width: 100%; /* 确保不超过容器宽度 */
 }
 
 /* 头部选择器样式，始终占满一行 */
@@ -162,6 +168,7 @@
   scrollbar-width: none; /* Firefox */
   background: #fff;
   box-sizing: border-box;
+  max-width: 100%; /* 确保不超过容器宽度 */
 }
 .hero-list::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
@@ -288,12 +295,16 @@
 /* 方案列表 */
 .plans-section {
   padding: 20rpx 30rpx;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .plans-grid {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .plan-card {
@@ -302,6 +313,9 @@
   padding: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .plan-card:active {
@@ -313,6 +327,8 @@
   display: flex;
   align-items: center;
   margin-bottom: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .plan-hero-avatar {
@@ -326,6 +342,7 @@
 .plan-info {
   flex: 1;
   min-width: 0; /* 防止flex子项溢出 */
+  max-width: calc(100% - 200rpx); /* 为头像和统计信息预留空间 */
 }
 
 .plan-title {
@@ -338,6 +355,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  word-break: break-word; /* 允许长标题换行 */
 }
 
 .plan-hero-name {
@@ -360,6 +378,7 @@
   gap: 16rpx;
   flex-shrink: 0; /* 防止被压缩 */
   min-width: 160rpx; /* 确保最小宽度 */
+  max-width: 200rpx; /* 限制最大宽度 */
 }
 
 .plan-stats .stat-item {
@@ -374,6 +393,8 @@
   background: rgba(102, 126, 234, 0.05);
   border: 2rpx solid rgba(102, 126, 234, 0.1);
   min-width: 70rpx; /* 确保最小宽度 */
+  max-width: 90rpx; /* 限制最大宽度 */
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .plan-stats .stat-item:active {
@@ -403,6 +424,8 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  word-break: break-word; /* 允许长文本换行 */
+  max-width: 100%;
 }
 
 .plan-tags {
@@ -410,6 +433,8 @@
   gap: 12rpx;
   margin-bottom: 16rpx;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tag {
@@ -418,6 +443,10 @@
   background: rgba(102, 126, 234, 0.1);
   padding: 6rpx 12rpx;
   border-radius: 12rpx;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-footer {
@@ -426,6 +455,8 @@
   align-items: center;
   padding-top: 16rpx;
   border-top: 1rpx solid #f0f0f0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .plan-author {
@@ -433,17 +464,27 @@
   align-items: center;
   font-size: 24rpx;
   color: #666;
+  max-width: 60%; /* 限制作者信息宽度 */
+  overflow: hidden;
 }
 
 .author-text {
   font-size: 24rpx;
   color: #666;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-time {
   font-size: 22rpx;
   color: #999;
+  max-width: 40%; /* 限制时间信息宽度 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
 }
 
 /* 加载状态 */
@@ -527,4 +568,93 @@
 .no-more-text {
   font-size: 24rpx;
   color: #999;
+} 
+
+/* 响应式布局优化 */
+@media screen and (max-width: 750rpx) {
+  .container {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .filter-section {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .filter-tabs {
+    width: 100%;
+    padding: 16rpx 16rpx;
+  }
+  
+  .hero-selector {
+    margin: 0 16rpx 16rpx 16rpx;
+    width: calc(100% - 32rpx);
+  }
+  
+  .plans-section {
+    padding: 16rpx 20rpx;
+  }
+  
+  .plan-card {
+    padding: 20rpx;
+  }
+  
+  .plan-info {
+    max-width: calc(100% - 180rpx);
+  }
+  
+  .plan-stats {
+    min-width: 140rpx;
+    max-width: 180rpx;
+  }
+  
+  .plan-stats .stat-item {
+    min-width: 60rpx;
+    max-width: 80rpx;
+  }
+}
+
+/* 确保内容不会超出容器边界 */
+.plan-card .plan-header,
+.plan-card .plan-hero-avatar,
+.plan-card .plan-info,
+.plan-card .plan-title,
+.plan-card .plan-hero-name,
+.plan-card .plan-stats,
+.plan-card .plan-description,
+.plan-card .plan-tags,
+.plan-card .plan-footer,
+.plan-card .plan-author,
+.plan-card .plan-time {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 优化长文本显示 */
+.plan-title,
+.plan-description,
+.author-text,
+.plan-time {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 防止flex布局溢出 */
+.plan-header {
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+/* 确保标签不会超出卡片边界 */
+.plan-tags {
+  max-width: 100%;
+}
+
+.tag {
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 } 

@@ -82,14 +82,44 @@ Page({
 
   // 切换筛选类型
   async switchFilter(e: any) {
-    const type = e.currentTarget.dataset.type;
-    this.setData({
-      currentFilter: type,
-      page: 1 // 重置页码
-    });
-    console.log('切换筛选类型:', type);
-    // 重新加载数据
-    await this.loadRecommendPlans();
+    try {
+      const type = e.currentTarget.dataset.type;
+      this.setData({
+        currentFilter: type,
+        page: 1 // 重置页码
+      });
+      console.log('切换筛选类型:', type);
+      
+      // 重新加载数据
+      await this.loadRecommendPlans();
+      
+      // 强制重新计算布局，确保页面比例正确
+      // 使用setTimeout确保DOM更新完成后再触发重新渲染
+      setTimeout(() => {
+        try {
+          // 触发页面重新渲染，确保布局正确
+          this.setData({
+            _layoutUpdate: Date.now()
+          });
+          
+          // 强制页面重新计算样式
+          wx.createSelectorQuery()
+            .select('.container')
+            .boundingClientRect()
+            .exec(() => {
+              console.log('布局重新计算完成');
+            });
+        } catch (layoutError) {
+          console.warn('布局重新计算失败，但不影响主要功能:', layoutError);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('切换筛选器失败:', error);
+      wx.showToast({
+        title: '切换失败，请重试',
+        icon: 'none'
+      });
+    }
   },
 
   // 切换英雄选择器显示状态

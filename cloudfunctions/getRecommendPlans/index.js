@@ -17,6 +17,7 @@ exports.main = async function(event, context) {
       hero = null, // 英雄名称筛选
       isBetaPlan = false, // 是否为体验服方案筛选
       includeBetaPlans = false, // 是否包含体验服方案
+      mode = 'hot', // recommended: 推荐方案, hot: 热门方案(按点赞收藏排序), latest: 最新方案(按时间排序)
       page = 1, 
       pageSize = 10 
     } = event;
@@ -30,10 +31,23 @@ exports.main = async function(event, context) {
     
     console.log('获取推荐方案数据，筛选条件:', { filter, heroId, page, pageSize });
     
-    // 构建查询条件
+    // 构建查询条件 - 根据mode参数决定筛选逻辑
     let whereCondition = {
       status: 'published' // 只显示已发布的方案
     };
+    
+    // 根据模式设置不同的筛选和排序逻辑
+    if (mode === 'recommended') {
+      // 推荐模式：只显示被标记为推荐的方案
+      whereCondition.isRecommended = true;
+      console.log('推荐模式：只显示推荐方案');
+    } else if (mode === 'hot') {
+      // 热门模式：显示所有已发布方案（按点赞收藏排序）
+      console.log('热门模式：显示所有已发布方案（按点赞收藏排序）');
+    } else if (mode === 'latest') {
+      // 最新模式：显示所有已发布方案（按时间排序）
+      console.log('最新模式：显示所有已发布方案（按时间排序）');
+    }
     
     // 如果指定了英雄ID，添加英雄筛选条件
     if (heroId && heroId !== 'all') {
@@ -55,26 +69,30 @@ exports.main = async function(event, context) {
       delete whereCondition.isBetaPlan;
     }
     
-    // 根据筛选类型设置排序
+    // 根据筛选类型和模式设置排序
     let orderByField = 'createTime';
     let orderByDirection = 'desc';
     
-    if (filter === 'featured') {
-      // 精选方案：需要先获取所有方案，然后按点赞数和收藏数排序
+    if (mode === 'hot') {
+      // 热门模式：需要先获取所有方案，然后按点赞数和收藏数排序
       // 由于云数据库不支持复合排序，我们需要获取所有方案后在应用层处理
       orderByField = 'createTime';
       orderByDirection = 'desc';
-    } else if (filter === 'latest') {
-      // 最新方案：按创建时间排序
+    } else if (mode === 'latest') {
+      // 最新模式：按创建时间排序
+      orderByField = 'createTime';
+      orderByDirection = 'desc';
+    } else if (mode === 'recommended') {
+      // 推荐模式：按创建时间排序，但只显示推荐方案
       orderByField = 'createTime';
       orderByDirection = 'desc';
     }
     
-    // 对于精选方案，需要获取所有方案来计算排序
+    // 根据模式决定数据获取方式
     let plansResult, countResult;
     
-    if (filter === 'featured') {
-      // 精选方案：获取所有方案用于排序
+    if (mode === 'hot') {
+      // 热门模式：获取所有方案用于排序
       [plansResult, countResult] = await Promise.all([
         db.collection('plans')
           .where(whereCondition)
@@ -84,7 +102,7 @@ exports.main = async function(event, context) {
           .count()
       ]);
     } else {
-      // 最新方案：按时间排序分页获取
+      // 推荐模式和最新模式：按时间排序分页获取
       [plansResult, countResult] = await Promise.all([
         db.collection('plans')
           .where(whereCondition)
@@ -167,8 +185,8 @@ exports.main = async function(event, context) {
       favoriteCount: favoriteCountMap[plan._id] || 0
     }));
     
-    // 如果是精选方案，按点赞数和收藏数重新排序
-    if (filter === 'featured') {
+    // 如果是热门模式，按点赞数和收藏数重新排序
+    if (mode === 'hot') {
       plans.sort((a, b) => {
         const aScore = a.likeCount + a.favoriteCount;
         const bScore = b.likeCount + b.favoriteCount;

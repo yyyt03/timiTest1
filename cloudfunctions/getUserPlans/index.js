@@ -84,7 +84,8 @@ exports.main = async function(event, context) {
     const plans = plansResult.data.map(plan => ({
       ...plan,
       likeCount: likeCountMap[plan._id] || 0,
-      favoriteCount: favoriteCountMap[plan._id] || 0
+      favoriteCount: favoriteCountMap[plan._id] || 0,
+      isRecommended: plan.isRecommended || false // 确保有推荐状态字段
     }));
     
     const resultData = {

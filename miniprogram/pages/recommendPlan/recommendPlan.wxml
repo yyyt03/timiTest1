@@ -2,10 +2,13 @@
   <!-- 顶部筛选选项 -->
   <view class="filter-section">
     <view class="filter-tabs">
-      <view class="filter-tab {{currentFilter === 'featured' ? 'active' : ''}}" bindtap="switchFilter" data-type="featured">
-        精选方案
+      <view class="filter-tab {{currentMode === 'recommended' ? 'active' : ''}}" bindtap="switchFilter" data-type="recommended">
+        推荐方案
       </view>
-      <view class="filter-tab {{currentFilter === 'latest' ? 'active' : ''}}" bindtap="switchFilter" data-type="latest">
+      <view class="filter-tab {{currentMode === 'hot' ? 'active' : ''}}" bindtap="switchFilter" data-type="hot">
+        热门方案
+      </view>
+      <view class="filter-tab {{currentMode === 'latest' ? 'active' : ''}}" bindtap="switchFilter" data-type="latest">
         最新方案
       </view>
     </view>
@@ -101,8 +104,12 @@
     <!-- 无数据提示 -->
     <view class="no-data" wx:if="{{!loading && recommendPlans.length === 0}}">
       <image class="no-data-icon" src="{{emptyIcon}}" mode="aspectFit"></image>
-      <view class="no-data-text">暂无推荐方案</view>
-      <view class="no-data-tip">试试切换筛选条件</view>
+      <view class="no-data-text">
+        {{currentMode === 'recommended' ? '暂无推荐方案' : (currentMode === 'hot' ? '暂无热门方案' : '暂无最新方案')}}
+      </view>
+      <view class="no-data-tip">
+        {{currentMode === 'recommended' ? '管理员还未设置推荐方案' : '试试切换筛选条件'}}
+      </view>
     </view>
     
     <!-- 加载更多 -->

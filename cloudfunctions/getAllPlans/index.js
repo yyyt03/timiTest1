@@ -57,7 +57,8 @@ exports.main = async function(event, context) {
     const enriched = plans.map(p => ({
       ...p,
       likeCount: likeCountMap[p._id] || 0,
-      favoriteCount: favoriteCountMap[p._id] || 0
+      favoriteCount: favoriteCountMap[p._id] || 0,
+      isRecommended: p.isRecommended || false // 确保有推荐状态字段
     }));
 
     return {

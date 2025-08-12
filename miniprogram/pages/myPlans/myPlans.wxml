@@ -8,7 +8,6 @@
   <!-- 管理员状态筛选，仅管理员审核模式显示 -->
   <view wx:if="{{isAdminReview}}" class="admin-filters">
     <view class="filter-btn {{adminStatusFilter === 'all' ? 'active' : ''}}" data-status="all" bindtap="switchAdminStatus">全部</view>
-    <view class="filter-btn {{adminStatusFilter === 'draft' ? 'active' : ''}}" data-status="draft" bindtap="switchAdminStatus">草稿</view>
     <view class="filter-btn {{adminStatusFilter === 'pending' ? 'active' : ''}}" data-status="pending" bindtap="switchAdminStatus">审核中</view>
     <view class="filter-btn {{adminStatusFilter === 'published' ? 'active' : ''}}" data-status="published" bindtap="switchAdminStatus">已发布</view>
     <view class="filter-btn {{adminStatusFilter === 'offline' ? 'active' : ''}}" data-status="offline" bindtap="switchAdminStatus">已下架</view>
@@ -57,9 +56,9 @@
           
           <!-- 状态和时间信息 -->
           <view class="plan-stats-row">
-            <view class="status-badge {{item.status === 'published' ? 'published' : (item.status === 'pending' ? 'pending' : (item.status === 'rejected' ? 'rejected' : (item.status === 'offline' ? 'offline' : 'draft')))}}">
-              <text class="status-icon">{{item.status === 'published' ? '✅' : (item.status === 'pending' ? '🔄' : (item.status === 'rejected' ? '📝' : (item.status === 'offline' ? '📴' : '📝')))}}</text>
-              <text class="status-text">{{item.status === 'published' ? '已发布' : (item.status === 'pending' ? '审核中' : (item.status === 'rejected' ? '已返回' : (item.status === 'offline' ? '已下架' : '草稿')))}}</text>
+            <view class="status-badge {{item.status === 'published' ? 'published' : (item.status === 'pending' ? 'pending' : (item.status === 'rejected' ? 'rejected' : 'offline'))}}">
+              <text class="status-icon">{{item.status === 'published' ? '✅' : (item.status === 'pending' ? '🔄' : (item.status === 'rejected' ? '📝' : '📴'))}}</text>
+              <text class="status-text">{{item.status === 'published' ? '已发布' : (item.status === 'pending' ? '审核中' : (item.status === 'rejected' ? '已返回' : '已下架'))}}</text>
             </view>
             <view class="meta-item time-item">
               <text class="meta-icon">🕒</text>
@@ -78,18 +77,14 @@
           <view class="action-btn preview-btn" catchtap="viewPlan" data-plan="{{item}}">
             <text class="btn-text">预览</text>
           </view>
-          <!-- 编辑按钮：管理员审核模式或开发环境下对所有方案可见，普通用户对草稿和下架方案可见 -->
+          <!-- 编辑按钮：管理员审核模式或开发环境下对所有方案可见，普通用户对下架方案可见 -->
           <view class="action-btn edit-btn" 
-                wx:if="{{isAdminReview || isDevelopment || item.status === 'draft' || item.status === 'offline'}}" 
+                wx:if="{{isAdminReview || isDevelopment || item.status === 'offline'}}" 
                 catchtap="editPlan" data-plan="{{item}}">
             <text class="btn-text">编辑</text>
           </view>
-          <!-- 发布按钮：仅开发环境下对草稿可见 -->
-          <view class="action-btn publish-btn" wx:if="{{item.status === 'draft' && isDevelopment}}" catchtap="publishPlan" data-plan="{{item}}">
-            <text class="btn-text">发布</text>
-          </view>
-          <!-- 提交审核，草稿和下架方案可见 -->
-          <view class="action-btn publish-btn" wx:if="{{item.status === 'draft' || item.status === 'offline'}}" catchtap="submitReview" data-plan="{{item}}">
+          <!-- 提交审核，下架方案可见 -->
+          <view class="action-btn publish-btn" wx:if="{{item.status === 'offline'}}" catchtap="submitReview" data-plan="{{item}}">
             <text class="btn-text">提交审核</text>
           </view>
           <!-- 提交审核，仅已拒绝可见 -->
@@ -103,14 +98,20 @@
           <view class="action-btn delete-btn" wx:if="{{isAdminReview && item.status === 'pending'}}" catchtap="rejectPlan" data-plan="{{item}}">
             <text class="btn-text">拒绝</text>
           </view>
-                     <!-- 下架按钮：管理员审核模式或普通用户的已发布方案可见 -->
-           <view class="action-btn offline-btn" wx:if="{{(isAdminReview || (!isAdminReview && item.status === 'published')) && item.status === 'published'}}" catchtap="offlinePlan" data-plan="{{item}}">
-             <text class="btn-text">下架</text>
-           </view>
-                     <!-- 重新发布按钮：仅管理员审核模式且已下架状态可见 -->
-           <view class="action-btn republish-btn" wx:if="{{isAdminReview && item.status === 'offline'}}" catchtap="republishPlan" data-plan="{{item}}">
-             <text class="btn-text">重新发布</text>
-           </view>
+          <!-- 推荐状态设置：仅管理员审核模式且已发布状态可见 -->
+          <view class="action-btn {{item.isRecommended ? 'unrecommend-btn' : 'recommend-btn'}}" 
+                wx:if="{{isAdminReview && item.status === 'published'}}" 
+                catchtap="toggleRecommend" data-plan="{{item}}">
+            <text class="btn-text">{{item.isRecommended ? '取消推荐' : '设为推荐'}}</text>
+          </view>
+          <!-- 下架按钮：管理员审核模式或普通用户的已发布方案可见 -->
+          <view class="action-btn offline-btn" wx:if="{{(isAdminReview || (!isAdminReview && item.status === 'published')) && item.status === 'published'}}" catchtap="offlinePlan" data-plan="{{item}}">
+            <text class="btn-text">下架</text>
+          </view>
+          <!-- 重新发布按钮：仅管理员审核模式且已下架状态可见 -->
+          <view class="action-btn republish-btn" wx:if="{{isAdminReview && item.status === 'offline'}}" catchtap="republishPlan" data-plan="{{item}}">
+            <text class="btn-text">重新发布</text>
+          </view>
           <!-- 删除按钮：管理员审核模式或开发环境下对所有方案可见 -->
           <view class="action-btn delete-btn" 
                 wx:if="{{isAdminReview || isDevelopment}}" 

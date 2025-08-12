@@ -110,6 +110,7 @@ exports.main = async (event, context) => {
       authorName: authorName, // 保存作者名称
       imageUrl: imageUrl || '',
       isBetaPlan: isBetaPlan || false, // 是否为体验服方案
+      isRecommended: false, // 新创建的方案默认不是推荐方案
       likeCount: 0,
       favoriteCount: 0,
       views: 0,

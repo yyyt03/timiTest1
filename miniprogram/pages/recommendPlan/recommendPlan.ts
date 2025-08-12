@@ -16,7 +16,7 @@ Page({
     emptyIcon: getEmptyIcon('favorites'),
     
     // 筛选状态
-    currentFilter: 'featured', // featured, latest
+    currentMode: 'hot', // recommended: 推荐方案, hot: 热门方案, latest: 最新方案
     selectedHero: 'all',
     showHeroSelector: false,
     
@@ -27,19 +27,38 @@ Page({
     page: 1,
     pageSize: 10,
     
-    // 英雄分类相关
-    heroCategories: [] as any[], // 英雄分类列表
-    allRecommendPlans: [] as any[], // 存储所有推荐方案数据
+    // 英雄分类相关 - 为每个模式维护独立数据
+    heroCategories: [] as any[], // 当前模式的英雄分类列表
+    allRecommendPlans: [] as any[], // 当前模式的所有方案数据
     total: 0,
     
     // 推荐方案列表
-    recommendPlans: [] as any[]
+    recommendPlans: [] as any[],
+    
+    // 为每个模式缓存数据，避免重复请求
+    modeDataCache: {
+      recommended: {
+        heroCategories: [] as any[],
+        allPlans: [] as any[],
+        total: 0
+      },
+      hot: {
+        heroCategories: [] as any[],
+        allPlans: [] as any[],
+        total: 0
+      },
+      latest: {
+        heroCategories: [] as any[],
+        allPlans: [] as any[],
+        total: 0
+      }
+    }
   },
  
   // 生命周期函数--监听页面加载
   onLoad() {
     console.log('推荐方案页面加载');
-    this.initHeroList();
+    this.initModeHeroList('hot'); // 初始化热门模式的英雄分类
     this.loadRecommendPlans();
   },
 
@@ -55,7 +74,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'getRecommendPlans',
         data: {
-          filter: 'featured',
+          mode: 'hot',
           page: 1,
           pageSize: 100 // 获取更多数据以提取英雄列表
         }
@@ -80,15 +99,74 @@ Page({
     }
   },
 
+  // 初始化指定模式的英雄分类
+  async initModeHeroList(mode: string) {
+    try {
+      // 如果缓存中已有数据，直接使用
+      if (this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache].heroCategories.length > 0) {
+        const cachedData = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
+        this.setData({
+          heroCategories: cachedData.heroCategories,
+          allRecommendPlans: cachedData.allPlans,
+          total: cachedData.total
+        });
+        console.log(`使用缓存的${mode}模式英雄分类数据`);
+        return;
+      }
+
+      // 获取指定模式的所有方案数据
+      const result = await wx.cloud.callFunction({
+        name: 'getRecommendPlans',
+        data: {
+          mode: mode,
+          page: 1,
+          pageSize: 100 // 获取更多数据以提取英雄列表
+        }
+      }) as any;
+      
+      if (result.result && result.result.success) {
+        const { plans } = result.result.data;
+        
+        // 生成英雄分类
+        const heroCategories = this.generateHeroCategoriesFromPlans(plans);
+        
+        // 更新缓存
+        const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
+        modeCache.heroCategories = heroCategories;
+        modeCache.allPlans = plans;
+        modeCache.total = plans.length;
+        
+        // 更新当前显示数据
+        this.setData({
+          heroCategories: heroCategories,
+          allRecommendPlans: plans,
+          total: plans.length,
+          [`modeDataCache.${mode}`]: modeCache
+        });
+        
+        console.log(`${mode}模式英雄分类初始化完成`);
+      }
+    } catch (error) {
+      console.error(`初始化${mode}模式英雄列表失败:`, error);
+    }
+  },
+
   // 切换筛选类型
   async switchFilter(e: any) {
     try {
       const type = e.currentTarget.dataset.type;
+      
+      // 重置英雄选择为全部
       this.setData({
-        currentFilter: type,
+        currentMode: type,
+        selectedHero: 'all',
         page: 1 // 重置页码
       });
+      
       console.log('切换筛选类型:', type);
+      
+      // 初始化对应模式的英雄分类
+      await this.initModeHeroList(type);
       
       // 重新加载数据
       await this.loadRecommendPlans();
@@ -122,6 +200,27 @@ Page({
     }
   },
 
+  // 切换显示模式
+  async switchMode(e: any) {
+    try {
+      const mode = e.currentTarget.dataset.mode;
+      this.setData({
+        currentMode: mode,
+        page: 1 // 重置页码
+      });
+      console.log('切换显示模式:', mode);
+      
+      // 重新加载数据
+      await this.loadRecommendPlans();
+    } catch (error) {
+      console.error('切换模式失败:', error);
+      wx.showToast({
+        title: '切换失败，请重试',
+        icon: 'none'
+      });
+    }
+  },
+
   // 切换英雄选择器显示状态
   toggleHeroSelector() {
     this.setData({
@@ -141,11 +240,22 @@ Page({
 
   // 根据英雄筛选推荐方案
   async filterRecommendPlansByHero() {
-    const { allRecommendPlans, selectedHero } = this.data;
+    const { allRecommendPlans, selectedHero, currentMode } = this.data;
     
     if (selectedHero === 'all') {
-      // 显示全部推荐方案，按点赞收藏总和降序排序
-      const sortedPlans = this.sortPlansByLikeAndFavorite(allRecommendPlans);
+      // 显示全部推荐方案，根据当前模式使用不同的排序逻辑
+      let sortedPlans = [...allRecommendPlans];
+      
+      if (currentMode === 'hot') {
+        // 热门方案按点赞收藏总和降序排序
+        sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
+      } else if (currentMode === 'latest') {
+        // 最新方案按创建时间降序排序
+        sortedPlans = this.sortPlansByCreateTime(sortedPlans);
+      } else {
+        // 推荐方案按推荐权重排序（如果有的话）
+        sortedPlans = this.sortPlansByRecommendation(sortedPlans);
+      }
       
       // 确保全部方案数据包含英雄头像
       const processedPlans = await this.processPlansWithAvatars(sortedPlans);
@@ -155,9 +265,20 @@ Page({
         total: processedPlans.length
       });
     } else {
-      // 筛选指定英雄的推荐方案，按点赞收藏总和降序排序
+      // 筛选指定英雄的推荐方案，根据当前模式使用不同的排序逻辑
       const filteredPlans = allRecommendPlans.filter(plan => plan.heroName === selectedHero);
-      const sortedPlans = this.sortPlansByLikeAndFavorite(filteredPlans);
+      let sortedPlans = [...filteredPlans];
+      
+      if (currentMode === 'hot') {
+        // 热门方案按点赞收藏总和降序排序
+        sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
+      } else if (currentMode === 'latest') {
+        // 最新方案按创建时间降序排序
+        sortedPlans = this.sortPlansByCreateTime(sortedPlans);
+      } else {
+        // 推荐方案按推荐权重排序（如果有的话）
+        sortedPlans = this.sortPlansByRecommendation(sortedPlans);
+      }
       
       // 确保筛选后的方案数据包含英雄头像
       const processedPlans = await this.processPlansWithAvatars(sortedPlans);
@@ -176,6 +297,21 @@ Page({
       const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
       return bScore - aScore;
     });
+  },
+
+  // 按创建时间降序排序方案
+  sortPlansByCreateTime(plans: any[]) {
+    return plans.sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime());
+  },
+
+  // 按推荐权重排序方案 (如果有)
+  sortPlansByRecommendation(plans: any[]) {
+    // 假设有一个推荐权重字段，例如 'recommendationWeight'
+    // 如果没有，则不排序
+    if (plans.length > 0 && plans[0].recommendationWeight) {
+      return plans.sort((a, b) => (b.recommendationWeight as number) - (a.recommendationWeight as number));
+    }
+    return plans;
   },
 
   // 生成英雄分类列表
@@ -207,6 +343,31 @@ Page({
     });
   },
 
+  // 生成英雄分类列表 (从方案数据中提取)
+  generateHeroCategoriesFromPlans(plans: any[]) {
+    const heroMap = new Map();
+    
+    // 统计每个英雄的方案数量
+    plans.forEach(plan => {
+      const heroName = plan.heroName || '未知英雄';
+      if (heroMap.has(heroName)) {
+        heroMap.set(heroName, heroMap.get(heroName) + 1);
+      } else {
+        heroMap.set(heroName, 1);
+      }
+    });
+    
+    // 转换为数组格式
+    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
+      heroName,
+      count
+    }));
+    
+    // 按方案数量排序
+    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
+    
+    return heroCategories;
+  },
 
 
   // 查看方案详情
@@ -407,7 +568,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'getRecommendPlans',
         data: {
-          filter: this.data.currentFilter,
+          mode: this.data.currentMode,
           heroId: this.data.selectedHero === 'all' ? null : this.data.selectedHero,
           page: isLoadMore ? this.data.page + 1 : 1,
           pageSize: this.data.pageSize,
@@ -421,10 +582,14 @@ Page({
         // 处理方案数据，添加英雄头像
         const processedPlans = await this.processPlansWithAvatars(plans);
         
-        // 如果是精选方案，按点赞收藏总和降序排序
+        // 根据当前模式使用不同的排序逻辑
         let sortedPlans = processedPlans;
-        if (this.data.currentFilter === 'featured') {
+        if (this.data.currentMode === 'hot') {
           sortedPlans = this.sortPlansByLikeAndFavorite(processedPlans);
+        } else if (this.data.currentMode === 'latest') {
+          sortedPlans = this.sortPlansByCreateTime(processedPlans);
+        } else {
+          sortedPlans = this.sortPlansByRecommendation(processedPlans);
         }
         
         // 格式化时间
@@ -440,6 +605,38 @@ Page({
           loading: false,
           loadingMore: false
         });
+
+        // 如果不是加载更多，则更新当前模式的缓存数据
+        if (!isLoadMore) {
+          // 获取当前模式的完整数据用于更新缓存
+          const fullResult = await wx.cloud.callFunction({
+            name: 'getRecommendPlans',
+            data: {
+              mode: this.data.currentMode,
+              page: 1,
+              pageSize: 100 // 获取更多数据以更新缓存
+            }
+          }) as any;
+          
+          if (fullResult.result && fullResult.result.success) {
+            const { plans: fullPlans } = fullResult.result.data;
+            const heroCategories = this.generateHeroCategoriesFromPlans(fullPlans);
+            
+            // 更新缓存
+            const modeCache = this.data.modeDataCache[this.data.currentMode as keyof typeof this.data.modeDataCache];
+            modeCache.heroCategories = heroCategories;
+            modeCache.allPlans = fullPlans;
+            modeCache.total = fullPlans.length;
+            
+            // 更新当前显示数据
+            this.setData({
+              heroCategories: heroCategories,
+              allRecommendPlans: fullPlans,
+              total: fullPlans.length,
+              [`modeDataCache.${this.data.currentMode}`]: modeCache
+            });
+          }
+        }
       } else {
         wx.showToast({
           title: (result.result && result.result.message) || '加载失败',
@@ -545,7 +742,7 @@ Page({
   // 页面分享给朋友
   onShareAppMessage() {
     return {
-      title: '推荐攻略方案 - 觉醒天赋推荐',
+      title: '攻略方案 - 推荐/热门/最新',
       path: '/pages/recommendPlan/recommendPlan',
       imageUrl: '/pages/images/share-recommend-plan.png'
     };
@@ -554,7 +751,7 @@ Page({
   // 页面分享到朋友圈
   onShareTimeline() {
     return {
-      title: '推荐攻略方案 - 觉醒天赋推荐',
+      title: '攻略方案 - 推荐/热门/最新',
       imageUrl: '/pages/images/share-recommend-plan.png'
     };
   }

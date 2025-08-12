@@ -11,7 +11,7 @@ exports.main = async function(event, context) {
   
   try {
     const db = cloud.database();
-    const { planId, status, reason, admin = false } = event;
+    const { planId, status, reason, admin = false, isRecommended = null } = event;
     
     if (!planId || !status) {
       return {
@@ -105,6 +105,11 @@ exports.main = async function(event, context) {
     // 如果是其他状态，清除返回原因
     if (status !== 'rejected') {
       updateData.rejectionReason = null;
+    }
+
+    // 如果指定了推荐状态，更新推荐状态
+    if (isRecommended !== null) {
+      updateData.isRecommended = isRecommended;
     }
 
     await db.collection('plans')

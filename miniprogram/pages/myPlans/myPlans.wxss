@@ -550,6 +550,30 @@
   box-shadow: 0 1rpx 4rpx rgba(23, 162, 184, 0.4);
 }
 
+.recommend-btn {
+  background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+  color: #ffffff;
+  border: 2rpx solid #ff8f00;
+  box-shadow: 0 2rpx 8rpx rgba(255, 193, 7, 0.3);
+}
+
+.recommend-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(255, 193, 7, 0.4);
+}
+
+.unrecommend-btn {
+  background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+  color: #ffffff;
+  border: 2rpx solid #5a32a3;
+  box-shadow: 0 2rpx 8rpx rgba(111, 66, 193, 0.3);
+}
+
+.unrecommend-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(111, 66, 193, 0.4);
+}
+
 .btn-text {
   color: inherit;
   font-size: 26rpx;

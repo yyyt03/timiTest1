@@ -17,7 +17,7 @@ Page({
     selectedHero: 'all', // 当前选中的英雄，'all'表示全部
     showHeroSelector: false, // 是否显示英雄选择器
     // 管理筛选
-    adminStatusFilter: 'all' // all | draft | pending | published | offline | rejected
+    adminStatusFilter: 'all' // all | pending | published | offline | rejected
   },
 
   onLoad(options?: any) {
@@ -245,14 +245,14 @@ Page({
         url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
       });
     } else {
-      // 普通用户只能编辑自己的草稿方案
-      if (plan.status === 'draft') {
+      // 普通用户只能编辑自己的下架方案
+      if (plan.status === 'offline') {
         wx.navigateTo({
           url: `../createPlan/createPlan?editMode=true&planId=${plan._id}`
         });
       } else {
         wx.showToast({
-          title: '只能编辑草稿状态的方案',
+          title: '只能编辑下架状态的方案',
           icon: 'none'
         });
       }
@@ -613,5 +613,66 @@ Page({
       title: '我的攻略方案 - 觉醒天赋推荐',
       imageUrl: '/pages/images/share-my-plans.png'
     };
+  },
+
+  // 切换推荐状态
+  toggleRecommend(e: any) {
+    const plan = e.currentTarget.dataset.plan;
+    const isRecommended = !plan.isRecommended;
+    
+    wx.showModal({
+      title: isRecommended ? '设为推荐' : '取消推荐',
+      content: isRecommended ? '确定要将此方案设为推荐吗？' : '确定要取消此方案的推荐状态吗？',
+      success: (res) => {
+        if (res.confirm) {
+          this.updatePlanRecommendStatus(plan._id, isRecommended);
+        }
+      }
+    });
+  },
+
+  // 更新方案推荐状态
+  updatePlanRecommendStatus(planId: string, isRecommended: boolean) {
+    wx.showLoading({ title: '处理中...' });
+    
+    wx.cloud.callFunction({
+      name: 'updatePlanStatus',
+      data: {
+        planId: planId,
+        status: 'published', // 保持当前状态不变
+        isRecommended: isRecommended,
+        admin: true
+      },
+      success: (res: any) => {
+        if (res.result.success) {
+          wx.showToast({
+            title: isRecommended ? '设为推荐成功' : '取消推荐成功',
+            icon: 'success'
+          });
+          // 刷新列表
+          if (this.data.isAdminReview) {
+            this.loadAllPlansForAdmin();
+          } else {
+            this.setData({ page: 1 });
+            this.loadUserPlans();
+          }
+        } else {
+          wx.showToast({
+            title: res.result.message,
+            icon: 'none'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('更新推荐状态失败:', err);
+        wx.showToast({
+          title: '网络错误，请重试',
+          icon: 'none'
+        });
+      },
+      complete: () => {
+        wx.hideLoading();
+      }
+    });
   }
 }); 

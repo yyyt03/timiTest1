@@ -3,20 +3,9 @@
   <view class="header-section">
     <!-- 轮播图 -->
     <swiper class="header-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}">
-      <!-- 第一页：文字展示 -->
+      <!-- 第一页：图片展示 -->
       <swiper-item>
-        <view class="text-slide">
-          <view class="welcome-text">
-            <text class="main-title">觉醒天赋推荐</text>
-            <text class="sub-title">梦也许会流泪，但是永远不会倒下。</text>
-            <text class="sub-title">
-              正式服：周五18点至周日结束，终极觉醒常驻开放
-              <br/>（当前赛季下）
-              体验服：全天开放，每周二、周五更新。
-              
-            </text>
-          </view>
-        </view>
+        <image class="header-image" src="cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/lunbo/lunbo.jpg" mode="aspectFill"></image>
       </swiper-item>
       
       <!-- 第二页：图片展示 -->

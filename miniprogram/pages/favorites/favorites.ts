@@ -1,5 +1,6 @@
 import { formatTime } from '../../utils/cloud'
 import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
+import { getHeroByName } from '../../data/localHeroData'
 
 // 收藏页面
 Page({
@@ -265,23 +266,61 @@ Page({
     allFavorites.forEach(fav => {
       const heroName = fav.heroName || '未知英雄';
       if (heroMap.has(heroName)) {
-        heroMap.set(heroName, heroMap.get(heroName) + 1);
+        const existing = heroMap.get(heroName);
+        existing.count += 1;
       } else {
-        heroMap.set(heroName, 1);
+        // 获取英雄信息，包括头像
+        const heroInfo = getHeroByName(heroName);
+        heroMap.set(heroName, {
+          count: 1,
+          heroName: heroName,
+          heroAvatar: heroInfo ? heroInfo.avatar : null
+        });
       }
     });
     
     // 转换为数组格式
-    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
-      heroName,
-      count
-    }));
+    const heroCategories = Array.from(heroMap.values());
     
     // 按收藏数量排序
-    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
+    heroCategories.sort((a, b) => b.count - a.count);
+    
+    // 处理英雄头像
+    this.processHeroAvatars(heroCategories);
     
     this.setData({
       heroCategories
+    });
+  },
+
+  // 处理英雄头像
+  processHeroAvatars(heroCategories: any[]) {
+    heroCategories.forEach(hero => {
+      if (!hero.heroAvatar) {
+        // 如果没有头像，尝试从本地数据获取
+        const heroInfo = getHeroByName(hero.heroName);
+        if (heroInfo && heroInfo.avatar) {
+          hero.heroAvatar = heroInfo.avatar;
+        }
+      }
+    });
+  },
+
+  // 英雄头像加载错误处理
+  onHeroAvatarError(e: any) {
+    const heroName = e.currentTarget.dataset.heroName;
+    const { heroCategories } = this.data;
+    
+    // 找到对应的英雄并清除头像
+    const updatedHeroCategories = heroCategories.map(hero => {
+      if (hero.heroName === heroName) {
+        return { ...hero, heroAvatar: null };
+      }
+      return hero;
+    });
+    
+    this.setData({
+      heroCategories: updatedHeroCategories
     });
   },
 

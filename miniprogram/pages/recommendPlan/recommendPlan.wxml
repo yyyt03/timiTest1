@@ -31,16 +31,22 @@
       <!-- 全部选项 -->
       <view class="hero-item {{selectedHero === 'all' ? 'selected' : ''}}" 
             bindtap="selectHero" data-hero="all">
-        <text class="hero-name">全部英雄</text>
-        <text class="hero-count">({{allRecommendPlans.length}})</text>
+        <view class="hero-avatar all-hero-avatar">全</view>
+        <text class="hero-name">全部</text>
       </view>
       
       <!-- 英雄选项 -->
       <view class="hero-item {{selectedHero === item.heroName ? 'selected' : ''}}" 
             wx:for="{{heroCategories}}" wx:key="heroName"
             bindtap="selectHero" data-hero="{{item.heroName}}">
+        <view class="hero-avatar">
+          <image class="hero-avatar-img" 
+                 src="{{item.heroAvatar}}" 
+                 mode="aspectFill" 
+                 binderror="onHeroAvatarError"
+                 data-hero-name="{{item.heroName}}"></image>
+        </view>
         <text class="hero-name">{{item.heroName}}</text>
-        <text class="hero-count">({{item.count}})</text>
       </view>
     </view>
   </view>
@@ -96,7 +102,7 @@
           <view class="plan-author">
             <text class="author-text">作者：{{item.creatorName}}</text>
           </view>
-          <view class="plan-time">🕒 {{item.createTime}}</view>
+          <view class="plan-time">{{item.createTime}}</view>
         </view>
       </view>
     </view>

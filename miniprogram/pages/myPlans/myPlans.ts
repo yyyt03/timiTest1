@@ -1,4 +1,6 @@
 // 我的方案页面
+import { getHeroByName } from '../../data/localHeroData';
+
 Page({
   data: {
     userPlans: [] as any[],
@@ -578,23 +580,81 @@ Page({
     allUserPlans.forEach(plan => {
       const heroName = plan.heroName || '未知英雄';
       if (heroMap.has(heroName)) {
-        heroMap.set(heroName, heroMap.get(heroName) + 1);
+        const existing = heroMap.get(heroName);
+        existing.count = existing.count + 1;
+        // 如果当前方案有英雄头像，则使用它
+        if (plan.heroAvatar && !existing.heroAvatar) {
+          existing.heroAvatar = plan.heroAvatar;
+        }
       } else {
-        heroMap.set(heroName, 1);
+        heroMap.set(heroName, {
+          heroName,
+          count: 1,
+          heroAvatar: plan.heroAvatar || null
+        });
       }
     });
     
     // 转换为数组格式
-    const heroCategories = Array.from(heroMap.entries()).map(([heroName, count]) => ({
-      heroName,
-      count
-    }));
+    const heroCategories = Array.from(heroMap.values());
     
     // 按方案数量排序
-    heroCategories.sort((a, b) => (b.count as number) - (a.count as number));
+    heroCategories.sort((a, b) => b.count - a.count);
+    
+    // 为没有头像的英雄获取头像
+    const heroCategoriesWithAvatars = this.processHeroAvatars(heroCategories);
     
     this.setData({
-      heroCategories
+      heroCategories: heroCategoriesWithAvatars
+    });
+  },
+
+  // 处理英雄头像
+  processHeroAvatars(heroCategories: any[]) {
+    try {
+      // 为每个英雄分类添加头像信息
+      const processedCategories = heroCategories.map(heroCategory => {
+        const hero = getHeroByName(heroCategory.heroName);
+        
+        if (hero && hero.avatar) {
+          return {
+            ...heroCategory,
+            heroAvatar: hero.avatar
+          };
+        } else {
+          return {
+            ...heroCategory,
+            heroAvatar: '../images/unused/default-avatar.png'
+          };
+        }
+      });
+      
+      return processedCategories;
+    } catch (error) {
+      console.error('处理英雄头像失败:', error);
+      // 如果处理失败，返回原始数据
+      return heroCategories;
+    }
+  },
+
+  // 头像加载失败处理
+  onHeroAvatarError(e: any) {
+    const heroName = e.currentTarget.dataset.heroName;
+    
+    // 找到对应的英雄分类，清除头像信息，这样会显示首字母
+    const { heroCategories } = this.data;
+    const updatedCategories = heroCategories.map(hero => {
+      if (hero.heroName === heroName) {
+        return {
+          ...hero,
+          heroAvatar: null
+        };
+      }
+      return hero;
+    });
+    
+    this.setData({
+      heroCategories: updatedCategories
     });
   },
 

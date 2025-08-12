@@ -2,10 +2,13 @@
   <!-- 顶部筛选选项 -->
   <view class="filter-section">
     <view class="filter-tabs">
-      <view class="filter-tab {{currentFilter === 'featured' ? 'active' : ''}}" bindtap="switchFilter" data-type="featured">
-        精选方案
+      <view class="filter-tab {{currentMode === 'recommended' ? 'active' : ''}}" bindtap="switchFilter" data-type="recommended">
+        推荐方案
       </view>
-      <view class="filter-tab {{currentFilter === 'latest' ? 'active' : ''}}" bindtap="switchFilter" data-type="latest">
+      <view class="filter-tab {{currentMode === 'hot' ? 'active' : ''}}" bindtap="switchFilter" data-type="hot">
+        热门方案
+      </view>
+      <view class="filter-tab {{currentMode === 'latest' ? 'active' : ''}}" bindtap="switchFilter" data-type="latest">
         最新方案
       </view>
     </view>
@@ -26,16 +29,22 @@
       <!-- 全部选项 -->
       <view class="hero-item {{selectedHero === 'all' ? 'selected' : ''}}" 
             bindtap="selectHero" data-hero="all">
-        <text class="hero-name">全部英雄</text>
-        <text class="hero-count">({{allBetaPlans.length}})</text>
+        <view class="hero-avatar all-hero-avatar">全</view>
+        <text class="hero-name">全部</text>
       </view>
       
       <!-- 英雄选项 -->
       <view class="hero-item {{selectedHero === item.heroName ? 'selected' : ''}}" 
             wx:for="{{heroCategories}}" wx:key="heroName"
             bindtap="selectHero" data-hero="{{item.heroName}}">
+        <view class="hero-avatar">
+          <image class="hero-avatar-img" 
+                 src="{{item.heroAvatar}}" 
+                 mode="aspectFill" 
+                 binderror="onHeroAvatarError"
+                 data-hero-name="{{item.heroName}}"></image>
+        </view>
         <text class="hero-name">{{item.heroName}}</text>
-        <text class="hero-count">({{item.count}})</text>
       </view>
     </view>
   </view>

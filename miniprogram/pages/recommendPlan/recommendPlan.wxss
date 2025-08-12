@@ -99,15 +99,21 @@
 
 /* 英雄分类选择器 横向样式 */
 .hero-selector {
-  margin: 0 20rpx 20rpx 20rpx;
+  margin: 0 24rpx 24rpx 24rpx;
   background: #ffffff;
-  border-radius: 8rpx;
-  box-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.08);
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  border: 1rpx solid #e1e5e9;
-  width: calc(100% - 40rpx);
+  border: 1rpx solid #f0f0f0;
+  width: calc(100% - 48rpx);
   box-sizing: border-box;
   max-width: 100%; /* 确保不超过容器宽度 */
+  transition: all 0.3s ease;
+}
+
+.hero-selector:hover {
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+  transform: translateY(-2rpx);
 }
 
 /* 头部选择器样式，始终占满一行 */
@@ -116,124 +122,183 @@
   align-items: center;
   justify-content: center; /* 默认居中 */
   width: 100%;
-  min-height: 60rpx;
+  min-height: 88rpx; /* 增大高度 */
   padding: 0rpx 24rpx;
-  background: #ffffff;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-bottom: 1rpx solid #f0f0f0;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
   box-sizing: border-box;
+  position: relative;
 }
 
 .selector-header:active {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+  transform: scale(0.98);
+}
+
+.selector-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.hero-selector:hover .selector-header::after {
+  width: 60%;
 }
 
 .selector-title {
-  font-size: 24rpx;
-  font-weight: 500;
-  color: #1a1a1a;
+  font-size: 30rpx; /* 增大字体 */
+  font-weight: 600;
+  color: #2d3748;
   flex: 1;
   text-align: center; /* 默认居中 */
+  letter-spacing: 0.5rpx;
 }
 
 .selector-count {
-  font-size: 20rpx;
-  color: #666666;
-  margin-left: 12rpx;
+  font-size: 24rpx; /* 增大字体 */
+  color: #667eea;
+  margin-left: 16rpx;
+  font-weight: 500;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: 16rpx;
 }
 
 .selector-arrow {
-  font-size: 16rpx;
-  color: #999999;
-  transition: transform 0.2s ease;
-  margin-left: 16rpx;
+  font-size: 20rpx; /* 增大字体 */
+  color: #667eea;
+  transition: all 0.3s ease;
+  margin-left: 20rpx;
+  opacity: 0.8;
 }
 
 .selector-arrow.expanded {
   transform: rotate(180deg);
+  opacity: 1;
+  color: #764ba2;
 }
 
-/* 横向滚动英雄分类列表，展开前后都占满横向空间 */
+/* 英雄列表网格布局 */
 .hero-list {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  min-height: 60rpx;
-  max-height: none;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 8rpx 0 8rpx 8rpx;
-  transition: none;
-  scrollbar-width: none; /* Firefox */
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 一行6个 */
+  gap: 20rpx;
+  padding: 24rpx;
   background: #fff;
   box-sizing: border-box;
-  max-width: 100%; /* 确保不超过容器宽度 */
-}
-.hero-list::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  max-width: 100%;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-20rpx);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
 }
 
-/* 横向英雄项 */
+.hero-list.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 移除滚动条样式，因为不再需要滚动 */
+
+/* 英雄项样式 */
 .hero-item {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 10rpx 24rpx;
-  margin-right: 16rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid #f0f0f0;
-  background: #f8f9fa;
-  transition: all 0.2s ease;
-  position: relative;
-  min-width: 120rpx;
-  border-bottom: none;
+  justify-content: center;
+  padding: 16rpx 8rpx;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.hero-item:last-child {
-  margin-right: 0;
+  background: transparent;
+  border: none;
+  position: relative;
 }
 
 .hero-item.selected {
-  background: #667eea;
-  color: white;
-  border: 1rpx solid #4a5568;
+  background: transparent;
+  color: #667eea;
+  border: none;
 }
 
-.hero-item.selected::before {
-  display: none;
+.hero-item:not(.selected):hover {
+  transform: translateY(-4rpx);
 }
 
 .hero-item:not(.selected):active {
-  background: #e6e8f5;
+  background: transparent;
+  transform: scale(0.95) translateY(-2rpx);
+}
+
+/* 英雄头像样式 */
+.hero-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #667eea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  border: 3rpx solid #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.25);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-item:hover .hero-avatar {
+  box-shadow: 0 8rpx 28rpx rgba(102, 126, 234, 0.35);
+  transform: scale(1.05);
+}
+
+.all-hero-avatar {
+  background: #10b981;
+}
+
+.hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.hero-item.selected .hero-avatar {
+  background: #ffffff;
+  border-color: #ffffff;
 }
 
 .hero-item .hero-name {
-  font-size: 22rpx;
-  font-weight: 400;
-  color: #333333;
-  margin-right: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #4a5568;
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 0;
+  transition: all 0.3s ease;
+}
+
+.hero-item:hover .hero-name {
+  color: #667eea;
+  font-weight: 600;
 }
 
 .hero-item.selected .hero-name {
-  color: white;
-  font-weight: 500;
+  color: #667eea;
+  font-weight: 600;
 }
 
 .hero-item .hero-count {
-  font-size: 18rpx;
-  color: #888888;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2rpx 8rpx;
-  border-radius: 10rpx;
-}
-
-.hero-item.selected .hero-count {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.2);
+  display: none; /* 隐藏数量显示 */
 }
 
 /* 英雄下拉列表 */
@@ -485,6 +550,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.plan-time::before {
+  content: "🕒";
+  font-size: 20rpx;
 }
 
 /* 加载状态 */
@@ -589,30 +662,125 @@
   }
   
   .hero-selector {
-    margin: 0 16rpx 16rpx 16rpx;
-    width: calc(100% - 32rpx);
+    margin: 0 12rpx 12rpx 12rpx;
+    width: calc(100% - 24rpx);
+    border-radius: 16rpx;
+  }
+  
+  .selector-header {
+    min-height: 72rpx;
+    padding: 0rpx 16rpx;
+  }
+  
+  .selector-title {
+    font-size: 26rpx;
+  }
+  
+  .selector-count {
+    font-size: 20rpx;
+    padding: 2rpx 8rpx;
+    margin-left: 12rpx;
+  }
+  
+  .selector-arrow {
+    font-size: 18rpx;
+    margin-left: 16rpx;
+  }
+  
+  .hero-list {
+    grid-template-columns: repeat(3, 1fr); /* 小屏幕下一行3个 */
+    gap: 12rpx;
+    padding: 16rpx;
+    overflow: hidden;
+  }
+  
+  .hero-item {
+    padding: 8rpx 4rpx;
+  }
+  
+  .hero-avatar {
+    width: 56rpx;
+    height: 56rpx;
+    margin-bottom: 8rpx;
+    border: 2rpx solid #ffffff;
+  }
+  
+  .hero-item .hero-name {
+    font-size: 18rpx;
+    margin-bottom: 0;
   }
   
   .plans-section {
-    padding: 16rpx 20rpx;
+    padding: 12rpx 16rpx;
   }
   
   .plan-card {
-    padding: 20rpx;
+    padding: 16rpx;
   }
   
   .plan-info {
-    max-width: calc(100% - 180rpx);
+    max-width: calc(100% - 160rpx);
   }
   
   .plan-stats {
-    min-width: 140rpx;
-    max-width: 180rpx;
+    min-width: 120rpx;
+    max-width: 160rpx;
   }
   
   .plan-stats .stat-item {
-    min-width: 60rpx;
-    max-width: 80rpx;
+    min-width: 50rpx;
+    max-width: 70rpx;
+  }
+}
+
+/* 超小屏幕优化 */
+@media screen and (max-width: 600rpx) {
+  .hero-selector {
+    margin: 0 8rpx 8rpx 8rpx;
+    width: calc(100% - 16rpx);
+  }
+  
+  .hero-list {
+    grid-template-columns: repeat(2, 1fr); /* 超小屏幕下一行2个 */
+    gap: 16rpx;
+    padding: 20rpx;
+  }
+  
+  .hero-avatar {
+    width: 64rpx;
+    height: 64rpx;
+  }
+  
+  .hero-item .hero-name {
+    font-size: 20rpx;
+  }
+}
+
+/* 中等屏幕优化 */
+@media screen and (min-width: 751rpx) and (max-width: 900rpx) {
+  .hero-list {
+    grid-template-columns: repeat(5, 1fr); /* 中等屏幕下一行5个 */
+    gap: 18rpx;
+    padding: 22rpx;
+  }
+  
+  .hero-avatar {
+    width: 72rpx;
+    height: 72rpx;
+  }
+}
+
+/* 大屏幕优化 */
+@media screen and (min-width: 901rpx) {
+  .hero-list {
+    grid-template-columns: repeat(6, 1fr); /* 大屏幕下一行6个 */
+    gap: 24rpx;
+    padding: 28rpx;
+  }
+  
+  .hero-avatar {
+    width: 88rpx;
+    height: 88rpx;
   }
 }
 
@@ -630,6 +798,32 @@
 .plan-card .plan-time {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* 英雄筛选器容器安全措施 */
+.hero-selector {
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+.hero-list {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hero-item {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hero-avatar {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hero-avatar-img {
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /* 优化长文本显示 */

@@ -19,9 +19,11 @@ class AvatarCacheManager {
   private static instance: AvatarCacheManager;
   private cache: AvatarCacheData;
   private readonly CACHE_KEY = 'avatar_url_cache';
-  private readonly CACHE_DURATION = 100 * 60 * 1000; // 100分钟缓存（接近2小时有效期）
+  // 英雄头像也是静态资源，可以长期缓存，设置为23小时（接近24小时最大有效期）
+  private readonly CACHE_DURATION = 23 * 60 * 60 * 1000; // 23小时缓存
   private readonly BATCH_SIZE = 20; // 批量处理大小
-  private readonly REFRESH_THRESHOLD = 80 * 60 * 1000; // 80分钟后开始刷新
+  // 21小时后开始刷新，留2小时缓冲时间
+  private readonly REFRESH_THRESHOLD = 21 * 60 * 60 * 1000; // 21小时后开始刷新
   private pendingRequests: Map<string, Promise<string>> = new Map(); // 防止重复请求
 
   private constructor() {
@@ -31,6 +33,14 @@ class AvatarCacheManager {
       batchSize: this.BATCH_SIZE
     };
     this.loadCache();
+    
+    // 记录缓存策略初始化
+    logger.info('英雄头像缓存管理器初始化完成', {
+      cacheDuration: '23小时',
+      refreshThreshold: '21小时',
+      strategy: '英雄头像为静态资源，可长期缓存以减少云函数调用',
+      maxTempUrlValidity: '24小时（云存储限制）'
+    });
   }
 
   static getInstance(): AvatarCacheManager {

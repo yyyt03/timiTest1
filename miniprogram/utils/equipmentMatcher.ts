@@ -249,28 +249,15 @@ export function getEquipmentSuggestions(input: string, maxSuggestions: number = 
 
 // 获取装备图片URL
 export async function getEquipmentImageUrl(equipmentName: string): Promise<string> {
-  const equipment = findEquipmentByName(equipmentName);
-  
-  if (equipment && equipment.image) {
-    try {
-      // 构建云存储路径
-      const cloudPath = `cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/equipment/${equipment.image}`;
-      
-      // 获取临时URL
-      const tempURLs = await wx.cloud.getTempFileURL({
-        fileList: [cloudPath]
-      });
-
-      if (tempURLs.fileList && tempURLs.fileList[0] && tempURLs.fileList[0].tempFileURL) {
-        return tempURLs.fileList[0].tempFileURL;
-      }
-    } catch (error) {
-      console.error('获取装备图片失败:', error);
-    }
+  try {
+    // 使用装备缓存管理器获取图片URL，避免重复调用云函数
+    const imageUrls = await equipmentCache.getEquipmentImageUrls([equipmentName]);
+    return imageUrls[equipmentName] || '../../pages/images/unused/default-avatar.png';
+  } catch (error) {
+    console.error('获取装备图片失败:', error);
+    // 如果缓存获取失败，返回默认图片
+    return '../../pages/images/unused/default-avatar.png';
   }
-
-  // 如果匹配失败或获取图片失败，返回默认图片
-  return '../../pages/images/unused/default-avatar.png';
 }
 
 import { equipmentCache } from './equipmentCache';

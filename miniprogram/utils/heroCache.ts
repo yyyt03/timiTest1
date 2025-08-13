@@ -20,8 +20,9 @@ interface CacheConfig {
 
 class HeroCache {
   private cacheKey = 'hero_list_cache';
+  private _hasLoggedCacheStrategy = false; // 标记是否已记录缓存策略日志
   private config: CacheConfig = {
-    heroDataExpireTime: 10 * 60 * 1000, // 10分钟
+    heroDataExpireTime: 23 * 60 * 60 * 1000, // 23小时（英雄数据为静态资源，可长期缓存）
     avatarURLExpireTime: 2 * 60 * 60 * 1000, // 2小时（临时URL有效期）
     useLocalData: true // 优先使用本地数据
   };
@@ -46,6 +47,16 @@ class HeroCache {
         };
         
         return localCache;
+      }
+      
+      // 记录英雄数据缓存策略（首次使用时）
+      if (!this._hasLoggedCacheStrategy) {
+        log('英雄数据缓存策略初始化', {
+          heroDataExpireTime: '23小时（英雄数据为静态资源，可长期缓存）',
+          avatarURLExpireTime: '2小时（临时URL有效期）',
+          strategy: '英雄数据为静态资源，可长期缓存以减少云函数调用'
+        });
+        this._hasLoggedCacheStrategy = true;
       }
       
       // 否则使用原有缓存逻辑

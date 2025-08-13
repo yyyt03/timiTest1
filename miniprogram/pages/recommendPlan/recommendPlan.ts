@@ -3,6 +3,7 @@ import { getAllHeroes, getHeroById, getHeroByName } from '../../data/localHeroDa
 import { avatarCache } from '../../utils/avatarCache';
 import { cacheManager } from '../../utils/cacheManager';
 import { notifyFavoriteAdded, notifyFavoriteRemoved, favoriteSyncManager } from '../../utils/favoriteSync';
+import { debounceOperation } from '../../utils/debounce';
 
 
 // 推荐方案页面
@@ -66,6 +67,9 @@ Page({
 
   // 收藏状态变化处理器
   favoriteChangeHandler: null as any,
+
+  // 防抖版本的筛选器切换函数
+  debouncedSwitchFilter: null as any,
  
   // 生命周期函数--监听页面加载
   onLoad() {
@@ -80,6 +84,13 @@ Page({
     
     // 设置收藏状态变化监听器
     this.setupFavoriteChangeListener();
+    
+    // 初始化防抖版本的筛选器切换函数（500ms防抖，避免快速切换）
+    this.debouncedSwitchFilter = debounceOperation('switchFilter', this.switchFilter.bind(this), 500, {
+      leading: false,
+      trailing: true,
+      maxWait: 2000 // 最大等待2秒
+    });
     
     // 从strategy进入时，强制重置为全部英雄状态，不管之前是否有筛选
     console.log('从strategy进入，强制重置为全部英雄状态');
@@ -158,6 +169,22 @@ Page({
     
     // 移除收藏状态变化监听器
     this.cleanupFavoriteChangeListener();
+    
+    // 清理防抖定时器
+    if (this.debouncedSwitchFilter) {
+      this.debouncedSwitchFilter.cancel();
+      this.debouncedSwitchFilter = null;
+      console.log('防抖定时器已清理');
+    }
+    
+    // 清理页面定时器
+    if (this.data.filterDebounceTimer) {
+      clearTimeout(this.data.filterDebounceTimer);
+      this.setData({
+        filterDebounceTimer: null
+      });
+      console.log('页面定时器已清理');
+    }
   },
 
   // 保存筛选状态到本地存储
@@ -1509,6 +1536,30 @@ Page({
       console.log('已清除收藏相关的所有缓存数据');
     } catch (error) {
       console.warn('清除收藏相关缓存失败:', error);
+    }
+  },
+
+  // 防抖版本的筛选器切换事件处理
+  onFilterSwitch(e: any) {
+    console.log('筛选器切换事件触发，使用防抖处理');
+    
+    // 如果正在筛选中，显示提示
+    if (this.data.isFiltering) {
+      wx.showToast({
+        title: '正在处理中，请稍候...',
+        icon: 'none',
+        duration: 1000
+      });
+      return;
+    }
+    
+    // 使用防抖版本的筛选器切换函数
+    if (this.debouncedSwitchFilter) {
+      this.debouncedSwitchFilter(e);
+    } else {
+      // 如果防抖函数未初始化，使用原始函数
+      console.warn('防抖函数未初始化，使用原始筛选器切换函数');
+      this.switchFilter(e);
     }
   }
 });

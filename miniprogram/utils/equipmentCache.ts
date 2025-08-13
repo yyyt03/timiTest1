@@ -12,12 +12,18 @@ class EquipmentCacheManager {
   private static instance: EquipmentCacheManager;
   private cache: EquipmentImageCache | null = null;
   private readonly CACHE_KEY = 'equipment_image_cache';
-  private readonly CACHE_DURATION = 60 * 60 * 1000; // 1小时缓存
+  // 装备图片是静态资源，可以长期缓存，设置为23小时（接近24小时最大有效期）
+  private readonly CACHE_DURATION = 23 * 60 * 60 * 1000; // 23小时缓存
   private readonly DEFAULT_AVATAR_PATH = '../images/unused/default-avatar.png';
 
   static getInstance(): EquipmentCacheManager {
     if (!EquipmentCacheManager.instance) {
       EquipmentCacheManager.instance = new EquipmentCacheManager();
+      logger.info('装备图片缓存管理器初始化完成', {
+        cacheDuration: '23小时',
+        strategy: '装备图片为静态资源，可长期缓存以减少云函数调用',
+        maxTempUrlValidity: '24小时（云存储限制）'
+      });
     }
     return EquipmentCacheManager.instance;
   }
@@ -151,7 +157,27 @@ class EquipmentCacheManager {
   }
 
   private isCacheValid(lastUpdate: number): boolean {
-    const isValid = Date.now() - lastUpdate < this.CACHE_DURATION;
+    const now = Date.now();
+    const timeSinceUpdate = now - lastUpdate;
+    const isValid = timeSinceUpdate < this.CACHE_DURATION;
+    
+    if (isValid) {
+      const remainingTime = this.CACHE_DURATION - timeSinceUpdate;
+      const remainingHours = Math.floor(remainingTime / (60 * 60 * 1000));
+      const remainingMinutes = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
+      
+      logger.debug('装备图片缓存仍然有效', { 
+        remainingTime: `${remainingHours}小时${remainingMinutes}分钟`,
+        lastUpdate: new Date(lastUpdate),
+        cacheDuration: `${this.CACHE_DURATION / (60 * 60 * 1000)}小时`
+      });
+    } else {
+      logger.info('装备图片缓存已过期，需要重新获取', { 
+        lastUpdate: new Date(lastUpdate),
+        expiredBy: `${Math.floor(timeSinceUpdate / (60 * 60 * 1000))}小时${Math.floor((timeSinceUpdate % (60 * 60 * 1000)) / (60 * 1000))}分钟`
+      });
+    }
+    
     return isValid;
   }
 }

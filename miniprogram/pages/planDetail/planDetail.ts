@@ -348,7 +348,7 @@ Page({
           const cachedData = cacheManager.get<PlanDetailCacheData>(cacheKey);
           if (cachedData) {
             cachedData.plan.isFavorited = isFavorited;
-            cacheManager.set(cacheKey, cachedData, 10 * 60 * 1000); // 保持原有TTL
+            cacheManager.set(cacheKey, cachedData, 30 * 60 * 1000); // TTL修改为30分钟
             console.log('缓存中的收藏状态已更新:', isFavorited);
           }
         }

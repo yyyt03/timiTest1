@@ -56,35 +56,121 @@ Page({
     // 添加页面状态标记
     isDataLoaded: false, // 数据是否已加载
     lastLoadTime: 0, // 最后加载时间
-    lastModeSwitchTime: 0 // 最后模式切换时间
+    lastModeSwitchTime: 0, // 最后模式切换时间
+    isFiltering: false, // 是否正在筛选
+    lastFilterTime: 0, // 最后筛选时间
+    filterDebounceTimer: null as any // 防抖定时器
   },
 
+  // 生命周期函数--监听页面加载
   onLoad() {
+    console.log('体验服方案页面 onLoad 触发');
+    
+    // 初始化时间状态，避免时间判断错误
+    const now = Date.now();
+    this.setData({
+      lastLoadTime: now,
+      lastModeSwitchTime: now
+    });
+    
+    // 从strategy进入时，强制重置为全部英雄状态，不管之前是否有筛选
+    console.log('从strategy进入，强制重置为全部英雄状态');
+    this.resetFilterState();
+    
+    // 然后初始化页面数据
+    console.log('初始化页面数据，模式:', this.data.currentMode, '英雄:', this.data.selectedHero);
     this.initModeHeroList('hot'); // 初始化热门模式的英雄分类
     this.loadBetaPlans();
   },
 
+  // 页面数据变化监听
+  onDataChange() {
+    // 页面数据变化监听
+  },
+
   onShow() {
+    console.log('体验服方案页面 onShow 触发');
     const now = Date.now();
     const timeSinceLastLoad = now - this.data.lastLoadTime;
     const timeSinceLastModeSwitch = now - this.data.lastModeSwitchTime;
     
-    // 只有在以下情况才重新加载：
-    // 1. 数据未加载
-    // 2. 距离上次加载超过10分钟
-    // 3. 距离上次模式切换超过2分钟（确保模式切换后的数据同步）
-    if (!this.data.isDataLoaded || 
-        timeSinceLastLoad > 10 * 60 * 1000 || 
-        timeSinceLastModeSwitch > 2 * 60 * 1000) {
-      this.loadBetaPlans();
+    console.log('时间检查:', {
+      timeSinceLastLoad: timeSinceLastLoad,
+      timeSinceLastModeSwitch: timeSinceLastModeSwitch,
+      isDataLoaded: this.data.isDataLoaded,
+      currentMode: this.data.currentMode,
+      selectedHero: this.data.selectedHero
+    });
+    
+    // 等待状态稳定后再处理数据
+    setTimeout(() => {
+      // 只有在以下情况才重新加载：
+      // 1. 数据未加载
+      // 2. 距离上次加载超过10分钟
+      // 3. 距离上次模式切换超过2分钟（确保模式切换后的数据同步）
+      // 注意：如果lastModeSwitchTime为0或异常值，跳过模式切换时间检查
+      const shouldReload = !this.data.isDataLoaded || 
+          timeSinceLastLoad > 10 * 60 * 1000 || 
+          (this.data.lastModeSwitchTime > 0 && timeSinceLastModeSwitch > 2 * 60 * 1000);
+      
+      if (shouldReload) {
+        console.log('需要重新加载数据');
+        this.loadBetaPlans();
+      } else {
+        console.log('数据已加载且未过期，保持现有数据');
+        // 如果数据已加载且未过期，且当前有英雄筛选，需要重新筛选数据
+        if (this.data.allBetaPlans.length > 0 && this.data.selectedHero !== 'all') {
+          console.log('当前有英雄筛选，重新筛选数据，当前数据量:', this.data.allBetaPlans.length);
+          this.filterBetaPlansByHero();
+        } else {
+          console.log('当前显示全部英雄或无数据，跳过筛选');
+        }
+      }
+    }, 50); // 等待50ms确保状态稳定
+  },
+
+  // 页面隐藏时保存筛选状态
+  onHide() {
+    console.log('体验服方案页面 onHide 触发，保存筛选状态');
+    this.saveFilterState();
+  },
+
+  // 页面卸载时保存筛选状态
+  onUnload() {
+    console.log('体验服方案页面 onUnload 触发，保存筛选状态');
+    this.saveFilterState();
+  },
+
+  // 保存筛选状态到本地存储
+  saveFilterState() {
+    try {
+      const filterState = {
+        currentMode: this.data.currentMode,
+        selectedHero: this.data.selectedHero,
+        timestamp: Date.now()
+      };
+      wx.setStorageSync('betaPlan_filter_state', filterState);
+      console.log('已保存筛选状态到本地存储:', filterState);
+    } catch (error) {
+      console.warn('保存筛选状态失败:', error);
     }
   },
 
-  // 从推荐页返回也能同步：依赖 onShow 刷新
-
-  // 页面数据变化监听
-  onDataChange() {
-    // 页面数据变化监听
+  // 重置筛选状态为默认值
+  resetFilterState() {
+    console.log('重置筛选状态为默认值');
+    this.setData({
+      currentMode: 'hot',
+      selectedHero: 'all'
+    });
+    
+    // 清除本地存储的筛选状态
+    try {
+      wx.removeStorageSync('betaPlan_filter_state');
+      console.log('已清除本地存储的筛选状态');
+    } catch (error) {
+      console.warn('清除本地存储筛选状态失败:', error);
+    }
   },
 
   // 初始化指定模式的英雄分类
@@ -166,6 +252,18 @@ Page({
           this.setData({
             heroCategories: heroCategories
           });
+          
+          // 英雄分类初始化完成后，只有在当前有英雄筛选时才重新筛选
+          // 避免在显示全部方案时不必要的筛选操作
+          if (this.data.selectedHero !== 'all') {
+            console.log('英雄分类初始化完成，根据当前筛选状态重新筛选');
+            // 使用setTimeout确保数据更新完成后再筛选
+            setTimeout(() => {
+              this.filterBetaPlansByHero();
+            }, 50);
+          } else {
+            console.log('英雄分类初始化完成，当前显示全部方案，无需筛选');
+          }
         }, 100);
       }
     } catch (error) {
@@ -177,6 +275,10 @@ Page({
   async switchFilter(e: any) {
     try {
       const type = e.currentTarget.dataset.type;
+      console.log('切换筛选类型:', type, '当前状态:', {
+        currentMode: this.data.currentMode,
+        selectedHero: this.data.selectedHero
+      });
       
       // 重置英雄选择为全部
       this.setData({
@@ -186,13 +288,45 @@ Page({
         lastModeSwitchTime: Date.now() // 记录模式切换时间
       });
       
-      // 初始化对应模式的英雄分类
+      console.log('模式切换完成，开始初始化英雄分类');
+      
+      // 优化：优先使用缓存数据，避免重复调用云函数
+      const modeCache = this.data.modeDataCache[type as keyof typeof this.data.modeDataCache];
+      if (modeCache && modeCache.allPlans && modeCache.allPlans.length > 0) {
+        console.log('使用缓存数据，避免重复调用云函数');
+        // 直接使用缓存数据
+        this.setData({
+          heroCategories: modeCache.heroCategories,
+          allBetaPlans: modeCache.allPlans,
+          total: modeCache.total,
+          betaPlans: modeCache.allPlans, // 显示全部方案
+          isDataLoaded: true,
+          lastLoadTime: Date.now()
+        });
+        
+        // 强制重新计算布局，确保页面比例正确
+        setTimeout(() => {
+          try {
+            this.setData({
+              _layoutUpdate: Date.now()
+            });
+          } catch (layoutError) {
+            console.warn('布局重新计算失败，但不影响主要功能:', layoutError);
+          }
+        }, 100);
+        
+        return; // 直接返回，不需要调用云函数
+      }
+      
+      // 如果缓存中没有数据，才调用云函数
       await this.initModeHeroList(type);
       
+      console.log('英雄分类初始化完成，开始加载数据');
       // 重新加载数据
       await this.loadBetaPlans();
       
       // 强制重新计算布局，确保页面比例正确
+      // 使用setTimeout确保DOM更新完成后再触发重新渲染
       setTimeout(() => {
         try {
           // 触发页面重新渲染，确保布局正确
@@ -230,73 +364,164 @@ Page({
   // 选择英雄分类
   selectHero(e: any) {
     const heroName = e.currentTarget.dataset.hero;
+    console.log('选择英雄:', heroName, '当前状态:', {
+      currentMode: this.data.currentMode,
+      selectedHero: this.data.selectedHero,
+      allBetaPlansLength: this.data.allBetaPlans.length
+    });
+    
     this.setData({
       selectedHero: heroName,
       showHeroSelector: false
     });
+    
+    console.log('英雄选择完成，开始筛选数据');
+    // 使用防抖机制，避免频繁筛选
     this.filterBetaPlansByHero();
   },
 
+  // 防抖定时器
+  filterDebounceTimer: null as any,
+
   // 根据英雄筛选体验服方案
   async filterBetaPlansByHero() {
-    const { allBetaPlans, selectedHero, currentMode } = this.data;
+    // 检查是否正在筛选，避免重复操作
+    if (this.data.isFiltering) {
+      console.log('正在筛选中，跳过重复调用');
+      return;
+    }
     
-    if (selectedHero === 'all') {
-      // 显示全部体验服方案，根据当前模式使用不同的排序逻辑
-      let sortedPlans = [...allBetaPlans];
+    // 检查距离上次筛选的时间，避免频繁筛选
+    const now = Date.now();
+    if (now - this.data.lastFilterTime < 200) { // 200ms内不重复筛选
+      console.log('距离上次筛选时间过短，跳过重复调用');
+      return;
+    }
+    
+    // 清除之前的防抖定时器
+    if (this.filterDebounceTimer) {
+      clearTimeout(this.filterDebounceTimer);
+    }
+    
+    // 设置防抖，避免频繁筛选
+    this.filterDebounceTimer = setTimeout(async () => {
+      await this._performFilter();
+    }, 100);
+  },
+
+  // 实际执行筛选的方法
+  async _performFilter() {
+    // 设置筛选状态
+    this.setData({
+      isFiltering: true,
+      lastFilterTime: Date.now()
+    });
+    
+    try {
+      const { allBetaPlans, selectedHero, currentMode } = this.data;
       
-      if (currentMode === 'hot') {
-        // 热门方案按点赞收藏总和降序排序
-        sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
-      } else if (currentMode === 'latest') {
-        // 最新方案按创建时间降序排序
-        sortedPlans = this.sortPlansByCreateTime(sortedPlans);
-      } else {
-        // 推荐方案按推荐权重排序（如果有的话）
-        sortedPlans = this.sortPlansByRecommendation(sortedPlans);
-      }
-      
-      // 确保全部方案数据包含英雄头像
-      const processedPlans = await this.processPlansWithAvatars(sortedPlans);
-      
-      // 格式化时间
-      const formattedPlans = processedPlans.map((plan: any) => ({
-        ...plan,
-        createTime: this.formatTime(plan.createTime)
-      }));
-      
-      this.setData({
-        betaPlans: formattedPlans,
-        total: formattedPlans.length
+      console.log('开始筛选体验服方案:', {
+        selectedHero,
+        currentMode,
+        allBetaPlansLength: allBetaPlans.length,
+        currentBetaPlansLength: this.data.betaPlans.length
       });
-    } else {
-      // 筛选指定英雄的体验服方案，根据当前模式使用不同的排序逻辑
-      const filteredPlans = allBetaPlans.filter(plan => plan.heroName === selectedHero);
-      let sortedPlans = [...filteredPlans];
       
-      if (currentMode === 'hot') {
-        // 热门方案按点赞收藏总和降序排序
-        sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
-      } else if (currentMode === 'latest') {
-        // 最新方案按创建时间降序排序
-        sortedPlans = this.sortPlansByCreateTime(sortedPlans);
+      if (selectedHero === 'all') {
+        console.log('显示全部体验服方案');
+        // 显示全部体验服方案，根据当前模式使用不同的排序逻辑
+        let sortedPlans = [...allBetaPlans];
+        
+        if (currentMode === 'hot') {
+          // 热门方案按点赞收藏总和降序排序
+          sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
+          console.log('热门模式排序完成，方案数量:', sortedPlans.length);
+        } else if (currentMode === 'latest') {
+          // 最新方案按创建时间降序排序
+          sortedPlans = this.sortPlansByCreateTime(sortedPlans);
+          console.log('最新模式排序完成，方案数量:', sortedPlans.length);
+        } else {
+          // 推荐方案按推荐权重排序（如果有的话）
+          sortedPlans = this.sortPlansByRecommendation(sortedPlans);
+          console.log('推荐模式排序完成，方案数量:', sortedPlans.length);
+        }
+        
+        // 确保全部方案数据包含英雄头像
+        const processedPlans = await this.processPlansWithAvatars(sortedPlans);
+        
+        // 格式化时间
+        const formattedPlans = processedPlans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+        
+        console.log('设置全部方案数据，数量:', formattedPlans.length);
+        this.setData({
+          betaPlans: formattedPlans,
+          total: formattedPlans.length
+        });
+        
+        // 强制更新页面UI
+        this.setData({
+          _forceUpdate: Date.now()
+        });
       } else {
-        // 推荐方案按推荐权重排序（如果有的话）
-        sortedPlans = this.sortPlansByRecommendation(sortedPlans);
+        console.log('筛选指定英雄的方案:', selectedHero);
+        // 筛选指定英雄的体验服方案，根据当前模式使用不同的排序逻辑
+        const filteredPlans = allBetaPlans.filter(plan => plan.heroName === selectedHero);
+        console.log('筛选结果:', {
+          heroName: selectedHero,
+          filteredCount: filteredPlans.length,
+          allPlansCount: allBetaPlans.length
+        });
+        
+        let sortedPlans = [...filteredPlans];
+        
+        if (currentMode === 'hot') {
+          // 热门方案按点赞收藏总和降序排序
+          sortedPlans = this.sortPlansByLikeAndFavorite(sortedPlans);
+          console.log('热门模式排序完成，筛选后方案数量:', sortedPlans.length);
+        } else if (currentMode === 'latest') {
+          // 最新方案按创建时间降序排序
+          sortedPlans = this.sortPlansByCreateTime(sortedPlans);
+          console.log('最新模式排序完成，筛选后方案数量:', sortedPlans.length);
+        } else {
+          // 推荐方案按推荐权重排序（如果有的话）
+          sortedPlans = this.sortPlansByRecommendation(sortedPlans);
+          console.log('推荐模式排序完成，筛选后方案数量:', sortedPlans.length);
+        }
+        
+        // 确保筛选后的方案数据包含英雄头像
+        const processedPlans = await this.processPlansWithAvatars(sortedPlans);
+        
+        // 格式化时间
+        const formattedPlans = processedPlans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+        
+        console.log('设置筛选后的方案数据，数量:', formattedPlans.length);
+        this.setData({
+          betaPlans: formattedPlans,
+          total: formattedPlans.length
+        });
+        
+        // 强制更新页面UI
+        this.setData({
+          _forceUpdate: Date.now()
+        });
       }
       
-      // 确保筛选后的方案数据包含英雄头像
-      const processedPlans = await this.processPlansWithAvatars(sortedPlans);
+      console.log('筛选完成，最终方案数量:', this.data.betaPlans.length);
       
-      // 格式化时间
-      const formattedPlans = processedPlans.map((plan: any) => ({
-        ...plan,
-        createTime: this.formatTime(plan.createTime)
-      }));
-      
+      // 使用setTimeout确保UI更新完成
+      setTimeout(() => {
+        console.log('UI更新完成，当前显示方案数量:', this.data.betaPlans.length);
+      }, 100);
+    } finally {
+      // 重置筛选状态
       this.setData({
-        betaPlans: formattedPlans,
-        total: formattedPlans.length
+        isFiltering: false
       });
     }
   },
@@ -378,7 +603,7 @@ Page({
 
         // 如果不是加载更多，则缓存数据并更新当前模式的缓存数据
         if (!isLoadMore) {
-          // 缓存当前筛选结果
+          // 缓存当前筛选结果，延长TTL到10分钟
           const cacheKey = `beta_plans_${this.data.currentMode}_${this.data.selectedHero}`;
           const cacheData = {
             plans: formattedPlans,
@@ -388,46 +613,74 @@ Page({
             mode: this.data.currentMode,
             heroId: this.data.selectedHero
           };
-          cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL，延长缓存时间
+          cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
           
-          // 获取当前模式的完整数据用于更新缓存
-          const fullResult = await wx.cloud.callFunction({
-            name: 'getRecommendPlans',
-            data: {
-              mode: this.data.currentMode,
-              page: 1,
-              pageSize: 100, // 获取更多数据以更新缓存
-              isBetaPlan: true // 只获取体验服方案
-            }
-          }) as any;
-          
-          if (fullResult.result && fullResult.result.success) {
-            const { plans: fullPlans } = fullResult.result.data;
-            const heroCategories = await this.generateHeroCategoriesFromPlans(fullPlans);
-            
-            // 处理方案数据，添加英雄头像
-            const processedFullPlans = await this.processPlansWithAvatars(fullPlans);
-            
-            // 格式化时间
-            const formattedFullPlans = processedFullPlans.map((plan: any) => ({
-              ...plan,
-              createTime: this.formatTime(plan.createTime)
-            }));
-            
-            // 更新缓存
-            const modeCache = this.data.modeDataCache[this.data.currentMode as keyof typeof this.data.modeDataCache];
-            modeCache.heroCategories = heroCategories;
-            modeCache.allPlans = formattedFullPlans;
-            modeCache.total = fullPlans.length;
-            
-            // 更新当前显示数据
+          // 优化：如果当前模式缓存中已有数据，直接使用，避免重复调用云函数
+          const modeCache = this.data.modeDataCache[this.data.currentMode as keyof typeof this.data.modeDataCache];
+          if (modeCache.allPlans && modeCache.allPlans.length > 0) {
+            console.log('使用现有模式缓存数据，避免重复调用云函数');
+            // 直接使用现有数据，只更新betaPlans
             this.setData({
-              heroCategories: heroCategories,
-              allBetaPlans: formattedFullPlans,
-              total: fullPlans.length,
-              [`modeDataCache.${this.data.currentMode}`]: modeCache
+              betaPlans: formattedPlans,
+              page: page,
+              hasMore: hasMore,
+              loading: false,
+              loadingMore: false,
+              isDataLoaded: true,
+              lastLoadTime: Date.now()
             });
+          } else {
+            console.log('模式缓存为空，需要获取完整数据');
+            // 获取当前模式的完整数据用于更新缓存
+            const fullResult = await wx.cloud.callFunction({
+              name: 'getRecommendPlans',
+              data: {
+                mode: this.data.currentMode,
+                page: 1,
+                pageSize: 100, // 获取更多数据以更新缓存
+                isBetaPlan: true // 只获取体验服方案
+              }
+            }) as any;
+            
+            if (fullResult.result && fullResult.result.success) {
+              const { plans: fullPlans } = fullResult.result.data;
+              const heroCategories = await this.generateHeroCategoriesFromPlans(fullPlans);
+              
+              // 处理方案数据，添加英雄头像
+              const processedFullPlans = await this.processPlansWithAvatars(fullPlans);
+              
+              // 格式化时间
+              const formattedFullPlans = processedFullPlans.map((plan: any) => ({
+                ...plan,
+                createTime: this.formatTime(plan.createTime)
+              }));
+              
+              // 更新缓存
+              modeCache.heroCategories = heroCategories;
+              modeCache.allPlans = formattedFullPlans;
+              modeCache.total = fullPlans.length;
+              
+              // 更新当前显示数据
+              this.setData({
+                heroCategories: heroCategories,
+                allBetaPlans: formattedFullPlans,
+                total: fullPlans.length,
+                [`modeDataCache.${this.data.currentMode}`]: modeCache
+              });
+              
+              // 缓存英雄分类数据，延长TTL到30分钟
+              const heroListCacheKey = `mode_hero_list_beta_${this.data.currentMode}`;
+              cacheManager.set(heroListCacheKey, {
+                heroCategories: heroCategories,
+                allPlans: formattedFullPlans,
+                total: fullPlans.length
+              }, 30 * 60 * 1000); // 30分钟TTL
+            }
           }
+          
+          // 数据加载完成后，不需要重新筛选，因为现在默认显示全部英雄
+          // 只有在用户主动选择英雄时才需要筛选
+          console.log('数据加载完成，当前显示全部方案，无需重新筛选');
         }
       } else {
         wx.showToast({

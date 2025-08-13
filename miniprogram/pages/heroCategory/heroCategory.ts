@@ -1,6 +1,6 @@
 // 英雄分类页面
 import { heroCache } from '../../utils/heroCache';
-import { getTempFileURLs } from '../../utils/cloud';
+import { avatarCache } from '../../utils/avatarCache';
 import { getHeroesByCategory } from '../../data/localHeroData';
 import { log } from '../../utils/logger';
 
@@ -89,32 +89,37 @@ Page({
           return avatar;
         });
         
-        // 获取临时URL
-        const tempURLs = await getTempFileURLs(fileIDs);
+        // 使用新的头像缓存机制获取临时URL
+        console.log('heroCategory: 开始获取头像临时URL，总数:', fileIDs.length);
+        const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
+        console.log('heroCategory: 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};
-        let urlIdx = 0;
         
         Object.values(categoriesData).forEach(function(cat: any) {
           cat.heroes.forEach(function(hero: any) {
             if (hero.avatar) {
-              if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
+              const tempUrl = avatarUrlMap[hero.avatar];
+              if (tempUrl && tempUrl.startsWith('http')) {
                 // 使用临时URL
-                hero.avatar = tempURLs[urlIdx];
-                avatarURLs[hero.id] = tempURLs[urlIdx];
+                hero.avatar = tempUrl;
+                avatarURLs[hero.id] = tempUrl;
               } else {
                 // 临时URL获取失败，使用默认图片
                 hero.avatar = '../images/unused/default-avatar.png';
                 avatarURLs[hero.id] = '../images/unused/default-avatar.png';
               }
             }
-            urlIdx++;
           });
         });
         
         // 缓存数据
         await heroCache.setCache(localData, avatarURLs);
+        
+        // 调试：显示头像缓存状态
+        const cacheStats = avatarCache.getCacheStats();
+        console.log('heroCategory: 头像缓存状态:', cacheStats);
         
         that.setData({
           heroCategories: categoriesData,
@@ -148,32 +153,37 @@ Page({
           return avatar;
         });
         
-        // 获取临时URL并缓存
-        const tempURLs = await getTempFileURLs(fileIDs);
+        // 使用新的头像缓存机制获取临时URL并缓存
+        console.log('heroCategory: 云函数回退 - 开始获取头像临时URL，总数:', fileIDs.length);
+        const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
+        console.log('heroCategory: 云函数回退 - 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};
-        let urlIdx = 0;
         
         Object.values(categoriesData).forEach(function(cat: any) {
           cat.heroes.forEach(function(hero: any) {
             if (hero.avatar) {
-              if (tempURLs[urlIdx] && tempURLs[urlIdx].indexOf('http') === 0) {
+              const tempUrl = avatarUrlMap[hero.avatar];
+              if (tempUrl && tempUrl.startsWith('http')) {
                 // 使用临时URL
-                hero.avatar = tempURLs[urlIdx];
-                avatarURLs[hero.id] = tempURLs[urlIdx];
+                hero.avatar = tempUrl;
+                avatarURLs[hero.id] = tempUrl;
               } else {
                 // 临时URL获取失败，使用默认图片
                 hero.avatar = '../images/unused/default-avatar.png';
                 avatarURLs[hero.id] = '../images/unused/default-avatar.png';
               }
             }
-            urlIdx++;
           });
         });
         
         // 缓存数据
         heroCache.setCache(result.result.data, avatarURLs);
+        
+        // 调试：显示头像缓存状态
+        const cacheStats = avatarCache.getCacheStats();
+        console.log('heroCategory: 云函数回退 - 头像缓存状态:', cacheStats);
         
         that.setData({
           heroCategories: categoriesData,

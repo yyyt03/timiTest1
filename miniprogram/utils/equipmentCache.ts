@@ -1,5 +1,7 @@
 // 装备图片缓存工具
 import { findEquipmentByName } from './equipmentMatcher';
+import { avatarCache } from './avatarCache';
+import { logger } from './logger';
 
 interface EquipmentImageCache {
   imageUrls: Record<string, string>;
@@ -61,25 +63,33 @@ class EquipmentCacheManager {
 
       if (imagePaths.length > 0) {
         try {
-          const tempURLs = await wx.cloud.getTempFileURL({
-            fileList: imagePaths
-          });
+          // 使用新的头像缓存管理器批量获取临时URL
+          const avatarUrlMap = await avatarCache.getAvatarUrls(imagePaths);
 
-          tempURLs.fileList.forEach((file: any) => {
-            const fileId = file.fileID || '';
-            const fileName = fileId.split('/').pop();
-            const equipmentName = Object.keys(nameToImageMap).find(name => nameToImageMap[name] === fileName);
-            if (equipmentName) {
-              if (file.tempFileURL) {
-                this.cache!.imageUrls[equipmentName] = file.tempFileURL;
+          // 更新装备图片URL
+          for (const name of uncachedNames) {
+            const equipment = findEquipmentByName(name);
+            if (equipment && equipment.image) {
+              const imagePath = `cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/equipment/${equipment.image}`;
+              const tempURL = avatarUrlMap[imagePath];
+              
+              if (tempURL && tempURL.startsWith('http')) {
+                this.cache!.imageUrls[name] = tempURL;
               } else {
-                this.cache!.imageUrls[equipmentName] = this.DEFAULT_AVATAR_PATH;
+                this.cache!.imageUrls[name] = this.DEFAULT_AVATAR_PATH;
               }
+            } else {
+              this.cache!.imageUrls[name] = this.DEFAULT_AVATAR_PATH;
             }
-          });
+          }
 
           this.setCachedData(this.cache!);
+          logger.info('装备图片URL获取完成', { 
+            total: uncachedNames.length, 
+            success: Object.keys(this.cache!.imageUrls).length 
+          });
         } catch (error) {
+          logger.error('获取装备图片URL失败', error);
           // 为失败的装备设置默认图片
           uncachedNames.forEach(name => {
             if (!this.cache!.imageUrls[name]) {

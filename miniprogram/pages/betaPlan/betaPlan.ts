@@ -1,7 +1,7 @@
 // 体验服方案页面
 import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getAllHeroes, getHeroById, getHeroByName } from '../../data/localHeroData';
-import { getTempFileURLs } from '../../utils/cloud';
+import { avatarCache } from '../../utils/avatarCache';
 import { cacheManager } from '../../utils/cacheManager';
 import { notifyFavoriteAdded, notifyFavoriteRemoved, favoriteSyncManager } from '../../utils/favoriteSync';
 
@@ -806,27 +806,36 @@ Page({
         }
       });
       
-      // 批量获取头像临时URL
+      // 使用新的头像缓存管理器批量获取头像临时URL
       const avatarUrls = processedCategories
         .map(hero => hero.heroAvatar)
         .filter(avatar => avatar && avatar.startsWith('cloud://'));
       
       if (avatarUrls.length > 0) {
-        const tempUrls = await getTempFileURLs(avatarUrls);
-        
-        // 更新头像URL
-        let urlIndex = 0;
-        processedCategories.forEach(heroCategory => {
-          if (heroCategory.heroAvatar && heroCategory.heroAvatar.startsWith('cloud://')) {
-            if (tempUrls[urlIndex] && tempUrls[urlIndex].indexOf('http') === 0) {
-              heroCategory.heroAvatar = tempUrls[urlIndex];
-            } else {
-              // 临时URL获取失败，使用默认头像
+        try {
+          const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+          
+          // 更新头像URL
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && heroCategory.heroAvatar.startsWith('cloud://')) {
+              const tempUrl = avatarUrlMap[heroCategory.heroAvatar];
+              if (tempUrl && tempUrl.startsWith('http')) {
+                heroCategory.heroAvatar = tempUrl;
+              } else {
+                // 临时URL获取失败，使用默认头像
+                heroCategory.heroAvatar = '../images/unused/default-avatar.png';
+              }
+            }
+          });
+        } catch (error) {
+          console.error('获取头像临时URL失败:', error);
+          // 如果获取失败，使用默认头像
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && heroCategory.heroAvatar.startsWith('cloud://')) {
               heroCategory.heroAvatar = '../images/unused/default-avatar.png';
             }
-            urlIndex++;
-          }
-        });
+          });
+        }
       }
       
       return processedCategories;
@@ -872,28 +881,25 @@ Page({
       }
     });
     
-    // 批量获取临时URL
-    let tempUrls: string[] = [];
+    // 使用新的头像缓存管理器批量获取临时URL
+    let avatarUrlMap: Record<string, string> = {};
     if (avatarUrls.length > 0) {
       try {
-        tempUrls = await getTempFileURLs(avatarUrls);
+        avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
       } catch (error) {
         console.error('获取头像临时URL失败:', error);
-        tempUrls = avatarUrls.map(() => '');
+        // 如果获取失败，使用原始URL
+        avatarUrls.forEach(url => {
+          avatarUrlMap[url] = url;
+        });
       }
     }
-    
-    // 创建URL映射
-    const urlMap = new Map();
-    avatarUrls.forEach((originalUrl, index) => {
-      urlMap.set(originalUrl, tempUrls[index] || originalUrl);
-    });
     
     // 处理方案数据
     return plans.map(plan => {
       const hero = getHeroById(plan.heroId);
       const originalAvatar = hero ? hero.avatar : '';
-      const heroAvatar = urlMap.get(originalAvatar) || originalAvatar;
+      const heroAvatar = avatarUrlMap[originalAvatar] || originalAvatar;
       
       return {
         ...plan,

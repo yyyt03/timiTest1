@@ -1,6 +1,7 @@
 import { getFavoriteIcon, getLikeIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getHeroByName } from '../../data/localHeroData';
 import { cacheManager } from '../../utils/cacheManager';
+import { avatarCache } from '../../utils/avatarCache';
 
 // 英雄方案页面
 Page({
@@ -36,20 +37,44 @@ Page({
         title: options.hero + '的方案'
       });
       // 获取英雄头像
-      this.getHeroAvatarFromLocal(options.hero);
+      this.getHeroAvatarFromLocal(options.hero).catch((error: any) => {
+        console.error('获取英雄头像失败:', error);
+      });
       this.loadPlans();
     }
   },
 
-  // 从本地数据获取英雄头像
-  getHeroAvatarFromLocal(heroName: string) {
+  // 从本地数据获取英雄头像 - 使用头像缓存机制
+  async getHeroAvatarFromLocal(heroName: string) {
     try {
       // 从本地数据获取英雄信息
       const hero = getHeroByName(heroName);
       
       if (hero && hero.avatar) {
+        let avatarUrl = hero.avatar;
+        
+        // 如果是云存储路径，使用头像缓存获取临时URL
+        if (avatarUrl && avatarUrl.startsWith('cloud://')) {
+          try {
+            console.log('获取英雄头像临时URL:', avatarUrl);
+            const avatarUrlMap = await avatarCache.getAvatarUrls([avatarUrl]);
+            const tempUrl = avatarUrlMap[avatarUrl];
+            
+            if (tempUrl && tempUrl.startsWith('http')) {
+              avatarUrl = tempUrl;
+              console.log('英雄头像临时URL获取成功');
+            } else {
+              console.warn('英雄头像临时URL获取失败，使用默认头像');
+              avatarUrl = '../images/unused/default-avatar.png';
+            }
+          } catch (error) {
+            console.error('获取英雄头像临时URL失败:', error);
+            avatarUrl = '../images/unused/default-avatar.png';
+          }
+        }
+        
         this.setData({
-          heroAvatar: hero.avatar
+          heroAvatar: avatarUrl
         });
       } else {
         // 未找到英雄，使用默认头像
@@ -116,7 +141,9 @@ Page({
         });
         
         // 获取英雄头像
-        this.getHeroAvatarFromLocal(plan.heroName);
+        this.getHeroAvatarFromLocal(plan.heroName).catch((error: any) => {
+          console.error('获取英雄头像失败:', error);
+        });
       } else {
         wx.showToast({
           title: (result.result && result.result.message) || '加载方案详情失败',

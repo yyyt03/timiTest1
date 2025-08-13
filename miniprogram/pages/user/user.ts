@@ -1,5 +1,5 @@
 import { getFavoritePlanIcon, getCreatePlanIcon, getMyPlanIcon } from '../../utils/iconManager'
-import { getTempFileURLs } from '../../utils/cloud'
+import { avatarCache } from '../../utils/avatarCache'
 
 // 用户页面
 Page({
@@ -127,10 +127,10 @@ Page({
   async getDefaultAvatarUrl(): Promise<string> {
     try {
       const cloudPath = 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/icons/default-avatar.png';
-      const tempURLs = await getTempFileURLs([cloudPath]);
+      const avatarUrlMap = await avatarCache.getAvatarUrls([cloudPath]);
       
-      if (tempURLs[0] && tempURLs[0].indexOf('http') === 0) {
-        return tempURLs[0];
+      if (avatarUrlMap[cloudPath] && avatarUrlMap[cloudPath].indexOf('http') === 0) {
+        return avatarUrlMap[cloudPath];
       } else {
         // 如果获取失败，使用本地默认头像
         return '../../pages/images/unused/default-avatar.png';

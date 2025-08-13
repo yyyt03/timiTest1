@@ -1,6 +1,7 @@
 import { formatTime } from '../../utils/cloud'
 import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
 import { getHeroByName } from '../../data/localHeroData'
+import { avatarCache } from '../../utils/avatarCache'
 import { cacheManager } from '../../utils/cacheManager'
 import { favoriteSyncManager, FavoriteAction } from '../../utils/favoriteSync'
 import type { FavoritesCacheData, FavoriteItem } from '../../typings/types/favorites'

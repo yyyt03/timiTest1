@@ -3,6 +3,7 @@ import { getHeroById, getHeroByName } from '../../data/localHeroData';
 import { callFunction } from '../../utils/cloud';
 import { cacheManager } from '../../utils/cacheManager';
 import { notifyFavoriteAdded, notifyFavoriteRemoved } from '../../utils/favoriteSync';
+import { avatarCache } from '../../utils/avatarCache';
 
 interface PlanData {
   _id?: string;
@@ -186,7 +187,9 @@ Page({
           });
           
           // 异步获取英雄头像，不阻塞页面显示
-          this.getHeroAvatar(cachedPlan.heroName, cachedPlan.heroId);
+          this.getHeroAvatar(cachedPlan.heroName, cachedPlan.heroId).catch((error: any) => {
+            console.error('获取缓存方案头像失败:', error);
+          });
           
           return;
         }
@@ -256,7 +259,9 @@ Page({
         });
         
         // 异步获取英雄头像，不阻塞页面显示
-        this.getHeroAvatar(plan.heroName, plan.heroId);
+        this.getHeroAvatar(plan.heroName, plan.heroId).catch((error: any) => {
+          console.error('获取方案头像失败:', error);
+        });
 
         // 依据全量技能数据映射 flags，避免覆盖 initialPlan 的正确显示
         // 只有在没有缓存的情况下才调用云函数
@@ -281,8 +286,8 @@ Page({
     }
   },
 
-  // 获取英雄头像 - 使用本地数据
-  getHeroAvatar(heroName: string, heroId?: string) {
+  // 获取英雄头像 - 使用头像缓存机制
+  async getHeroAvatar(heroName: string, heroId?: string) {
     try {
       let avatarUrl = null;
       
@@ -308,6 +313,31 @@ Page({
       if (!avatarUrl) {
         console.log('使用默认头像');
         avatarUrl = '../images/unused/default-avatar.png';
+      }
+      
+      // 如果是云存储路径，使用头像缓存获取临时URL
+      if (avatarUrl && avatarUrl.startsWith('cloud://')) {
+        try {
+          console.log('获取头像临时URL:', avatarUrl);
+          
+          // 调试：显示当前缓存状态
+          const cacheStats = avatarCache.getCacheStats();
+          console.log('头像缓存状态:', cacheStats);
+          
+          const avatarUrlMap = await avatarCache.getAvatarUrls([avatarUrl]);
+          const tempUrl = avatarUrlMap[avatarUrl];
+          
+          if (tempUrl && tempUrl.startsWith('http')) {
+            avatarUrl = tempUrl;
+            console.log('头像临时URL获取成功');
+          } else {
+            console.warn('头像临时URL获取失败，使用默认头像');
+            avatarUrl = '../images/unused/default-avatar.png';
+          }
+        } catch (error) {
+          console.error('获取头像临时URL失败:', error);
+          avatarUrl = '../images/unused/default-avatar.png';
+        }
       }
       
       // 更新头像

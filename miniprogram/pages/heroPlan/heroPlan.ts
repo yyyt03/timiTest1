@@ -1,5 +1,6 @@
 import { getFavoriteIcon, getLikeIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getHeroByName } from '../../data/localHeroData';
+import { cacheManager } from '../../utils/cacheManager';
 
 // 英雄方案页面
 Page({
@@ -66,14 +67,34 @@ Page({
   },
 
   // 加载方案详情
-  async loadPlanDetail(planId: string) {
+  async loadPlanDetail(planId: string, forceRefresh: boolean = false) {
     this.setData({ loading: true });
     
     try {
-      const result = await wx.cloud.callFunction({
-        name: 'getPlanDetail',
-        data: { planId }
-      }) as any;
+      // 尝试从缓存获取方案详情（除非强制刷新）
+      const cacheKey = `hero_plan_detail_${planId}`;
+      let result: any;
+      
+      if (!forceRefresh) {
+        const cachedData = cacheManager.get(cacheKey);
+        if (cachedData) {
+          console.log('使用缓存的方案详情数据');
+          result = { result: { success: true, data: cachedData } };
+        }
+      }
+      
+      if (!result) {
+        console.log('从云函数获取方案详情数据');
+        result = await wx.cloud.callFunction({
+          name: 'getPlanDetail',
+          data: { planId }
+        }) as any;
+        
+        // 缓存方案详情数据，英雄方案页面缓存时间设置为15分钟
+        if (result.result && result.result.success) {
+          cacheManager.set(cacheKey, result.result.data, 15 * 60 * 1000);
+        }
+      }
       
       if (result.result && result.result.success) {
         const plan = result.result.data;

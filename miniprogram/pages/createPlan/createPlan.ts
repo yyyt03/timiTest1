@@ -231,14 +231,34 @@ Page({
   },
 
   // 加载方案数据用于编辑
-  async loadPlanForEdit(planId: string) {
+  async loadPlanForEdit(planId: string, forceRefresh: boolean = false) {
     try {
       wx.showLoading({ title: '加载方案数据...' });
       
-      const result = await wx.cloud.callFunction({
-        name: 'getPlanDetail',
-        data: { planId }
-      }) as any;
+      // 尝试从缓存获取方案数据（除非强制刷新）
+      const cacheKey = `plan_for_edit_${planId}`;
+      let result: any;
+      
+      if (!forceRefresh) {
+        const cachedData = cacheManager.get(cacheKey);
+        if (cachedData) {
+          console.log('使用缓存的方案数据进行编辑');
+          result = { result: { success: true, data: cachedData } };
+        }
+      }
+      
+      if (!result) {
+        console.log('从云函数获取方案数据');
+        result = await wx.cloud.callFunction({
+          name: 'getPlanDetail',
+          data: { planId }
+        }) as any;
+        
+        // 缓存方案数据，编辑页面缓存时间设置为10分钟
+        if (result.result && result.result.success) {
+          cacheManager.set(cacheKey, result.result.data, 10 * 60 * 1000);
+        }
+      }
       
       if (result.result && result.result.success) {
         const plan = result.result.data;
@@ -1708,5 +1728,7 @@ Page({
       title: `${hero}方案创作 - 觉醒天赋推荐`,
       imageUrl: '/pages/images/share-create-plan.png'
     };
-  }
+  },
+
+
 }); 

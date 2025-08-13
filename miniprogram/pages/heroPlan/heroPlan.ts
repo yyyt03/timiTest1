@@ -3,6 +3,7 @@ import { getHeroByName } from '../../data/localHeroData';
 import { cacheManager } from '../../utils/cacheManager';
 import { avatarCache } from '../../utils/avatarCache';
 import { log } from '../../utils/logger';
+import { notifyLikeAdded, notifyLikeRemoved, interactionSyncManager } from '../../utils/favoriteSync';
 
 // 英雄方案页面
 Page({
@@ -54,7 +55,13 @@ Page({
         this.loadPlans();
       });
     }
+    
+    // 设置点赞状态变化监听器
+    this.setupLikeChangeListener();
   },
+
+  // 点赞状态变化处理器
+  likeChangeHandler: null as any,
 
   // 智能缓存检查和更新
   async checkAndUpdateCache() {
@@ -82,6 +89,36 @@ Page({
     }
 
     log('英雄方案缓存有效，保留现有缓存');
+  },
+
+  // 设置点赞状态变化监听器
+  setupLikeChangeListener() {
+    this.likeChangeHandler = (event: any) => {
+      console.log('收到点赞状态变化事件', event);
+      this.handleLikeChange(event);
+    };
+    
+    interactionSyncManager.addLikeListener(this.likeChangeHandler);
+  },
+
+  // 处理点赞状态变化
+  handleLikeChange(event: any) {
+    const { planId, action } = event;
+    const plans = [...this.data.plans];
+    const planIndex = plans.findIndex(plan => plan._id === planId);
+    
+    if (planIndex !== -1) {
+      if (action === 'add') {
+        plans[planIndex].isLiked = true;
+        plans[planIndex].likeCount = (plans[planIndex].likeCount || 0) + 1;
+      } else if (action === 'remove') {
+        plans[planIndex].isLiked = false;
+        plans[planIndex].likeCount = Math.max(0, (plans[planIndex].likeCount || 0) - 1);
+      }
+      
+      this.setData({ plans });
+      console.log('点赞状态已同步更新');
+    }
   },
 
   // 清除英雄相关的缓存
@@ -439,8 +476,15 @@ Page({
       if (result.result && result.result.success) {
         // 使用服务器返回的准确数据更新
         plans[planIndex].isLiked = result.result.data.isLiked;
-        plans[planIndex].likeCount = result.result.data.likes;
+        plans[planIndex].likeCount = result.result.data.likeCount;
         this.setData({ plans });
+        
+        // 通知点赞状态变化，确保其他页面数据同步
+        if (result.result.data.isLiked) {
+          notifyLikeAdded(planId);
+        } else {
+          notifyLikeRemoved(planId);
+        }
         
         // 点赞操作成功后，清除相关缓存以确保数据一致性
         this.invalidateHeroPlansCache();
@@ -560,6 +604,14 @@ Page({
     
     if (cacheManager.delete(cacheKey)) {
       log('已清除英雄方案列表缓存:', cacheKey);
+    }
+  },
+
+  // 页面卸载时清理监听器
+  onUnload() {
+    if (this.likeChangeHandler) {
+      interactionSyncManager.removeLikeListener(this.likeChangeHandler);
+      this.likeChangeHandler = null;
     }
   }
 }); 

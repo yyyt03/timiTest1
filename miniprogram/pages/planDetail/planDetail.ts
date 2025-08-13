@@ -364,8 +364,7 @@ Page({
     
     try {
       const result = await callFunction('toggleFavorite', {
-        planId: plan._id,
-        action: isFavorited ? 'add' : 'remove'
+        planId: plan._id
       }) as CloudFunctionResult;
       
       if (result && result.success) {

@@ -3,7 +3,7 @@ import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from
 import { getAllHeroes, getHeroById, getHeroByName } from '../../data/localHeroData';
 import { avatarCache } from '../../utils/avatarCache';
 import { cacheManager } from '../../utils/cacheManager';
-import { notifyFavoriteAdded, notifyFavoriteRemoved, favoriteSyncManager } from '../../utils/favoriteSync';
+import { notifyFavoriteAdded, notifyFavoriteRemoved, notifyLikeAdded, notifyLikeRemoved, favoriteSyncManager, interactionSyncManager } from '../../utils/favoriteSync';
 import { debounceOperation } from '../../utils/debounce';
 
 Page({
@@ -61,11 +61,18 @@ Page({
     lastModeSwitchTime: 0, // 最后模式切换时间
     isFiltering: false, // 是否正在筛选
     lastFilterTime: 0, // 最后筛选时间
-    filterDebounceTimer: null as any // 防抖定时器
+    filterDebounceTimer: null as any, // 防抖定时器
+    
+    // 添加请求状态管理
+    currentRequestId: 0 // 当前请求ID，用于取消过期的请求
   },
 
   // 收藏状态变化处理器
   favoriteChangeHandler: null as any,
+  // 点赞状态变化处理器
+  likeChangeHandler: null as any,
+  // 统一交互状态变化处理器
+  interactionChangeHandler: null as any,
 
   // 防抖版本的筛选器切换函数
   debouncedSwitchFilter: null as any,
@@ -83,6 +90,10 @@ Page({
     
     // 设置收藏状态变化监听器
     this.setupFavoriteChangeListener();
+    // 设置点赞状态变化监听器
+    this.setupLikeChangeListener();
+    // 设置统一交互状态变化监听器
+    this.setupInteractionChangeListener();
     
     // 初始化防抖版本的筛选器切换函数（500ms防抖，避免快速切换）
     this.debouncedSwitchFilter = debounceOperation('betaSwitchFilter', this.switchFilter.bind(this), 500, {
@@ -97,8 +108,8 @@ Page({
     
     // 然后初始化页面数据
     console.log('初始化页面数据，模式:', this.data.currentMode, '英雄:', this.data.selectedHero);
-    this.initModeHeroList('hot'); // 初始化热门模式的英雄分类
-    this.loadBetaPlans();
+    this.initModeHeroList('hot', this.data.currentRequestId); // 初始化热门模式的英雄分类
+    this.loadBetaPlans(false, this.data.currentRequestId);
   },
 
   // 页面数据变化监听
@@ -109,10 +120,10 @@ Page({
   onShow() {
     console.log('体验服方案页面 onShow 触发');
     
-    // 优先检查收藏状态变化
-    if (this.checkFavoriteChanges()) {
-      console.log('检测到收藏状态变化，需要刷新数据');
-      this.loadBetaPlans();
+    // 优先检查交互状态变化（收藏和点赞）
+    if (this.checkInteractionChanges()) {
+      console.log('检测到交互状态变化，需要刷新数据');
+      this.loadBetaPlans(false, this.data.currentRequestId);
       return;
     }
     
@@ -141,7 +152,7 @@ Page({
       
       if (shouldReload) {
         console.log('需要重新加载数据');
-        this.loadBetaPlans();
+        this.loadBetaPlans(false, this.data.currentRequestId);
       } else {
         console.log('数据已加载且未过期，保持现有数据');
         // 如果数据已加载且未过期，且当前有英雄筛选，需要重新筛选数据
@@ -168,6 +179,10 @@ Page({
     
     // 移除收藏状态变化监听器
     this.cleanupFavoriteChangeListener();
+    // 移除点赞状态变化监听器
+    this.cleanupLikeChangeListener();
+    // 移除统一交互状态变化监听器
+    this.cleanupInteractionChangeListener();
     
     // 清理防抖定时器
     if (this.debouncedSwitchFilter) {
@@ -219,8 +234,14 @@ Page({
   },
 
   // 初始化指定模式的英雄分类
-  async initModeHeroList(mode: string) {
+  async initModeHeroList(mode: string, requestId: number) {
     try {
+      // 检查请求是否已被取消
+      if (requestId !== this.data.currentRequestId) {
+        console.log('请求已被取消，跳过英雄分类初始化，请求ID:', requestId);
+        return;
+      }
+      
       // 如果缓存中已有数据且未过期，直接使用
       const cacheKey = `mode_hero_list_beta_${mode}`;
       const cachedData = cacheManager.get<{
@@ -230,6 +251,12 @@ Page({
       }>(cacheKey);
       
       if (cachedData && cachedData.heroCategories && cachedData.heroCategories.length > 0) {
+        // 再次检查请求是否已被取消
+        if (requestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过缓存数据使用，请求ID:', requestId);
+          return;
+        }
+        
         const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
         modeCache.heroCategories = cachedData.heroCategories;
         modeCache.allPlans = cachedData.allPlans;
@@ -255,11 +282,23 @@ Page({
         }
       }) as any;
       
+      // 检查请求是否已被取消
+      if (requestId !== this.data.currentRequestId) {
+        console.log('请求已被取消，跳过云函数结果处理，请求ID:', requestId);
+        return;
+      }
+      
       if (result.result && result.result.success) {
         const { plans } = result.result.data;
         
         // 生成英雄分类
         const heroCategories = await this.generateHeroCategoriesFromPlans(plans);
+        
+        // 再次检查请求是否已被取消
+        if (requestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过英雄分类处理，请求ID:', requestId);
+          return;
+        }
         
         // 处理方案数据，添加英雄头像
         const processedPlans = await this.processPlansWithAvatars(plans);
@@ -294,6 +333,12 @@ Page({
         
         // 强制刷新页面数据，确保头像能正确显示
         setTimeout(() => {
+          // 最后一次检查请求是否已被取消
+          if (requestId !== this.data.currentRequestId) {
+            console.log('请求已被取消，跳过页面数据更新，请求ID:', requestId);
+            return;
+          }
+          
           this.setData({
             heroCategories: heroCategories
           });
@@ -325,6 +370,13 @@ Page({
         selectedHero: this.data.selectedHero
       });
       
+      // 生成新的请求ID，用于取消之前的请求
+      const requestId = ++this.data.currentRequestId;
+      this.setData({ currentRequestId: requestId });
+      
+      // 取消所有待处理的请求
+      this.cancelPendingRequests();
+      
       // 重置英雄选择为全部
       this.setData({
         currentMode: type,
@@ -333,12 +385,19 @@ Page({
         lastModeSwitchTime: Date.now() // 记录模式切换时间
       });
       
-      console.log('模式切换完成，开始初始化英雄分类');
+      console.log('模式切换完成，开始初始化英雄分类，请求ID:', requestId);
       
       // 优化：优先使用缓存数据，避免重复调用云函数
       const modeCache = this.data.modeDataCache[type as keyof typeof this.data.modeDataCache];
       if (modeCache && modeCache.allPlans && modeCache.allPlans.length > 0) {
-        console.log('使用缓存数据，避免重复调用云函数');
+        console.log('使用缓存数据，避免重复调用云函数，请求ID:', requestId);
+        
+        // 检查请求是否已被取消
+        if (requestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过缓存数据设置，请求ID:', requestId);
+          return;
+        }
+        
         // 直接使用缓存数据
         this.setData({
           heroCategories: modeCache.heroCategories,
@@ -364,11 +423,23 @@ Page({
       }
       
       // 如果缓存中没有数据，才调用云函数
-      await this.initModeHeroList(type);
+      await this.initModeHeroList(type, requestId);
       
-      console.log('英雄分类初始化完成，开始加载数据');
+      // 检查请求是否已被取消
+      if (requestId !== this.data.currentRequestId) {
+        console.log('请求已被取消，跳过数据加载，请求ID:', requestId);
+        return;
+      }
+      
+      console.log('英雄分类初始化完成，开始加载数据，请求ID:', requestId);
       // 重新加载数据
-      await this.loadBetaPlans();
+      await this.loadBetaPlans(false, requestId);
+      
+      // 检查请求是否已被取消
+      if (requestId !== this.data.currentRequestId) {
+        console.log('请求已被取消，跳过布局更新，请求ID:', requestId);
+        return;
+      }
       
       // 强制重新计算布局，确保页面比例正确
       // 使用setTimeout确保DOM更新完成后再触发重新渲染
@@ -572,7 +643,10 @@ Page({
   },
 
   // 加载体验服方案数据
-  async loadBetaPlans(isLoadMore = false) {
+  async loadBetaPlans(isLoadMore = false, requestId?: number) {
+    // 如果没有提供requestId，使用当前请求ID
+    const currentRequestId = requestId || this.data.currentRequestId;
+    
     if (isLoadMore) {
       if (!this.data.hasMore || this.data.loadingMore) {
         return;
@@ -589,6 +663,12 @@ Page({
         const cachedData = cacheManager.get<any>(cacheKey);
         
         if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
+          // 检查请求是否已被取消
+          if (currentRequestId !== this.data.currentRequestId) {
+            console.log('请求已被取消，跳过缓存数据使用，请求ID:', currentRequestId);
+            return;
+          }
+          
           console.log('使用缓存的体验服方案数据:', cacheKey);
           this.setData({
             betaPlans: cachedData.plans,
@@ -614,11 +694,23 @@ Page({
         }
       }) as any;
       
+      // 检查请求是否已被取消
+      if (currentRequestId !== this.data.currentRequestId) {
+        console.log('请求已被取消，跳过云函数结果处理，请求ID:', currentRequestId);
+        return;
+      }
+      
       if (result.result && result.result.success) {
         const { plans, total, page, hasMore } = result.result.data;
         
         // 处理方案数据，添加英雄头像
         const processedPlans = await this.processPlansWithAvatars(plans);
+        
+        // 再次检查请求是否已被取消
+        if (currentRequestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过方案数据处理，请求ID:', currentRequestId);
+          return;
+        }
         
         // 根据当前模式使用不同的排序逻辑
         let sortedPlans = processedPlans;
@@ -686,6 +778,12 @@ Page({
                 isBetaPlan: true // 只获取体验服方案
               }
             }) as any;
+            
+            // 再次检查请求是否已被取消
+            if (currentRequestId !== this.data.currentRequestId) {
+              console.log('请求已被取消，跳过完整数据获取，请求ID:', currentRequestId);
+              return;
+            }
             
             if (fullResult.result && fullResult.result.success) {
               const { plans: fullPlans } = fullResult.result.data;
@@ -1096,8 +1194,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'toggleLike',
         data: {
-          planId: plan._id,
-          action: isLiked ? 'add' : 'remove'
+          planId: plan._id
         }
       }) as any;
       
@@ -1113,8 +1210,18 @@ Page({
           betaPlans: updatedPlans
         });
         
+        // 通知点赞状态变化，确保其他页面数据同步
+        if (result.result.data.isLiked) {
+          notifyLikeAdded(plan._id);
+        } else {
+          notifyLikeRemoved(plan._id);
+        }
+        
+        // 清除相关缓存，确保数据一致性
+        this.clearLikeRelatedCache();
+        
         wx.showToast({
-          title: isLiked ? '点赞成功' : '取消点赞',
+          title: result.result.message,
           icon: 'success'
         });
       } else {
@@ -1183,8 +1290,7 @@ Page({
       const result = await wx.cloud.callFunction({
         name: 'toggleFavorite',
         data: {
-          planId: plan._id,
-          action: isFavorited ? 'add' : 'remove'
+          planId: plan._id
         }
       }) as any;
       
@@ -1260,7 +1366,7 @@ Page({
       console.log('下拉刷新，已清除体验服方案缓存:', cacheKey);
       
       this.setData({ page: 1 }); // 重置页码
-      await this.loadBetaPlans();
+      await this.loadBetaPlans(false, this.data.currentRequestId);
     } catch (error) {
       console.error('下拉刷新失败:', error);
     } finally {
@@ -1277,7 +1383,7 @@ Page({
 
   // 加载更多数据
   async loadMorePlans() {
-    await this.loadBetaPlans(true);
+    await this.loadBetaPlans(true, this.data.currentRequestId);
   },
 
   // 加载更多
@@ -1340,6 +1446,54 @@ Page({
     }
   },
 
+  // 设置点赞状态变化监听器
+  setupLikeChangeListener() {
+    this.likeChangeHandler = (event: any) => {
+      console.log('收到点赞状态变化事件:', event);
+      // 当收到点赞状态变化事件时，立即清除相关缓存并标记数据需要刷新
+      this.clearLikeRelatedCache();
+      this.setData({
+        lastLoadTime: 0 // 强制下次onShow时刷新数据
+      });
+    };
+    
+    interactionSyncManager.addLikeListener(this.likeChangeHandler);
+    console.log('点赞状态变化监听器已设置');
+  },
+
+  // 清理点赞状态变化监听器
+  cleanupLikeChangeListener() {
+    if (this.likeChangeHandler) {
+      interactionSyncManager.removeLikeListener(this.likeChangeHandler);
+      this.likeChangeHandler = null;
+      console.log('点赞状态变化监听器已清理');
+    }
+  },
+
+  // 设置统一交互状态变化监听器
+  setupInteractionChangeListener() {
+    this.interactionChangeHandler = (event: any) => {
+      console.log('收到统一交互状态变化事件:', event);
+      // 当收到统一交互状态变化事件时，立即清除所有相关缓存并标记数据需要刷新
+      this.clearAllRelatedCache();
+      this.setData({
+        lastLoadTime: 0 // 强制下次onShow时刷新数据
+      });
+    };
+    
+    interactionSyncManager.addInteractionListener(this.interactionChangeHandler);
+    console.log('统一交互状态变化监听器已设置');
+  },
+
+  // 清理统一交互状态变化监听器
+  cleanupInteractionChangeListener() {
+    if (this.interactionChangeHandler) {
+      interactionSyncManager.removeInteractionListener(this.interactionChangeHandler);
+      this.interactionChangeHandler = null;
+      console.log('统一交互状态变化监听器已清理');
+    }
+  },
+
   // 检查收藏状态变化
   checkFavoriteChanges(): boolean {
     try {
@@ -1362,6 +1516,58 @@ Page({
       return false;
     } catch (error) {
       console.warn('检查收藏状态变化失败:', error);
+      return false;
+    }
+  },
+
+  // 检查点赞状态变化
+  checkLikeChanges(): boolean {
+    try {
+      const lastGlobalChange = wx.getStorageSync('last_global_like_change') || 0;
+      const lastLocalUpdate = this.data.lastLoadTime || 0;
+      
+      if (lastGlobalChange > lastLocalUpdate) {
+        console.log('检测到全局点赞状态变化，时间戳:', {
+          global: lastGlobalChange,
+          local: lastLocalUpdate,
+          diff: lastGlobalChange - lastLocalUpdate
+        });
+        
+        // 清除相关缓存，确保获取最新数据
+        this.clearLikeRelatedCache();
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('检查点赞状态变化失败:', error);
+      return false;
+    }
+  },
+
+  // 检查统一交互状态变化
+  checkInteractionChanges(): boolean {
+    try {
+      const lastGlobalChange = wx.getStorageSync('last_global_interaction_change') || 0;
+      const lastLocalUpdate = this.data.lastLoadTime || 0;
+      
+      if (lastGlobalChange > lastLocalUpdate) {
+        console.log('检测到全局交互状态变化，时间戳:', {
+          global: lastGlobalChange,
+          local: lastLocalUpdate,
+          diff: lastGlobalChange - lastLocalUpdate
+        });
+        
+        // 清除所有相关缓存，确保获取最新数据
+        this.clearAllRelatedCache();
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('检查统一交互状态变化失败:', error);
       return false;
     }
   },
@@ -1406,6 +1612,60 @@ Page({
     }
   },
 
+  // 清除点赞相关的缓存
+  clearLikeRelatedCache() {
+    try {
+      // 清除当前模式的所有英雄筛选缓存
+      const cacheKeys = [
+        `beta_plans_${this.data.currentMode}_all`,
+        `beta_plans_${this.data.currentMode}_${this.data.selectedHero}`,
+        `mode_hero_list_${this.data.currentMode}`
+      ];
+      
+      // 清除所有模式的缓存，因为点赞状态变化可能影响所有模式
+      ['recommended', 'hot', 'latest'].forEach(mode => {
+        cacheKeys.push(
+          `beta_plans_${mode}_all`,
+          `mode_hero_list_${mode}`
+        );
+      });
+      
+      cacheKeys.forEach(key => {
+        if (cacheManager.has(key)) {
+          cacheManager.delete(key);
+          console.log('已清除点赞相关缓存:', key);
+        }
+      });
+      
+      // 清除模式数据缓存
+      this.setData({
+        modeDataCache: {
+          recommended: { heroCategories: [], allPlans: [], total: 0 },
+          hot: { heroCategories: [], allPlans: [], total: 0 },
+          latest: { heroCategories: [], allPlans: [], total: 0 }
+        }
+      });
+      
+      console.log('已清除点赞相关的所有缓存数据');
+    } catch (error) {
+      console.warn('清除点赞相关缓存失败:', error);
+    }
+  },
+
+  // 清除所有相关缓存
+  clearAllRelatedCache() {
+    this.clearFavoriteRelatedCache();
+    this.clearLikeRelatedCache();
+    this.setData({
+      modeDataCache: {
+        recommended: { heroCategories: [], allPlans: [], total: 0 },
+        hot: { heroCategories: [], allPlans: [], total: 0 },
+        latest: { heroCategories: [], allPlans: [], total: 0 }
+      }
+    });
+    console.log('已清除所有相关缓存数据');
+  },
+
   // 防抖版本的筛选器切换事件处理
   onFilterSwitch(e: any) {
     console.log('体验服筛选器切换事件触发，使用防抖处理');
@@ -1428,5 +1688,11 @@ Page({
       console.warn('防抖函数未初始化，使用原始筛选器切换函数');
       this.switchFilter(e);
     }
+  },
+
+  // 取消所有待处理的请求
+  cancelPendingRequests() {
+    // 简化实现：只记录请求ID，不存储复杂的请求对象
+    console.log('取消所有待处理的请求，当前请求ID:', this.data.currentRequestId);
   }
 }); 

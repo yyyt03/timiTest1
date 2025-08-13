@@ -65,7 +65,6 @@ exports.main = async function(event, context) {
         success: true,
         data: {
           isLiked: false,
-          action: 'unliked',
           likeCount: updatedLikeCount
         },
         message: '取消点赞成功'
@@ -94,7 +93,6 @@ exports.main = async function(event, context) {
         success: true,
         data: {
           isLiked: true,
-          action: 'liked',
           likeCount: updatedLikeCount
         },
         message: '点赞成功'

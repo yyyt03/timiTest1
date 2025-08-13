@@ -42,7 +42,7 @@ class CacheManager {
 
   constructor() {
     this.config = {
-      defaultTTL: 5 * 60 * 1000, // 5分钟
+      defaultTTL: 15 * 60 * 1000, // 15分钟，延长默认缓存时间
       maxSize: 1000,
       enableVersioning: true,
       cleanupInterval: 60 * 1000, // 1分钟

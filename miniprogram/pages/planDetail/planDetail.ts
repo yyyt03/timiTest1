@@ -239,14 +239,14 @@ Page({
           loading: false
         });
         
-        // 缓存方案详情数据
+        // 缓存方案详情数据，延长TTL到30分钟
         const cacheKey = `plan_detail_${planId}`;
         const cacheData: PlanDetailCacheData = {
           plan: finalPlan,
           timestamp: Date.now(),
           planId: planId
         };
-        cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
+        cacheManager.set(cacheKey, cacheData, 30 * 60 * 1000); // 30分钟TTL
         console.log('方案详情数据已缓存:', planId);
         
         // 设置导航栏标题
@@ -258,7 +258,8 @@ Page({
         this.getHeroAvatar(plan.heroName, plan.heroId);
 
         // 依据全量技能数据映射 flags，避免覆盖 initialPlan 的正确显示
-        if (plan.heroId) {
+        // 只有在没有缓存的情况下才调用云函数
+        if (plan.heroId && !this.data.plan.skillOne?.priorityTalentsFlags?.length) {
           this.loadHeroSkillsAndComputeFlags(plan.heroId, this.data.plan);
         }
         
@@ -393,7 +394,7 @@ Page({
           planId: plan._id
         };
         
-        cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
+        cacheManager.set(cacheKey, cacheData, 30 * 60 * 1000); // 30分钟TTL
         console.log('方案详情页面卸载，已缓存方案详情数据:', plan._id);
       }
     } catch (error) {

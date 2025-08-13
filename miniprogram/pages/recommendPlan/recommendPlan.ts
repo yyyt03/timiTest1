@@ -52,7 +52,12 @@ Page({
         allPlans: [] as any[],
         total: 0
       }
-    }
+    },
+    
+    // 添加页面状态标记
+    isDataLoaded: false, // 数据是否已加载
+    lastLoadTime: 0, // 最后加载时间
+    lastModeSwitchTime: 0 // 最后模式切换时间
   },
  
   // 生命周期函数--监听页面加载
@@ -67,8 +72,19 @@ Page({
   },
 
   onShow() {
-    // 返回页面时刷新，确保与体验服页面点赞/收藏状态同步
-    this.loadRecommendPlans();
+    const now = Date.now();
+    const timeSinceLastLoad = now - this.data.lastLoadTime;
+    const timeSinceLastModeSwitch = now - this.data.lastModeSwitchTime;
+    
+    // 只有在以下情况才重新加载：
+    // 1. 数据未加载
+    // 2. 距离上次加载超过10分钟
+    // 3. 距离上次模式切换超过2分钟（确保模式切换后的数据同步）
+    if (!this.data.isDataLoaded || 
+        timeSinceLastLoad > 10 * 60 * 1000 || 
+        timeSinceLastModeSwitch > 2 * 60 * 1000) {
+      this.loadRecommendPlans();
+    }
   },
 
   // 初始化英雄列表 - 基于已有方案
@@ -104,13 +120,21 @@ Page({
   // 初始化指定模式的英雄分类
   async initModeHeroList(mode: string) {
     try {
-      // 如果缓存中已有数据，直接使用
-      if (this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache].heroCategories.length > 0) {
-        const cachedData = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
+      // 如果缓存中已有数据且未过期，直接使用
+      const cacheKey = `mode_hero_list_${mode}`;
+      const cachedData = cacheManager.get(cacheKey);
+      
+      if (cachedData && cachedData.heroCategories && cachedData.heroCategories.length > 0) {
+        const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
+        modeCache.heroCategories = cachedData.heroCategories;
+        modeCache.allPlans = cachedData.allPlans;
+        modeCache.total = cachedData.total;
+        
         this.setData({
           heroCategories: cachedData.heroCategories,
           allRecommendPlans: cachedData.allPlans,
-          total: cachedData.total
+          total: cachedData.total,
+          [`modeDataCache.${mode}`]: modeCache
         });
         return;
       }
@@ -154,6 +178,14 @@ Page({
           [`modeDataCache.${this.data.currentMode}`]: modeCache
         });
         
+        // 缓存英雄分类数据，延长TTL到30分钟
+        const heroListCacheKey = `mode_hero_list_${mode}`;
+        cacheManager.set(heroListCacheKey, {
+          heroCategories: heroCategories,
+          allPlans: formattedPlans,
+          total: plans.length
+        }, 30 * 60 * 1000); // 30分钟TTL
+        
         // 强制刷新页面数据，确保头像能正确显示
         setTimeout(() => {
           this.setData({
@@ -175,7 +207,8 @@ Page({
       this.setData({
         currentMode: type,
         selectedHero: 'all',
-        page: 1 // 重置页码
+        page: 1, // 重置页码
+        lastModeSwitchTime: Date.now() // 记录模式切换时间
       });
       
       // 初始化对应模式的英雄分类
@@ -219,7 +252,8 @@ Page({
       const mode = e.currentTarget.dataset.mode;
       this.setData({
         currentMode: mode,
-        page: 1 // 重置页码
+        page: 1, // 重置页码
+        lastModeSwitchTime: Date.now() // 记录模式切换时间
       });
       // 重新加载数据
       await this.loadRecommendPlans();
@@ -684,7 +718,9 @@ Page({
             page: cachedData.page || 1,
             hasMore: cachedData.hasMore !== undefined ? cachedData.hasMore : true,
             loading: false,
-            loadingMore: false
+            loadingMore: false,
+            isDataLoaded: true,
+            lastLoadTime: Date.now()
           });
           return;
         }
@@ -728,12 +764,14 @@ Page({
           page: page,
           hasMore: hasMore,
           loading: false,
-          loadingMore: false
+          loadingMore: false,
+          isDataLoaded: true,
+          lastLoadTime: Date.now()
         });
 
         // 如果不是加载更多，则缓存数据并更新当前模式的缓存数据
         if (!isLoadMore) {
-          // 缓存当前筛选结果
+          // 缓存当前筛选结果，延长TTL到10分钟
           const cacheKey = `recommend_plans_${this.data.currentMode}_${this.data.selectedHero}`;
           const cacheData = {
             plans: formattedPlans,
@@ -743,7 +781,7 @@ Page({
             mode: this.data.currentMode,
             heroId: this.data.selectedHero
           };
-          cacheManager.set(cacheKey, cacheData, 3 * 60 * 1000); // 3分钟TTL
+          cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
           
           // 获取当前模式的完整数据用于更新缓存
           const fullResult = await wx.cloud.callFunction({

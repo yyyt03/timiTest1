@@ -2,6 +2,7 @@ import { getRecommendPlanIcon, getLikeIcon, getFavoriteIcon, getEmptyIcon } from
 import { getAllHeroes, getHeroById, getHeroByName } from '../../data/localHeroData';
 import { getTempFileURLs } from '../../utils/cloud';
 import { cacheManager } from '../../utils/cacheManager';
+import { notifyFavoriteAdded, notifyFavoriteRemoved, favoriteSyncManager } from '../../utils/favoriteSync';
 
 
 // 推荐方案页面
@@ -62,6 +63,9 @@ Page({
     lastFilterTime: 0, // 最后筛选时间
     filterDebounceTimer: null as any // 防抖定时器
   },
+
+  // 收藏状态变化处理器
+  favoriteChangeHandler: null as any,
  
   // 生命周期函数--监听页面加载
   onLoad() {
@@ -73,6 +77,9 @@ Page({
       lastLoadTime: now,
       lastModeSwitchTime: now
     });
+    
+    // 设置收藏状态变化监听器
+    this.setupFavoriteChangeListener();
     
     // 从strategy进入时，强制重置为全部英雄状态，不管之前是否有筛选
     console.log('从strategy进入，强制重置为全部英雄状态');
@@ -91,6 +98,14 @@ Page({
 
   onShow() {
     console.log('推荐方案页面 onShow 触发');
+    
+    // 优先检查收藏状态变化
+    if (this.checkFavoriteChanges()) {
+      console.log('检测到收藏状态变化，需要刷新数据');
+      this.loadRecommendPlans();
+      return;
+    }
+    
     const now = Date.now();
     const timeSinceLastLoad = now - this.data.lastLoadTime;
     const timeSinceLastModeSwitch = now - this.data.lastModeSwitchTime;
@@ -140,6 +155,9 @@ Page({
   onUnload() {
     console.log('推荐方案页面 onUnload 触发，保存筛选状态');
     this.saveFilterState();
+    
+    // 移除收藏状态变化监听器
+    this.cleanupFavoriteChangeListener();
   },
 
   // 保存筛选状态到本地存储
@@ -292,7 +310,7 @@ Page({
     try {
       // 如果缓存中已有数据且未过期，直接使用
       const cacheKey = `mode_hero_list_${mode}`;
-      const cachedData = cacheManager.get(cacheKey);
+      const cachedData = cacheManager.get(cacheKey) as any;
       
       if (cachedData && cachedData.heroCategories && cachedData.heroCategories.length > 0) {
         const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
@@ -961,6 +979,16 @@ Page({
           recommendPlans: updatedPlans
         });
         
+        // 通知其他页面收藏状态变化
+        if (isFavorited) {
+          notifyFavoriteAdded(plan._id);
+        } else {
+          notifyFavoriteRemoved(plan._id);
+        }
+        
+        // 清除相关缓存，确保数据一致性
+        this.clearFavoriteRelatedCache();
+        
         wx.showToast({
           title: isFavorited ? '收藏成功' : '取消收藏',
           icon: 'success'
@@ -1386,5 +1414,95 @@ Page({
       title: '攻略方案 - 推荐/热门/最新',
       imageUrl: '/pages/images/share-recommend-plan.png'
     };
+  },
+
+  // 设置收藏状态变化监听器
+  setupFavoriteChangeListener() {
+    this.favoriteChangeHandler = (event: any) => {
+      console.log('收到收藏状态变化事件:', event);
+      // 当收到收藏状态变化事件时，立即清除相关缓存并标记数据需要刷新
+      this.clearFavoriteRelatedCache();
+      this.setData({
+        lastLoadTime: 0 // 强制下次onShow时刷新数据
+      });
+    };
+    
+    favoriteSyncManager.addListener(this.favoriteChangeHandler);
+    console.log('收藏状态变化监听器已设置');
+  },
+
+  // 清理收藏状态变化监听器
+  cleanupFavoriteChangeListener() {
+    if (this.favoriteChangeHandler) {
+      favoriteSyncManager.removeListener(this.favoriteChangeHandler);
+      this.favoriteChangeHandler = null;
+      console.log('收藏状态变化监听器已清理');
+    }
+  },
+
+  // 检查收藏状态变化
+  checkFavoriteChanges(): boolean {
+    try {
+      const lastGlobalChange = wx.getStorageSync('last_global_favorite_change') || 0;
+      const lastLocalUpdate = this.data.lastLoadTime || 0;
+      
+      if (lastGlobalChange > lastLocalUpdate) {
+        console.log('检测到全局收藏状态变化，时间戳:', {
+          global: lastGlobalChange,
+          local: lastLocalUpdate,
+          diff: lastGlobalChange - lastLocalUpdate
+        });
+        
+        // 清除相关缓存，确保获取最新数据
+        this.clearFavoriteRelatedCache();
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('检查收藏状态变化失败:', error);
+      return false;
+    }
+  },
+
+  // 清除收藏相关的缓存
+  clearFavoriteRelatedCache() {
+    try {
+      // 清除当前模式的所有英雄筛选缓存
+      const cacheKeys = [
+        `recommend_plans_${this.data.currentMode}_all`,
+        `recommend_plans_${this.data.currentMode}_${this.data.selectedHero}`,
+        `mode_hero_list_${this.data.currentMode}`
+      ];
+      
+      // 清除所有模式的缓存，因为收藏状态变化可能影响所有模式
+      ['recommended', 'hot', 'latest'].forEach(mode => {
+        cacheKeys.push(
+          `recommend_plans_${mode}_all`,
+          `mode_hero_list_${mode}`
+        );
+      });
+      
+      cacheKeys.forEach(key => {
+        if (cacheManager.has(key)) {
+          cacheManager.delete(key);
+          console.log('已清除收藏相关缓存:', key);
+        }
+      });
+      
+      // 清除模式数据缓存
+      this.setData({
+        modeDataCache: {
+          recommended: { heroCategories: [], allPlans: [], total: 0 },
+          hot: { heroCategories: [], allPlans: [], total: 0 },
+          latest: { heroCategories: [], allPlans: [], total: 0 }
+        }
+      });
+      
+      console.log('已清除收藏相关的所有缓存数据');
+    } catch (error) {
+      console.warn('清除收藏相关缓存失败:', error);
+    }
   }
 });

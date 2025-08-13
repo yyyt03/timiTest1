@@ -2,6 +2,7 @@
 import { getHeroById, getHeroByName } from '../../data/localHeroData';
 import { callFunction } from '../../utils/cloud';
 import { cacheManager } from '../../utils/cacheManager';
+import { notifyFavoriteAdded, notifyFavoriteRemoved } from '../../utils/favoriteSync';
 
 interface PlanData {
   _id?: string;
@@ -341,6 +342,15 @@ Page({
         this.setData({
           'plan.isFavorited': isFavorited
         });
+        
+        // 通知其他页面收藏状态变化
+        if (plan._id) {
+          if (isFavorited) {
+            notifyFavoriteAdded(plan._id);
+          } else {
+            notifyFavoriteRemoved(plan._id);
+          }
+        }
         
         // 更新缓存中的收藏状态
         if (plan._id) {

@@ -100,6 +100,12 @@ exports.main = async function(event, context) {
       updateTime: new Date().toISOString()
     };
     
+    // 状态自动变更逻辑：普通用户编辑已发布方案时，自动变为待审核状态
+    if (!admin && planResult.data.status === 'published') {
+      updateData.status = 'pending';
+      console.log('普通用户编辑已发布方案，状态自动变为待审核');
+    }
+    
     console.log('准备更新的数据:', updateData);
     
     // 验证方案思路字数

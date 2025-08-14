@@ -40,21 +40,12 @@ Page({
         title: options.hero + '的方案'
       });
       
-      // 智能缓存检查，只在必要时清除缓存
-      this.checkAndUpdateCache().then(() => {
-        // 获取英雄头像
-        this.getHeroAvatarFromLocal(options.hero).catch((error: any) => {
-          console.error('获取英雄头像失败:', error);
-        });
-        this.loadPlans();
-      }).catch((error: any) => {
-        log('缓存检查失败，直接获取数据:', error);
-        // 获取英雄头像
-        this.getHeroAvatarFromLocal(options.hero).catch((error: any) => {
-          console.error('获取英雄头像失败:', error);
-        });
-        this.loadPlans();
+      // 直接加载方案数据，让loadPlans方法处理缓存逻辑
+      // 获取英雄头像
+      this.getHeroAvatarFromLocal(options.hero).catch((error: any) => {
+        console.error('获取英雄头像失败:', error);
       });
+      this.loadPlans();
     }
     
     // 设置点赞状态变化监听器
@@ -64,33 +55,10 @@ Page({
   // 点赞状态变化处理器
   likeChangeHandler: null as any,
 
-  // 智能缓存检查和更新
+  // 智能缓存检查和更新 - 简化逻辑，让loadPlans方法处理缓存
   async checkAndUpdateCache() {
-    const cacheKey = CacheKeyGenerator.hero('data', 'plans');
-    const cacheInfo = cacheManager.getCacheItem(cacheKey);
-    
-    // 如果缓存不存在，清除相关缓存
-    if (!cacheInfo) {
-      log('英雄方案缓存不存在，清除相关缓存');
-      this.clearHeroRelatedCache();
-      return;
-    }
-
-    // 检查缓存是否过期（英雄方案列表缓存时间设置为30分钟）
-    const cacheAge = Date.now() - cacheInfo.timestamp;
-    if (cacheAge > 30 * 60 * 1000) { // 30分钟
-      log('英雄方案缓存已过期，清除相关缓存');
-      this.clearHeroRelatedCache();
-      return;
-    }
-
-    // 检查缓存年龄，如果超过25分钟则标记为即将过期
-    if (cacheAge > 25 * 60 * 1000) { // 25分钟
-      log('英雄方案缓存即将过期，标记为需要更新');
-      // 不立即清除，但标记为需要更新
-    }
-
-    log('英雄方案缓存有效，保留现有缓存');
+    // 简化缓存检查逻辑，主要缓存逻辑在loadPlans方法中处理
+    log('缓存检查：让loadPlans方法处理具体的缓存逻辑');
   },
 
   // 设置点赞状态变化监听器
@@ -125,8 +93,11 @@ Page({
 
   // 清除英雄相关的缓存
   clearHeroRelatedCache() {
+    // 使用与recommendPlan页面相同的缓存键模式，确保缓存共享
     const patterns = [
-      CacheKeyGenerator.hero('data', 'plans'),
+      `timi:plan:data:herolist_hot`, // recommendPlan页面的主要缓存键，包含所有方案数据
+      `timi:plan:data:herolist_latest`,
+      `timi:plan:data:herolist_recommended`,
       CacheKeyGenerator.hero('url', 'avatar'),
       CacheKeyGenerator.hero('data', 'info')
     ];
@@ -255,7 +226,7 @@ Page({
     }
   },
 
-  // 加载方案数据
+  // 加载方案数据 - 优先使用recommendPlan页面的缓存数据，模拟英雄筛选器
   async loadPlans(isLoadMore = false) {
     const that = this;
     
@@ -269,56 +240,100 @@ Page({
     }
 
     try {
-      // 如果不是加载更多，尝试从缓存获取数据
+      // 如果不是加载更多，先尝试从recommendPlan页面的缓存中获取数据
       let result: any;
       if (!isLoadMore) {
-        const cacheKey = CacheKeyGenerator.hero('data', 'plans');
+        // 优先使用recommendPlan页面的缓存数据，实现真正的缓存共享
+        // recommendPlan页面使用 timi:plan:data:herolist_hot:v1 缓存hot模式的所有方案数据
+        const recommendPlanCacheKey = `timi:plan:data:herolist_hot:v1`;
         const cachedData = cacheManager.get<{
-          plans: any[];
+          heroCategories: any[];
+          allPlans: any[];  // 这里包含了hot模式下的所有方案数据
           total: number;
-          page: number;
-          hasMore: boolean;
+          mode: string;
+          isRecommended: boolean;
           timestamp: number;
-        }>(cacheKey);
+        }>(recommendPlanCacheKey);
         
-        if (cachedData) {
-          log('使用缓存的英雄方案列表数据');
+        if (cachedData && cachedData.allPlans && cachedData.allPlans.length > 0) {
+          log('使用recommendPlan页面的缓存数据，模拟英雄筛选器筛选英雄方案（实现缓存共享）');
+          
           // 检查缓存是否仍然有效（30分钟）
-          const cacheAge = Date.now() - cachedData.timestamp;
+          // 注意：这里需要处理时间戳可能是字符串的情况
+          let cacheAge = 0;
+          if (cachedData.timestamp) {
+            const timestamp = typeof cachedData.timestamp === 'string' 
+              ? new Date(cachedData.timestamp).getTime() 
+              : cachedData.timestamp;
+            cacheAge = Date.now() - timestamp;
+          }
+          
+          log(`缓存时间检查：当前时间 ${new Date().toISOString()}，缓存时间 ${cachedData.timestamp}，时间差 ${cacheAge}ms`);
+          
           if (cacheAge < 30 * 60 * 1000) { // 30分钟
-            const formattedPlans = cachedData.plans.map((plan: any) => ({
-              ...plan,
-              createTime: this.formatTime(plan.createTime)
-            }));
+            // 从缓存数据中筛选出当前英雄的方案，模拟recommendPlan页面的英雄筛选器
+            const heroPlans = cachedData.allPlans.filter((plan: any) => 
+              plan.heroId === this.data.heroId || plan.heroName === this.data.hero
+            );
             
-            this.setData({
-              plans: formattedPlans,
-              page: cachedData.page,
-              hasMore: cachedData.hasMore,
-              loading: false
-            });
-            return;
+            if (heroPlans.length > 0) {
+              log(`从缓存中筛选出${this.data.hero}的方案，数量: ${heroPlans.length}（模拟英雄筛选器）`);
+              
+              // 按点赞收藏总和降序排序，与hot模式保持一致
+              const sortedPlans = this.sortPlansByLikeAndFavorite(heroPlans);
+              
+              // 格式化时间
+              const formattedPlans = sortedPlans.map((plan: any) => ({
+                ...plan,
+                createTime: this.formatTime(plan.createTime)
+              }));
+              
+              this.setData({
+                plans: formattedPlans,
+                page: 1,
+                hasMore: false, // 缓存数据通常是一页完整的
+                loading: false
+              });
+              
+              log('成功使用recommendPlan页面缓存数据，模拟英雄筛选器，避免调用云函数');
+              return;
+            } else {
+              log(`缓存中未找到${this.data.hero}的方案，需要调用云函数`);
+            }
           } else {
-            log('缓存已过期，从云函数获取数据');
+            log(`recommendPlan页面缓存已过期，时间差: ${cacheAge}ms，超过30分钟限制，需要调用云函数`);
+          }
+        } else {
+          log('recommendPlan页面缓存不存在或数据结构不完整，需要调用云函数');
+          if (cachedData) {
+            log('缓存数据结构:', {
+              hasHeroCategories: !!cachedData.heroCategories,
+              hasAllPlans: !!cachedData.allPlans,
+              allPlansLength: cachedData.allPlans ? cachedData.allPlans.length : 0,
+              timestamp: cachedData.timestamp,
+              mode: cachedData.mode
+            });
           }
         }
       }
 
-      // 从云函数获取数据
+      // 如果缓存中没有数据或已过期，调用云函数获取数据
+      console.log('调用getRecommendPlans云函数获取英雄方案数据，英雄ID:', this.data.heroId);
       result = await wx.cloud.callFunction({
-        name: 'getHeroPlans',
+        name: 'getRecommendPlans',
         data: {
           heroId: this.data.heroId,
           page: isLoadMore ? this.data.page + 1 : 1,
           pageSize: this.data.pageSize,
-          forceRefresh: false // 移除强制刷新，让缓存机制发挥作用
+          mode: 'hot', // 使用热门模式，按点赞收藏排序
+          includeBetaPlans: true
         }
       }) as any;
       
       if (result.result && result.result.success) {
         const { plans, total, page, hasMore } = result.result.data;
         
-        // 按点赞收藏总和降序排序
+        // 按点赞收藏总和降序排序（云函数已经排序，这里确保一下）
         const sortedPlans = this.sortPlansByLikeAndFavorite(plans);
         
         // 格式化时间
@@ -329,17 +344,20 @@ Page({
 
         // 如果不是加载更多，缓存第一页数据
         if (!isLoadMore) {
-          const cacheKey = CacheKeyGenerator.hero('data', 'plans');
+          // 使用与recommendPlan页面相同的缓存键，实现缓存共享
+          const cacheKey = `timi:plan:data:recommend_hot_${this.data.heroId}:v1`;
           const cacheData = {
             plans: sortedPlans,
             total,
             page,
             hasMore,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            mode: 'hot',
+            heroId: this.data.heroId
           };
           // 缓存30分钟
           cacheManager.set(cacheKey, cacheData, 30 * 60 * 1000);
-          log('英雄方案列表数据已缓存，有效期30分钟');
+          log('英雄方案列表数据已缓存（与recommendPlan共享），有效期30分钟');
         }
 
         this.setData({
@@ -380,9 +398,38 @@ Page({
     });
   },
 
-  // 格式化时间
-  formatTime(timeStr: string) {
-    const date = new Date(timeStr);
+  // 格式化时间 - 修复iOS兼容性问题
+  formatTime(timeStr: any) {
+    if (!timeStr) return '';
+    
+    let date: Date;
+    
+    // 处理不同类型的输入，确保 iOS 兼容性
+    if (typeof timeStr === 'string') {
+      // 处理 MongoDB 的日期格式
+      if (timeStr.includes('$date')) {
+        try {
+          const dateObj = JSON.parse(timeStr);
+          date = new Date(dateObj.$date);
+        } catch (e) {
+          // 如果解析失败，尝试标准化格式
+          date = this.parseDateString(timeStr);
+        }
+      } else {
+        // 标准化字符串格式，确保 iOS 兼容性
+        date = this.parseDateString(timeStr);
+      }
+    } else if (timeStr instanceof Date) {
+      date = timeStr;
+    } else {
+      // 处理时间戳或其他类型
+      date = new Date(timeStr);
+    }
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return '';
+    }
     
     // 标准格式：年月日+小时分钟
     const year = date.getFullYear();
@@ -392,6 +439,83 @@ Page({
     const minutes = String(date.getMinutes()).padStart(2, '0');
     
     return `${year}-${month}-${day} ${hours}:${minutes}`;
+  },
+
+  // 解析日期字符串，确保 iOS 兼容性
+  parseDateString(dateString: string): Date {
+    if (!dateString) {
+      return new Date();
+    }
+    
+    // 移除多余的空格
+    const cleanString = dateString.trim();
+    
+    // 优先使用 iOS 完全兼容的格式
+    // iOS 支持的格式：yyyy/MM/dd、yyyy/MM/dd HH:mm:ss、yyyy-MM-dd、yyyy-MM-ddTHH:mm:ss、yyyy-MM-ddTHH:mm:ss+HH:mm
+    
+    // 1. 处理 "2025-08-09 16:34" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T') + ':00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 2. 处理 "2025-08-09 16:34:30" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T');
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 3. 处理 "2025/08/09 16:34" 格式，转换为 ISO 格式
+    if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T').replace(/\//g, '-') + ':00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 4. 处理 "2025/08/09 16:34:30" 格式，转换为 ISO 格式
+    if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T').replace(/\//g, '-');
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 5. 处理 "2025-08-09" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanString)) {
+      const isoString = cleanString + 'T00:00:00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 6. 处理 "2025/08/09" 格式，转换为 ISO 格式
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(/\//g, '-') + 'T00:00:00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 7. 尝试直接解析（对于已经是 ISO 格式的字符串）
+    const directDate = new Date(cleanString);
+    if (!isNaN(directDate.getTime())) {
+      return directDate;
+    }
+    
+    // 8. 最后的尝试：解析失败时返回当前时间
+    console.warn('无法解析日期字符串:', dateString, '，使用当前时间');
+    return new Date();
   },
 
   // 查看方案详情
@@ -428,8 +552,6 @@ Page({
       url: '../createPlan/createPlan?hero=' + this.data.hero + '&heroId=' + this.data.heroId
     });
   },
-
-
 
   // 切换点赞状态
   async toggleLike(e: any) {
@@ -579,10 +701,18 @@ Page({
 
   // 清除英雄方案相关缓存
   invalidateHeroPlansCache() {
-    const cacheKey = CacheKeyGenerator.hero('data', 'plans');
+    // 使用与recommendPlan页面相同的缓存键，确保缓存共享
+    // 优先清除recommendPlan页面的主要缓存
+    const recommendPlanCacheKey = `timi:plan:data:herolist_hot:v1`;
     
-    if (cacheManager.delete(cacheKey)) {
-      log('已清除英雄方案列表缓存:', cacheKey);
+    if (cacheManager.delete(recommendPlanCacheKey)) {
+      log('已清除recommendPlan页面缓存（实现缓存共享）:', recommendPlanCacheKey);
+    }
+    
+    // 同时清除特定英雄的缓存
+    const heroSpecificCacheKey = `timi:plan:data:recommend_hot_${this.data.heroId}:v1`;
+    if (cacheManager.delete(heroSpecificCacheKey)) {
+      log('已清除英雄特定缓存:', heroSpecificCacheKey);
     }
   },
 

@@ -4,10 +4,9 @@
     <view class="user-card">
       <view class="user-info">
         <view class="avatar-container">
-          <image wx:if="{{hasUserInfo && userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          <image wx:if="{{userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
           <view wx:else class="avatar-placeholder">
-            <text wx:if="{{isLoggedIn}}">👤</text>
-            <text wx:else>🔒</text>
+            <text>👤</text>
           </view>
         </view>
         <view class="user-details">

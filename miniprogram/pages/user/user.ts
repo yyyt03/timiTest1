@@ -8,13 +8,11 @@ Page({
       avatarUrl: '',
       nickName: '微信用户'
     },
-    hasUserInfo: true,
     // 图标路径
     favoritePlanIcon: getFavoritePlanIcon(),
     createPlanIcon: getCreatePlanIcon(),
     myPlanIcon: getMyPlanIcon(),
-    // 用户方案数据
-    userPlans: [],
+    // 用户方案数量
     userPlansCount: 0,
     // 环境控制
     isDevelopment: false
@@ -35,15 +33,14 @@ Page({
     // 检测环境
     this.detectEnvironment();
     
-    // 获取用户方案数据
-    this.getUserPlans();
+    // 获取用户方案数量
+    this.getUserPlansCount();
   },
 
   // 检测环境
   detectEnvironment() {
     try {
       const accountInfo = wx.getAccountInfoSync();
-      const version = accountInfo.miniProgram?.version || '';
       const envVersion = accountInfo.miniProgram?.envVersion || '';
       
       // 仅开发版显示管理员入口；trial 视作 release
@@ -54,7 +51,6 @@ Page({
       });
       
       console.log('用户页面环境检测结果:', {
-        version,
         envVersion,
         isDevelopment: isDev
       });
@@ -67,16 +63,12 @@ Page({
     }
   },
 
-
-
   // 跳转到方案审核（仅开发者可见入口）
   goToPlanReview() {
     wx.navigateTo({
       url: '../myPlans/myPlans?admin=1'
     });
   },
-
-
 
   // 跳转到收藏方案页面
   goToFavorites() {
@@ -85,24 +77,23 @@ Page({
     });
   },
 
-  // 获取用户方案数据
-  getUserPlans() {
+  // 获取用户方案数量
+  getUserPlansCount() {
     wx.cloud.callFunction({
       name: 'getUserPlans',
       data: {
         page: 1,
-        pageSize: 20
+        pageSize: 1
       },
       success: (res: any) => {
         if (res.result.success) {
           this.setData({
-            userPlans: res.result.data.plans,
-            userPlansCount: res.result.data.total
+            userPlansCount: res.result.data.total || 0
           });
         }
       },
       fail: (err) => {
-        console.error('获取用户方案失败:', err);
+        console.error('获取用户方案数量失败:', err);
       }
     });
   },
@@ -120,8 +111,6 @@ Page({
       url: '../myPlans/myPlans'
     });
   },
-
-
 
   // 获取默认头像URL
   async getDefaultAvatarUrl(): Promise<string> {

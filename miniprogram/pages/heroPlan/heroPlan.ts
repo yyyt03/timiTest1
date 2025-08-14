@@ -1,9 +1,10 @@
 import { getFavoriteIcon, getLikeIcon, getEmptyIcon } from '../../utils/iconManager';
 import { getHeroByName } from '../../data/localHeroData';
-import { cacheManager } from '../../utils/cacheManager';
+import cacheManager from '../../utils/cacheManager';
 import { avatarCache } from '../../utils/avatarCache';
 import { log } from '../../utils/logger';
 import { notifyLikeAdded, notifyLikeRemoved, interactionSyncManager } from '../../utils/favoriteSync';
+import { CACHE_KEYS, CacheKeyGenerator } from '../../utils/cacheKeys';
 
 // 英雄方案页面
 Page({
@@ -65,8 +66,8 @@ Page({
 
   // 智能缓存检查和更新
   async checkAndUpdateCache() {
-    const cacheKey = `hero_plans_cache_${this.data.heroId || this.data.hero}`;
-    const cacheInfo = cacheManager.getItemInfo(cacheKey);
+    const cacheKey = CacheKeyGenerator.hero('data', 'plans');
+    const cacheInfo = cacheManager.getCacheItem(cacheKey);
     
     // 如果缓存不存在，清除相关缓存
     if (!cacheInfo) {
@@ -76,14 +77,15 @@ Page({
     }
 
     // 检查缓存是否过期（英雄方案列表缓存时间设置为30分钟）
-    if (cacheInfo.expired) {
+    const cacheAge = Date.now() - cacheInfo.timestamp;
+    if (cacheAge > 30 * 60 * 1000) { // 30分钟
       log('英雄方案缓存已过期，清除相关缓存');
       this.clearHeroRelatedCache();
       return;
     }
 
     // 检查缓存年龄，如果超过25分钟则标记为即将过期
-    if (cacheInfo.age > 25 * 60 * 1000) { // 25分钟
+    if (cacheAge > 25 * 60 * 1000) { // 25分钟
       log('英雄方案缓存即将过期，标记为需要更新');
       // 不立即清除，但标记为需要更新
     }
@@ -123,16 +125,15 @@ Page({
 
   // 清除英雄相关的缓存
   clearHeroRelatedCache() {
-    const heroKey = this.data.heroId || this.data.hero;
     const patterns = [
-      `hero_plans_cache_${heroKey}`,
-      `hero_avatar_cache_${heroKey}`,
-      `hero_info_cache_${heroKey}`
+      CacheKeyGenerator.hero('data', 'plans'),
+      CacheKeyGenerator.hero('url', 'avatar'),
+      CacheKeyGenerator.hero('data', 'info')
     ];
     
     patterns.forEach(pattern => {
-      const keys = cacheManager.getKeys().filter(key => key.includes(pattern));
-      keys.forEach(key => cacheManager.delete(key));
+      const keys = cacheManager.getCacheKeys().filter((key: string) => key.includes(pattern));
+      keys.forEach((key: string) => cacheManager.delete(key));
     });
     
     log('已清除英雄相关缓存:', patterns);
@@ -141,66 +142,45 @@ Page({
   // 从本地数据获取英雄头像 - 使用头像缓存机制
   async getHeroAvatarFromLocal(heroName: string) {
     try {
-      // 检查头像缓存
-      const avatarCacheKey = `hero_avatar_cache_${heroName}`;
-      const cachedAvatar = cacheManager.get<string>(avatarCacheKey);
-      
-      if (cachedAvatar) {
-        log('使用缓存的英雄头像');
-        this.setData({
-          heroAvatar: cachedAvatar
-        });
-        return;
-      }
-
       // 从本地数据获取英雄信息
       const hero = getHeroByName(heroName);
       
       if (hero && hero.avatar) {
-        let avatarUrl = hero.avatar;
-        
-        // 如果是云存储路径，使用头像缓存获取临时URL
-        if (avatarUrl && avatarUrl.startsWith('cloud://')) {
-          try {
-            console.log('获取英雄头像临时URL:', avatarUrl);
-            const avatarUrlMap = await avatarCache.getAvatarUrls([avatarUrl]);
-            const tempUrl = avatarUrlMap[avatarUrl];
-            
-            if (tempUrl && tempUrl.startsWith('http')) {
-              avatarUrl = tempUrl;
-              console.log('英雄头像临时URL获取成功');
-            } else {
-              console.warn('英雄头像临时URL获取失败，使用默认头像');
-              avatarUrl = '../images/unused/default-avatar.png';
-            }
-          } catch (error) {
-            console.error('获取英雄头像临时URL失败:', error);
-            avatarUrl = '../images/unused/default-avatar.png';
+        try {
+          console.log('获取英雄头像:', hero.avatar);
+          // 直接使用avatarCache获取头像URL，它会自动处理本地路径和云存储路径
+          const avatarUrlMap = await avatarCache.getAvatarUrls([hero.avatar]);
+          const avatarUrl = avatarUrlMap[hero.avatar];
+          
+          if (avatarUrl && avatarUrl.startsWith('http')) {
+            console.log('英雄头像获取成功:', avatarUrl);
+            this.setData({
+              heroAvatar: avatarUrl
+            });
+          } else {
+            console.warn('英雄头像获取失败，使用默认头像');
+            this.setData({
+              heroAvatar: '../images/unused/default-avatar.png'
+            });
           }
+        } catch (error) {
+          console.error('获取英雄头像失败:', error);
+          this.setData({
+            heroAvatar: '../images/unused/default-avatar.png'
+          });
         }
-        
-        // 缓存头像URL（2小时）
-        cacheManager.set(avatarCacheKey, avatarUrl, 2 * 60 * 60 * 1000);
-        
-        this.setData({
-          heroAvatar: avatarUrl
-        });
       } else {
         // 未找到英雄，使用默认头像
-        const defaultAvatar = '../images/unused/default-avatar.png';
-        cacheManager.set(avatarCacheKey, defaultAvatar, 2 * 60 * 60 * 1000);
+        console.log('未找到英雄信息，使用默认头像');
         this.setData({
-          heroAvatar: defaultAvatar
+          heroAvatar: '../images/unused/default-avatar.png'
         });
       }
     } catch (error) {
       console.error('获取英雄头像失败:', error);
       // 出错时使用默认头像
-      const defaultAvatar = '../images/unused/default-avatar.png';
-      const avatarCacheKey = `hero_avatar_cache_${heroName}`;
-      cacheManager.set(avatarCacheKey, defaultAvatar, 2 * 60 * 60 * 1000);
       this.setData({
-        heroAvatar: defaultAvatar
+        heroAvatar: '../images/unused/default-avatar.png'
       });
     }
   },
@@ -211,7 +191,7 @@ Page({
     
     try {
       // 尝试从缓存获取方案详情（除非强制刷新）
-      const cacheKey = `hero_plan_detail_${planId}`;
+      const cacheKey = CacheKeyGenerator.plan('detail', planId);
       let result: any;
       
       if (!forceRefresh) {
@@ -292,7 +272,7 @@ Page({
       // 如果不是加载更多，尝试从缓存获取数据
       let result: any;
       if (!isLoadMore) {
-        const cacheKey = `hero_plans_cache_${this.data.heroId || this.data.hero}`;
+        const cacheKey = CacheKeyGenerator.hero('data', 'plans');
         const cachedData = cacheManager.get<{
           plans: any[];
           total: number;
@@ -349,7 +329,7 @@ Page({
 
         // 如果不是加载更多，缓存第一页数据
         if (!isLoadMore) {
-          const cacheKey = `hero_plans_cache_${this.data.heroId || this.data.hero}`;
+          const cacheKey = CacheKeyGenerator.hero('data', 'plans');
           const cacheData = {
             plans: sortedPlans,
             total,
@@ -599,8 +579,7 @@ Page({
 
   // 清除英雄方案相关缓存
   invalidateHeroPlansCache() {
-    const heroKey = this.data.heroId || this.data.hero;
-    const cacheKey = `hero_plans_cache_${heroKey}`;
+    const cacheKey = CacheKeyGenerator.hero('data', 'plans');
     
     if (cacheManager.delete(cacheKey)) {
       log('已清除英雄方案列表缓存:', cacheKey);

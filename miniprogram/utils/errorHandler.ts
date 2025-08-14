@@ -1,5 +1,6 @@
 // 统一错误处理机制
-import { getCurrentConfig } from './config';
+// 移除循环依赖的导入
+// import { getCurrentConfig } from './config';
 import { log } from './logger';
 
 // 错误类型枚举
@@ -134,7 +135,10 @@ class ErrorHandler {
 
   // 记录错误到控制台
   private logError(error: ErrorInfo): void {
-    const currentConfig = getCurrentConfig();
+    // 使用默认配置
+    const currentConfig = {
+      enableLogs: true // 默认开启日志
+    };
     
     if (currentConfig.enableLogs) {
       const logMessage = `[ERROR] ${error.type} (${error.severity}): ${error.message}`;

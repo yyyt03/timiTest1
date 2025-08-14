@@ -1,7 +1,7 @@
 // 应用配置管理
 import { errorHandler, handleError, ErrorType } from './errorHandler';
 import { logger } from './logger';
-import { cacheManager } from './cacheManager';
+import cacheManager from './cacheManager';
 
 // 应用配置接口
 export interface AppConfig {
@@ -72,9 +72,10 @@ class ConfigManager {
       this.initializeSubsystems();
       
       this.isInitialized = true;
-      logger.info('配置管理器初始化完成');
+      // 使用console.log避免循环依赖
+      console.log('配置管理器初始化完成');
     } catch (error) {
-      handleError(ErrorType.UNKNOWN, '配置管理器初始化失败');
+      console.error('配置管理器初始化失败:', error);
       throw error;
     }
   }
@@ -84,23 +85,36 @@ class ConfigManager {
     try {
       // 初始化缓存管理器
       if (this.config.cacheEnabled) {
-        cacheManager.init();
-        logger.info('缓存管理器初始化完成');
+        try {
+          cacheManager.init();
+          console.log('缓存管理器初始化完成');
+        } catch (error) {
+          console.warn('缓存管理器初始化失败:', error);
+        }
       }
 
       // 初始化错误处理器
       if (this.config.enableErrorReporting) {
-        errorHandler.init();
-        logger.info('错误处理器初始化完成');
+        try {
+          errorHandler.init();
+          console.log('错误处理器初始化完成');
+        } catch (error) {
+          console.warn('错误处理器初始化失败:', error);
+        }
       }
 
       // 初始化日志系统
       if (this.config.enableLogs) {
-        logger.init();
-        logger.info('日志系统初始化完成');
+        try {
+          logger.init();
+          console.log('日志系统初始化完成');
+        } catch (error) {
+          console.warn('日志系统初始化失败:', error);
+        }
       }
     } catch (error) {
-      handleError(ErrorType.UNKNOWN, '子系统初始化失败');
+      console.error('子系统初始化失败:', error);
+      // 不抛出错误，允许部分子系统初始化失败
     }
   }
 

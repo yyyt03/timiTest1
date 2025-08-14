@@ -7,7 +7,7 @@ cloud.init({
 
 // 云函数入口函数
 exports.main = async function(event, context) {
-  console.log('getRecommendPlans云函数被调用', event);
+  console.log('getRecommendPlans云函数被调用，完整参数:', event);
   
   try {
     const db = cloud.database();
@@ -18,9 +18,22 @@ exports.main = async function(event, context) {
       isBetaPlan = false, // 是否为体验服方案筛选
       includeBetaPlans = false, // 是否包含体验服方案
       mode = 'hot', // recommended: 推荐方案, hot: 热门方案(按点赞收藏排序), latest: 最新方案(按时间排序)
+      isRecommended = false, // 是否为推荐方案筛选
       page = 1, 
       pageSize = 10 
     } = event;
+    
+    console.log('解析后的参数:', {
+      filter,
+      heroId,
+      hero,
+      isBetaPlan,
+      includeBetaPlans,
+      mode,
+      isRecommended,
+      page,
+      pageSize
+    });
     
     // 计算偏移量
     const skip = (page - 1) * pageSize;
@@ -37,10 +50,10 @@ exports.main = async function(event, context) {
     };
     
     // 根据模式设置不同的筛选和排序逻辑
-    if (mode === 'recommended') {
+    if (mode === 'recommended' || event.isRecommended === true) {
       // 推荐模式：只显示被标记为推荐的方案
       whereCondition.isRecommended = true;
-      console.log('推荐模式：只显示推荐方案');
+      console.log('推荐模式：只显示推荐方案，查询条件:', whereCondition);
     } else if (mode === 'hot') {
       // 热门模式：显示所有已发布方案（按点赞收藏排序）
       console.log('热门模式：显示所有已发布方案（按点赞收藏排序）');
@@ -114,6 +127,24 @@ exports.main = async function(event, context) {
           .where(whereCondition)
           .count()
       ]);
+    }
+    
+    console.log('数据库查询结果:', {
+      mode,
+      isRecommended: event.isRecommended,
+      whereCondition,
+      plansCount: plansResult.data.length,
+      totalCount: countResult.total
+    });
+    
+    // 验证推荐方案筛选结果
+    if (mode === 'recommended' || event.isRecommended === true) {
+      const recommendedPlans = plansResult.data.filter(plan => plan.isRecommended === true);
+      console.log('推荐方案筛选验证:', {
+        totalPlans: plansResult.data.length,
+        recommendedPlans: recommendedPlans.length,
+        isRecommendedPlans: recommendedPlans.map(p => ({ id: p._id, title: p.title, isRecommended: p.isRecommended }))
+      });
     }
     
     // 获取所有方案的点赞和收藏数量

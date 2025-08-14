@@ -15,7 +15,7 @@
   </view>
 
   <!-- 英雄分类选择器 -->
-  <view class="hero-selector" wx:if="{{heroCategories.length > 0}}">
+  <view class="hero-selector" wx:if="{{heroCategories.length > 0 || currentMode === 'recommended'}}">
     <view class="selector-header" bindtap="toggleHeroSelector">
       <text class="selector-title">
         {{selectedHero === 'all' ? '全部英雄' : selectedHero}}
@@ -36,6 +36,7 @@
       <!-- 英雄选项 -->
       <view class="hero-item {{selectedHero === item.heroName ? 'selected' : ''}}" 
             wx:for="{{heroCategories}}" wx:key="heroName"
+            wx:if="{{heroCategories.length > 0}}"
             bindtap="selectHero" data-hero="{{item.heroName}}">
         <view class="hero-avatar">
           <image class="hero-avatar-img" 
@@ -45,6 +46,12 @@
                  data-hero-name="{{item.heroName}}"></image>
         </view>
         <text class="hero-name">{{item.heroName}}</text>
+      </view>
+      
+      <!-- 当没有英雄分类数据时的提示 -->
+      <view class="hero-item no-hero" wx:if="{{heroCategories.length === 0}}">
+        <view class="hero-avatar no-hero-avatar">无</view>
+        <text class="hero-name">暂无英雄数据</text>
       </view>
     </view>
   </view>

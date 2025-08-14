@@ -2,7 +2,7 @@ import { formatTime } from '../../utils/cloud'
 import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
 import { getHeroByName } from '../../data/localHeroData'
 import { avatarCache } from '../../utils/avatarCache'
-import { cacheManager } from '../../utils/cacheManager'
+import cacheManager from '../../utils/cacheManager'
 import { favoriteSyncManager, FavoriteAction } from '../../utils/favoriteSync'
 import type { FavoritesCacheData, FavoriteItem } from '../../typings/types/favorites'
 
@@ -427,7 +427,11 @@ Page({
     heroCategories.sort((a, b) => b.count - a.count);
     
     // 处理英雄头像
-    this.processHeroAvatars(heroCategories);
+    this.processHeroAvatars(heroCategories).then(processedCategories => {
+      this.setData({
+        heroCategories: processedCategories
+      });
+    });
     
     this.setData({
       heroCategories
@@ -435,16 +439,74 @@ Page({
   },
 
   // 处理英雄头像
-  processHeroAvatars(heroCategories: any[]) {
-    heroCategories.forEach(hero => {
-      if (!hero.heroAvatar) {
-        // 如果没有头像，尝试从本地数据获取
-        const heroInfo = getHeroByName(hero.heroName);
-        if (heroInfo && heroInfo.avatar) {
-          hero.heroAvatar = heroInfo.avatar;
+  async processHeroAvatars(heroCategories: any[]) {
+    try {
+      console.log('favorites: 开始处理英雄头像，英雄数量:', heroCategories.length);
+      
+      // 为每个英雄分类添加头像信息
+      const processedCategories = heroCategories.map(heroCategory => {
+        const hero = getHeroByName(heroCategory.heroName);
+        
+        if (hero && hero.avatar) {
+          console.log(`favorites: 英雄 ${heroCategory.heroName} 找到头像:`, hero.avatar);
+          return {
+            ...heroCategory,
+            heroAvatar: hero.avatar
+          };
+        } else {
+          console.log(`favorites: 英雄 ${heroCategory.heroName} 未找到头像，使用默认头像`);
+          return {
+            ...heroCategory,
+            heroAvatar: '/images/unused/default-avatar.png'
+          };
+        }
+      });
+      
+      // 使用新的头像缓存管理器批量获取头像临时URL
+      const avatarUrls = processedCategories
+        .map(hero => hero.heroAvatar)
+        .filter(avatar => avatar && !avatar.startsWith('http') && !avatar.startsWith('/'));
+      
+      console.log('favorites: 需要处理的头像URL数量:', avatarUrls.length);
+      console.log('favorites: 头像URL列表:', avatarUrls);
+      
+      if (avatarUrls.length > 0) {
+        try {
+          console.log('favorites: 开始获取英雄头像临时URL，数量:', avatarUrls.length);
+          const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+          console.log('favorites: 头像临时URL获取完成，结果:', avatarUrlMap);
+          
+          // 更新头像URL
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
+              const tempUrl = avatarUrlMap[heroCategory.heroAvatar];
+              if (tempUrl && tempUrl.startsWith('http')) {
+                console.log(`favorites: 英雄 ${heroCategory.heroName} 头像URL更新成功:`, tempUrl);
+                heroCategory.heroAvatar = tempUrl;
+              } else {
+                console.warn(`favorites: 英雄 ${heroCategory.heroName} 头像临时URL获取失败，使用默认头像`);
+                heroCategory.heroAvatar = '/images/unused/default-avatar.png';
+              }
+            }
+          });
+        } catch (error) {
+          console.error('favorites: 获取头像临时URL失败:', error);
+          // 如果获取失败，使用默认头像
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
+              heroCategory.heroAvatar = '/images/unused/default-avatar.png';
+            }
+          });
         }
       }
-    });
+      
+      console.log('favorites: 英雄头像处理完成，结果:', processedCategories);
+      return processedCategories;
+    } catch (error) {
+      console.error('favorites: 处理英雄头像失败:', error);
+      // 如果处理失败，返回原始数据
+      return heroCategories;
+    }
   },
 
   // 英雄头像加载错误处理

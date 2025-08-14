@@ -1,6 +1,7 @@
 // 头像URL缓存管理器
 import { getTempFileURLs } from './cloud';
 import { logger } from './logger';
+import { CACHE_KEYS } from './cacheKeys';
 
 interface AvatarCacheItem {
   url: string;
@@ -18,7 +19,7 @@ interface AvatarCacheData {
 class AvatarCacheManager {
   private static instance: AvatarCacheManager;
   private cache: AvatarCacheData;
-  private readonly CACHE_KEY = 'avatar_url_cache';
+  private readonly CACHE_KEY = CACHE_KEYS.AVATAR_URL_CACHE;
   // 英雄头像也是静态资源，可以长期缓存，设置为23小时（接近24小时最大有效期）
   private readonly CACHE_DURATION = 23 * 60 * 60 * 1000; // 23小时缓存
   private readonly BATCH_SIZE = 20; // 批量处理大小
@@ -39,8 +40,13 @@ class AvatarCacheManager {
       cacheDuration: '23小时',
       refreshThreshold: '21小时',
       strategy: '英雄头像为静态资源，可长期缓存以减少云函数调用',
-      maxTempUrlValidity: '24小时（云存储限制）'
+      maxTempUrlValidity: '24小时（云存储限制）',
+      cacheKey: this.CACHE_KEY
     });
+    
+    // 输出缓存键信息用于调试
+    console.log('头像缓存管理器初始化完成，缓存键:', this.CACHE_KEY);
+    console.log('缓存键解析:', CACHE_KEYS.AVATAR_URL_CACHE);
   }
 
   static getInstance(): AvatarCacheManager {
@@ -101,324 +107,204 @@ class AvatarCacheManager {
     });
     
     if (expiredKeys.length > 0) {
-      logger.info('清理过期头像URL', { count: expiredKeys.length });
+      logger.info(`清理了 ${expiredKeys.length} 个过期的头像缓存`);
       this.saveCache();
     }
   }
 
-  // 获取头像URL（主要方法）
-  async getAvatarUrl(fileID: string): Promise<string> {
-    // 检查缓存
-    const cached = this.cache.avatars[fileID];
-    if (cached && Date.now() < cached.expiresAt) {
-      // 如果缓存即将过期，后台刷新
-      if (Date.now() > cached.expiresAt - this.REFRESH_THRESHOLD) {
-        this.refreshAvatarUrl(fileID).catch(error => {
-          logger.warn('后台刷新头像URL失败', { fileID, error });
-        });
-      }
-      return cached.url;
-    }
-
-    // 检查是否有正在进行的请求
-    if (this.pendingRequests.has(fileID)) {
-      return this.pendingRequests.get(fileID)!;
-    }
-
-    // 创建新的请求
-    const requestPromise = this.fetchAvatarUrl(fileID);
-    this.pendingRequests.set(fileID, requestPromise);
-    
-    try {
-      const url = await requestPromise;
-      return url;
-    } finally {
-      this.pendingRequests.delete(fileID);
-    }
+  // 检查缓存是否需要刷新
+  private shouldRefreshCache(): boolean {
+    const now = Date.now();
+    return now - this.cache.lastUpdate > this.REFRESH_THRESHOLD;
   }
 
   // 批量获取头像URL
   async getAvatarUrls(fileIDs: string[]): Promise<Record<string, string>> {
-    if (fileIDs.length === 0) {
-      return {};
-    }
-
-    // 过滤出需要获取的fileID
-    const now = Date.now();
-    const needFetch: string[] = [];
     const result: Record<string, string> = {};
-
-    logger.info('开始批量获取头像URL', { 
-      total: fileIDs.length, 
-      cacheSize: Object.keys(this.cache.avatars).length 
-    });
-
+    const uncachedFileIDs: string[] = [];
+    
+    // 检查缓存
     for (const fileID of fileIDs) {
       const cached = this.cache.avatars[fileID];
-      if (cached && now < cached.expiresAt) {
+      if (cached && Date.now() < cached.expiresAt) {
         result[fileID] = cached.url;
-        logger.debug('使用缓存的头像URL', { fileID, expiresAt: new Date(cached.expiresAt) });
-        // 如果缓存即将过期，加入刷新队列
-        if (now > cached.expiresAt - this.REFRESH_THRESHOLD) {
-          needFetch.push(fileID);
-          logger.debug('缓存即将过期，加入刷新队列', { fileID, expiresAt: new Date(cached.expiresAt) });
-        }
       } else {
-        needFetch.push(fileID);
-        if (cached) {
-          logger.debug('缓存已过期', { fileID, expiresAt: new Date(cached.expiresAt), now: new Date(now) });
-        } else {
-          logger.debug('缓存不存在', { fileID });
-        }
+        uncachedFileIDs.push(fileID);
       }
     }
-
-    logger.info('头像URL缓存状态', { 
-      cached: fileIDs.length - needFetch.length, 
-      needFetch: needFetch.length,
-      needFetchList: needFetch
-    });
-
-    // 批量获取需要的头像URL
-    if (needFetch.length > 0) {
-      logger.info('开始获取未缓存的头像URL', { count: needFetch.length });
-      const batchResults = await this.batchFetchAvatarUrls(needFetch);
-      Object.assign(result, batchResults);
-    }
-
-    // 后台刷新即将过期的URL
-    if (needFetch.length > 0) {
-      this.refreshExpiringAvatars(needFetch).catch(error => {
-        logger.warn('后台刷新即将过期的头像URL失败', error);
-      });
-    }
-
-    return result;
-  }
-
-  // 批量获取头像URL
-  private async batchFetchAvatarUrls(fileIDs: string[]): Promise<Record<string, string>> {
-    const result: Record<string, string> = {};
     
-    try {
-      // 分批处理，避免单次请求过大
-      const batches = this.chunkArray(fileIDs, this.BATCH_SIZE);
-      
-      for (const batch of batches) {
-        const batchResult = await this.fetchBatchAvatarUrls(batch);
-        Object.assign(result, batchResult);
+    // 如果有未缓存的文件ID，批量获取
+    if (uncachedFileIDs.length > 0) {
+      try {
+        const newUrls = await this.fetchAvatarUrls(uncachedFileIDs);
+        Object.assign(result, newUrls);
+      } catch (error) {
+        logger.error('获取头像URL失败', error);
       }
-      
-      logger.info('批量获取头像URL完成', { 
-        total: fileIDs.length, 
-        success: Object.keys(result).length 
-      });
-    } catch (error) {
-      logger.error('批量获取头像URL失败', error);
-      // 失败时返回空结果，避免阻塞
-    }
-    
-    return result;
-  }
-
-  // 获取单批头像URL
-  private async fetchBatchAvatarUrls(fileIDs: string[]): Promise<Record<string, string>> {
-    const result: Record<string, string> = {};
-    
-    try {
-      const tempURLs = await getTempFileURLs(fileIDs);
-      
-      for (let i = 0; i < fileIDs.length; i++) {
-        const fileID = fileIDs[i];
-        const tempURL = tempURLs[i];
-        
-        if (tempURL && tempURL.startsWith('http')) {
-          result[fileID] = tempURL;
-          // 缓存URL
-          this.cacheAvatarUrl(fileID, tempURL);
-        } else {
-          logger.warn('获取头像临时URL失败', { fileID, tempURL });
-        }
-      }
-    } catch (error) {
-      logger.error('获取单批头像URL失败', error);
     }
     
     return result;
   }
 
   // 获取单个头像URL
+  async getAvatarUrl(fileID: string): Promise<string> {
+    // 检查是否有待处理的请求
+    if (this.pendingRequests.has(fileID)) {
+      return this.pendingRequests.get(fileID)!;
+    }
+    
+    // 检查缓存
+    const cached = this.cache.avatars[fileID];
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.url;
+    }
+    
+    // 创建新的请求
+    const request = this.fetchAvatarUrl(fileID);
+    this.pendingRequests.set(fileID, request);
+    
+    try {
+      const url = await request;
+      return url;
+    } finally {
+      this.pendingRequests.delete(fileID);
+    }
+  }
+
+  // 获取头像URL（私有方法）
   private async fetchAvatarUrl(fileID: string): Promise<string> {
     try {
-      const tempURLs = await getTempFileURLs([fileID]);
-      const tempURL = tempURLs[0];
+      // 构建完整的云存储fileID
+      const fullFileID = this.buildFullFileID(fileID);
+      logger.debug(`构建完整fileID: ${fileID} -> ${fullFileID}`);
       
-      if (tempURL && tempURL.startsWith('http')) {
-        this.cacheAvatarUrl(fileID, tempURL);
-        return tempURL;
-      } else {
-        throw new Error('获取临时URL失败');
+      const result = await getTempFileURLs([fullFileID]);
+      if (result && result[fullFileID]) {
+        const url = result[fullFileID];
+        const expiresAt = Date.now() + this.CACHE_DURATION;
+        
+        // 更新缓存
+        this.cache.avatars[fileID] = {
+          url,
+          timestamp: Date.now(),
+          expiresAt,
+          fileID
+        };
+        
+        this.saveCache();
+        logger.debug(`头像URL已缓存: ${fileID}`);
+        return url;
       }
     } catch (error) {
-      logger.error('获取头像URL失败', { fileID, error });
-      // 返回默认头像或抛出错误
-      throw error;
+      logger.error(`获取头像URL失败: ${fileID}`, error);
     }
+    
+    // 返回默认头像
+    return '../../pages/images/unused/default-avatar.png';
   }
 
-  // 缓存头像URL
-  private cacheAvatarUrl(fileID: string, url: string): void {
-    const now = Date.now();
-    const expiresAt = now + this.CACHE_DURATION;
+  // 批量获取头像URL（私有方法）
+  private async fetchAvatarUrls(fileIDs: string[]): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
     
-    this.cache.avatars[fileID] = {
-      url,
-      timestamp: now,
-      expiresAt,
-      fileID
-    };
-    
-    this.cache.lastUpdate = now;
-    this.saveCache();
-    
-    logger.info('头像URL已缓存', { 
-      fileID, 
-      expiresAt: new Date(expiresAt),
-      cacheSize: Object.keys(this.cache.avatars).length 
-    });
-  }
-
-  // 刷新头像URL
-  private async refreshAvatarUrl(fileID: string): Promise<void> {
     try {
-      const url = await this.fetchAvatarUrl(fileID);
-      logger.debug('头像URL刷新成功', { fileID, url: url.substring(0, 50) + '...' });
-    } catch (error) {
-      logger.warn('刷新头像URL失败', { fileID, error });
-    }
-  }
-
-  // 后台刷新即将过期的头像URL
-  private async refreshExpiringAvatars(fileIDs: string[]): Promise<void> {
-    const now = Date.now();
-    const expiringFileIDs = fileIDs.filter(fileID => {
-      const cached = this.cache.avatars[fileID];
-      return cached && now > cached.expiresAt - this.REFRESH_THRESHOLD;
-    });
-    
-    if (expiringFileIDs.length > 0) {
-      logger.info('开始后台刷新即将过期的头像URL', { count: expiringFileIDs.length });
+      // 构建完整的云存储fileID列表
+      const fullFileIDs = fileIDs.map(fileID => this.buildFullFileID(fileID));
+      logger.debug(`批量构建完整fileID: ${fileIDs.length} 个`);
       
-      // 分批刷新，避免阻塞主线程
-      const batches = this.chunkArray(expiringFileIDs, this.BATCH_SIZE);
-      for (const batch of batches) {
-        setTimeout(() => {
-          this.batchFetchAvatarUrls(batch).catch(error => {
-            logger.warn('后台刷新头像URL批次失败', { batch, error });
-          });
-        }, 100); // 延迟100ms，避免阻塞
+      const tempUrls = await getTempFileURLs(fullFileIDs);
+      
+      for (const fileID of fileIDs) {
+        const fullFileID = this.buildFullFileID(fileID);
+        if (tempUrls[fullFileID]) {
+          const url = tempUrls[fullFileID];
+          const expiresAt = Date.now() + this.CACHE_DURATION;
+          
+          // 更新缓存
+          this.cache.avatars[fileID] = {
+            url,
+            timestamp: Date.now(),
+            expiresAt,
+            fileID
+          };
+          
+          result[fileID] = url;
+        } else {
+          // 设置默认头像
+          result[fileID] = '../../pages/images/unused/default-avatar.png';
+        }
       }
+      
+      this.saveCache();
+      logger.info(`批量获取头像URL完成，成功: ${Object.keys(result).length}/${fileIDs.length}`);
+    } catch (error) {
+      logger.error('批量获取头像URL失败', error);
+      
+      // 为失败的请求设置默认头像
+      fileIDs.forEach(fileID => {
+        result[fileID] = '../../pages/images/unused/default-avatar.png';
+      });
     }
+    
+    return result;
   }
 
-  // 数组分块
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
-  }
-
-  // 清除缓存
+  // 清理缓存
   clearCache(): void {
-    this.cache.avatars = {};
-    this.cache.lastUpdate = 0;
+    this.cache = {
+      avatars: {},
+      lastUpdate: 0,
+      batchSize: this.BATCH_SIZE
+    };
     this.saveCache();
-    logger.info('头像缓存已清除');
+    logger.info('头像缓存已清理');
   }
 
   // 获取缓存统计信息
   getCacheStats(): {
     totalAvatars: number;
-    validAvatars: number;
-    expiredAvatars: number;
     lastUpdate: number;
-    cacheSize: number;
+    cacheKey: string;
   } {
-    const now = Date.now();
-    let validCount = 0;
-    let expiredCount = 0;
-    
-    for (const item of Object.values(this.cache.avatars)) {
-      if (now < item.expiresAt) {
-        validCount++;
-      } else {
-        expiredCount++;
-      }
-    }
-    
     return {
       totalAvatars: Object.keys(this.cache.avatars).length,
-      validAvatars: validCount,
-      expiredAvatars: expiredCount,
       lastUpdate: this.cache.lastUpdate,
-      cacheSize: JSON.stringify(this.cache).length
+      cacheKey: this.CACHE_KEY
     };
   }
 
-  // 获取详细的缓存状态（用于调试）
-  getDetailedCacheInfo(): any {
-    const now = Date.now();
-    const avatars = Object.entries(this.cache.avatars).map(([fileID, item]) => ({
-      fileID,
-      url: item.url,
-      timestamp: new Date(item.timestamp),
-      expiresAt: new Date(item.expiresAt),
-      isExpired: now > item.expiresAt,
-      timeUntilExpiry: item.expiresAt - now
-    }));
-
-    return {
-      cacheKey: this.CACHE_KEY,
-      lastUpdate: new Date(this.cache.lastUpdate),
-      totalAvatars: avatars.length,
-      expiredAvatars: avatars.filter(a => a.isExpired).length,
-      validAvatars: avatars.filter(a => !a.isExpired).length,
-      avatars: avatars
-    };
+  // 检查缓存是否有效
+  isCacheValid(): boolean {
+    return Date.now() - this.cache.lastUpdate < this.CACHE_DURATION;
   }
 
-  // 预加载头像URL（用于优化用户体验）
-  async preloadAvatarUrls(fileIDs: string[]): Promise<void> {
-    if (fileIDs.length === 0) return;
+  // 构建完整的云存储fileID
+  private buildFullFileID(relativePath: string): string {
+    // 清理路径，移除可能的@符号和多余空格
+    let cleanPath = relativePath.trim();
     
-    // 过滤出未缓存的fileID
-    const uncachedFileIDs = fileIDs.filter(fileID => {
-      const cached = this.cache.avatars[fileID];
-      return !cached || Date.now() >= cached.expiresAt;
-    });
-    
-    if (uncachedFileIDs.length > 0) {
-      logger.info('开始预加载头像URL', { count: uncachedFileIDs.length });
-      
-      // 异步预加载，不阻塞主线程
-      setTimeout(() => {
-        this.batchFetchAvatarUrls(uncachedFileIDs).catch(error => {
-          logger.warn('预加载头像URL失败', error);
-        });
-      }, 100);
+    // 如果是以@cloud://开头的地址，转换为标准的cloud://格式
+    if (cleanPath.startsWith('@cloud://')) {
+      cleanPath = cleanPath.substring(1); // 移除@符号
+      return cleanPath; // 直接返回，因为已经是正确的cloud://格式
     }
+    
+    // 如果已经是完整的云存储路径，直接返回
+    if (cleanPath.startsWith('cloud://')) {
+      return cleanPath;
+    }
+    
+    // 如果路径以/开头，移除开头的/
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    
+    // 构建完整的云存储fileID
+    // 使用正确的云环境ID格式：1gk9t6w2d1d090af (包含6w)，不是 1gk9t9d1d090af (包含9d)
+    const cloudEnv = 'cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497';
+    return `cloud://${cloudEnv}/${cleanPath}`;
   }
 }
 
 // 导出单例实例
 export const avatarCache = AvatarCacheManager.getInstance();
-
-// 兼容性导出
-export default avatarCache;
-
-// 全局调试方法（在控制台中使用）
-// 在微信小程序控制台中可以使用以下命令查看缓存状态：
-// avatarCache.getDetailedCacheInfo()
-// avatarCache.getCacheStats()

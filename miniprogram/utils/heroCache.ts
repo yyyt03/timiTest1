@@ -2,6 +2,7 @@
 import { getHeroesByCategory, getHeroById as getLocalHeroById, getHeroByName as getLocalHeroByName } from '../data/localHeroData';
 import { getCurrentConfig } from './config';
 import { log } from './logger';
+import { CACHE_KEYS } from './cacheKeys';
 
 interface HeroCacheData {
   categories: any;
@@ -19,7 +20,7 @@ interface CacheConfig {
 }
 
 class HeroCache {
-  private cacheKey = 'hero_list_cache';
+  private cacheKey = CACHE_KEYS.HERO_LIST_DATA;
   private _hasLoggedCacheStrategy = false; // 标记是否已记录缓存策略日志
   private config: CacheConfig = {
     heroDataExpireTime: 23 * 60 * 60 * 1000, // 23小时（英雄数据为静态资源，可长期缓存）
@@ -54,7 +55,8 @@ class HeroCache {
         log('英雄数据缓存策略初始化', {
           heroDataExpireTime: '23小时（英雄数据为静态资源，可长期缓存）',
           avatarURLExpireTime: '2小时（临时URL有效期）',
-          strategy: '英雄数据为静态资源，可长期缓存以减少云函数调用'
+          strategy: '英雄数据为静态资源，可长期缓存以减少云函数调用',
+          cacheKey: this.cacheKey
         });
         this._hasLoggedCacheStrategy = true;
       }
@@ -96,9 +98,20 @@ class HeroCache {
 
       wx.setStorageSync(this.cacheKey, JSON.stringify(cacheData));
       // 使用新的日志系统
-      log('英雄数据缓存已更新，版本:', currentVersion);
+      log('英雄数据缓存已更新，版本:', currentVersion, { cacheKey: this.cacheKey });
     } catch (error) {
       console.error('设置缓存失败:', error);
+    }
+  }
+
+  // 获取当前数据版本
+  private async getCurrentDataVersion(): Promise<string> {
+    try {
+      const config = getCurrentConfig();
+      return config.version || 'v1.0.0';
+    } catch (error) {
+      console.error('获取数据版本失败:', error);
+      return 'v1.0.0';
     }
   }
 
@@ -106,261 +119,168 @@ class HeroCache {
   clearCache(): void {
     try {
       wx.removeStorageSync(this.cacheKey);
-      console.log('英雄数据缓存已清除');
+      log('英雄数据缓存已清除', { cacheKey: this.cacheKey });
     } catch (error) {
       console.error('清除缓存失败:', error);
     }
   }
 
-  // 检查缓存是否有效
-  isCacheValid(): boolean {
-    const cache = this.getCache();
-    return cache !== null;
-  }
-
-  // 检查数据版本是否有变化
-  async checkDataVersion(): Promise<boolean> {
+  // 检查缓存是否存在
+  hasCache(): boolean {
     try {
-      const currentConfig = getCurrentConfig();
-      if (!currentConfig.enableVersionCheck) {
-        return false; // 版本检查被禁用
-      }
+      const cacheStr = wx.getStorageSync(this.cacheKey);
+      if (!cacheStr) return false;
 
-      const cache = this.getCache();
-      if (!cache) {
-        return true; // 无缓存，需要刷新
-      }
-
+      const cache: HeroCacheData = JSON.parse(cacheStr);
       const now = Date.now();
-      const timeSinceLastCheck = now - cache.lastVersionCheck;
-      
-      // 检查是否需要执行版本检查
-      if (timeSinceLastCheck < currentConfig.versionCheckInterval) {
-        return false; // 距离上次检查时间太短，跳过
-      }
 
-      // 获取当前数据版本
-      const currentVersion = await this.getCurrentDataVersion();
-      
-      // 如果版本不同，需要刷新
-      if (currentVersion !== cache.dataVersion) {
-        log('数据版本已变化，需要刷新缓存');
-        return true;
-      }
-
-      // 更新最后检查时间
-      cache.lastVersionCheck = now;
-      this.updateCacheTimestamp(cache);
-      
-      return false; // 版本相同，无需刷新
+      // 检查缓存是否过期
+      return now - cache.timestamp <= this.config.heroDataExpireTime;
     } catch (error) {
-      log('版本检查失败:', error);
-      return false; // 检查失败时，保守处理，不刷新
+      return false;
     }
   }
 
-  // 获取当前数据版本
-  private async getCurrentDataVersion(): Promise<string> {
+  // 获取缓存统计信息
+  getCacheStats(): {
+    hasCache: boolean;
+    cacheKey: string;
+    lastUpdate?: number;
+    dataVersion?: string;
+  } {
     try {
-      if (this.config.useLocalData) {
-        // 本地数据版本：基于数据内容生成哈希值
-        const localData = getHeroesByCategory();
-        const dataHash = this.generateDataHash(localData);
-        return `local-${dataHash}`;
-      } else {
-        // 远程数据版本：从服务器获取
-        // 这里可以调用一个轻量级的版本检查API
-        return 'remote-v1.0';
+      const cacheStr = wx.getStorageSync(this.cacheKey);
+      if (!cacheStr) {
+        return {
+          hasCache: false,
+          cacheKey: this.cacheKey
+        };
       }
-    } catch (error) {
-      log('获取数据版本失败:', error);
-      return 'unknown';
-    }
-  }
 
-  // 生成数据哈希值
-  private generateDataHash(data: any): string {
-    try {
-      // 简化的哈希算法，基于关键数据字段
-      const keyData = {
-        totalHeroes: data.totalHeroes,
-        categories: Object.keys(data.categories).length,
-        // 可以添加更多关键字段
+      const cache: HeroCacheData = JSON.parse(cacheStr);
+      return {
+        hasCache: true,
+        cacheKey: this.cacheKey,
+        lastUpdate: cache.timestamp,
+        dataVersion: cache.dataVersion
       };
-      
-      const dataStr = JSON.stringify(keyData);
-      let hash = 0;
-      
-      for (let i = 0; i < dataStr.length; i++) {
-        const char = dataStr.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // 转换为32位整数
-      }
-      
-      return Math.abs(hash).toString(16);
     } catch (error) {
-      log('生成数据哈希失败:', error);
-      return 'hash-error';
+      return {
+        hasCache: false,
+        cacheKey: this.cacheKey
+      };
     }
   }
 
-  // 更新缓存时间戳
-  private updateCacheTimestamp(cache: HeroCacheData): void {
-    try {
-      cache.timestamp = Date.now();
-      wx.setStorageSync(this.cacheKey, JSON.stringify(cache));
-    } catch (error) {
-      log('更新缓存时间戳失败:', error);
-    }
-  }
-
-  // 获取缓存状态信息
-  getCacheInfo(): { hasCache: boolean; age: number; size: number } {
+  // 获取英雄分类数据
+  getHeroesByCategory(): any {
     const cache = this.getCache();
-    if (!cache) {
-      return { hasCache: false, age: 0, size: 0 };
+    if (cache && cache.categories) {
+      return cache.categories;
     }
+    
+    // 如果缓存不存在，返回本地数据
+    return getHeroesByCategory();
+  }
 
-    const age = Date.now() - cache.timestamp;
-    const size = JSON.stringify(cache).length;
+  // 根据ID获取英雄
+  getHeroById(id: string): any {
+    const cache = this.getCache();
+    if (cache && cache.categories) {
+      // 从缓存中查找英雄
+      for (const category of Object.values(cache.categories)) {
+        const heroes = (category as any).heroes || [];
+        const hero = heroes.find((h: any) => h.id === id);
+        if (hero) return hero;
+      }
+    }
+    
+    // 如果缓存中找不到，使用本地数据
+    return getLocalHeroById(id);
+  }
 
-    return {
-      hasCache: true,
-      age: age,
-      size: size
-    };
+  // 根据名称获取英雄
+  getHeroByName(name: string): any {
+    const cache = this.getCache();
+    if (cache && cache.categories) {
+      // 从缓存中查找英雄
+      for (const category of Object.values(cache.categories)) {
+        const heroes = (category as any).heroes || [];
+        const hero = heroes.find((h: any) => h.name === name);
+        if (hero) return hero;
+      }
+    }
+    
+    // 如果缓存中找不到，使用本地数据
+    return getLocalHeroByName(name);
+  }
+
+  // 获取英雄总数
+  getTotalHeroes(): number {
+    const cache = this.getCache();
+    if (cache && cache.totalHeroes) {
+      return cache.totalHeroes;
+    }
+    
+    // 如果缓存中找不到，使用本地数据
+    const localData = getHeroesByCategory();
+    return localData.totalHeroes || 0;
+  }
+
+  // 获取头像URL映射
+  getAvatarURLs(): { [key: string]: string } {
+    const cache = this.getCache();
+    return cache ? cache.avatarURLs : {};
+  }
+
+  // 检查缓存是否过期
+  isCacheExpired(): boolean {
+    const cache = this.getCache();
+    if (!cache) return true;
+
+    const now = Date.now();
+    return now - cache.timestamp > this.config.heroDataExpireTime;
+  }
+
+  // 获取缓存过期时间
+  getCacheExpiryTime(): number | null {
+    const cache = this.getCache();
+    if (!cache) return null;
+
+    return cache.timestamp + this.config.heroDataExpireTime;
+  }
+
+  // 获取缓存剩余时间
+  getCacheRemainingTime(): number {
+    const expiryTime = this.getCacheExpiryTime();
+    if (!expiryTime) return 0;
+
+    const remaining = expiryTime - Date.now();
+    return Math.max(0, remaining);
   }
 
   // 强制刷新缓存
-  forceRefresh(): void {
+  async forceRefreshCache(): Promise<void> {
     this.clearCache();
+    log('英雄数据缓存已强制刷新', { cacheKey: this.cacheKey });
   }
 
-  // 切换本地数据使用状态
-  toggleLocalData(useLocal: boolean): void {
-    this.config.useLocalData = useLocal;
-    console.log('本地数据使用状态已切换为:', useLocal);
+  // 获取缓存配置
+  getCacheConfig(): CacheConfig {
+    return { ...this.config };
   }
 
-  // 获取本地数据使用状态
-  isLocalDataEnabled(): boolean {
-    return this.config.useLocalData;
-  }
-
-  // 根据英雄ID查找英雄信息
-  async getHeroById(heroId: string): Promise<any | null> {
-    try {
-      // 如果启用本地数据，优先使用本地数据查找
-      if (this.config.useLocalData) {
-        const localHero = getLocalHeroById(heroId);
-        if (localHero) {
-          console.log('通过本地数据找到英雄:', localHero);
-          return {
-            id: localHero._id,
-            name: localHero.name,
-            avatar: localHero.avatar,
-            category: localHero.category
-          };
-        }
-      }
-      
-      // 否则使用原有缓存逻辑
-      const cache = this.getCache();
-      if (!cache || !cache.categories) {
-        console.log('缓存中没有英雄数据');
-        return null;
-      }
-
-      // 遍历所有分类查找英雄
-      for (const category of Object.values(cache.categories)) {
-        if (category && typeof category === 'object' && (category as any).heroes && Array.isArray((category as any).heroes)) {
-          const hero = (category as any).heroes.find((h: any) => h.id === heroId);
-          if (hero) {
-            console.log('通过ID找到英雄:', hero);
-            return hero;
-          }
-        }
-      }
-
-      console.log('未找到ID为', heroId, '的英雄');
-      return null;
-    } catch (error) {
-      console.error('通过ID查找英雄失败:', error);
-      return null;
-    }
-  }
-
-  // 根据英雄名称查找英雄信息
-  async getHeroByName(heroName: string): Promise<any | null> {
-    try {
-      // 如果启用本地数据，优先使用本地数据查找
-      if (this.config.useLocalData) {
-        const localHero = getLocalHeroByName(heroName);
-        if (localHero) {
-          console.log('通过本地数据找到英雄:', localHero);
-          return {
-            id: localHero._id,
-            name: localHero.name,
-            avatar: localHero.avatar,
-            category: localHero.category
-          };
-        }
-      }
-      
-      // 否则使用原有缓存逻辑
-      const cache = this.getCache();
-      if (!cache || !cache.categories) {
-        console.log('缓存中没有英雄数据');
-        return null;
-      }
-
-      // 遍历所有分类查找英雄
-      for (const category of Object.values(cache.categories)) {
-        if (category && typeof category === 'object' && (category as any).heroes && Array.isArray((category as any).heroes)) {
-          const hero = (category as any).heroes.find((h: any) => h.name === heroName);
-          if (hero) {
-            console.log('通过名称找到英雄:', hero);
-            return hero;
-          }
-        }
-      }
-
-      console.log('未找到名称为', heroName, '的英雄');
-      return null;
-    } catch (error) {
-      console.error('通过名称查找英雄失败:', error);
-      return null;
-    }
-  }
-
-  // 获取英雄头像URL
-  async getHeroAvatar(heroId: string): Promise<string | null> {
-    try {
-      const cache = this.getCache();
-      if (!cache || !cache.avatarURLs) {
-        console.log('缓存中没有头像数据');
-        return null;
-      }
-
-      const avatarURL = cache.avatarURLs[heroId];
-      if (avatarURL) {
-        console.log('获取到英雄头像URL:', avatarURL);
-        return avatarURL;
-      }
-
-      console.log('未找到英雄', heroId, '的头像URL');
-      return null;
-    } catch (error) {
-      console.error('获取英雄头像失败:', error);
-      return null;
-    }
-  }
-
-  // 获取头像URL（兼容性方法）
-  async getAvatarUrl(heroId: string): Promise<string | null> {
-    return this.getHeroAvatar(heroId);
+  // 更新缓存配置
+  updateCacheConfig(newConfig: Partial<CacheConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+    log('英雄数据缓存配置已更新', { 
+      newConfig: this.config,
+      cacheKey: this.cacheKey
+    });
   }
 }
 
-// 导出单例实例
-export const heroCache = new HeroCache(); 
+// 创建单例实例
+const heroCache = new HeroCache();
+
+export default heroCache; 

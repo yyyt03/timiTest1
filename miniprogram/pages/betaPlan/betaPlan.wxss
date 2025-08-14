@@ -206,32 +206,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 8rpx 4rpx; /* 减小内边距 */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 8rpx 4rpx;
+  border-radius: 16rpx;
   cursor: pointer;
-  box-sizing: border-box;
+  transition: all 0.3s ease;
   background: transparent;
   border: none;
+  margin: 0;
   position: relative;
-  min-width: 80rpx; /* 减小最小宽度 */
-  max-width: 100rpx; /* 减小最大宽度 */
   overflow: hidden;
 }
 
 .hero-item.selected {
-  background: transparent;
-  color: #667eea;
-  border: none;
-}
-
-.hero-item:not(.selected):hover {
-  transform: translateY(-4rpx);
-}
-
-.hero-item:not(.selected):active {
-  background: transparent;
-  transform: scale(0.95) translateY(-2rpx);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
 }
 
 /* 英雄头像样式 */

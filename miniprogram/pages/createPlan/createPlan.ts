@@ -1,5 +1,5 @@
 // 方案创作页面
-import { cacheManager } from '../../utils/cacheManager';
+import cacheManager from '../../utils/cacheManager';
 
 // 英雄技能缓存数据接口
 interface HeroSkillsCacheData {
@@ -236,7 +236,7 @@ Page({
       wx.showLoading({ title: '加载方案数据...' });
       
       // 尝试从缓存获取方案数据（除非强制刷新）
-      const cacheKey = `plan_for_edit_${planId}`;
+      const cacheKey = CacheKeyGenerator.plan('data', `edit_${planId}`);
       let result: any;
       
       if (!forceRefresh) {

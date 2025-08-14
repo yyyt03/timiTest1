@@ -2,6 +2,7 @@
 import { findEquipmentByName } from './equipmentMatcher';
 import { avatarCache } from './avatarCache';
 import { logger } from './logger';
+import { CACHE_KEYS } from './cacheKeys';
 
 interface EquipmentImageCache {
   imageUrls: Record<string, string>;
@@ -11,7 +12,7 @@ interface EquipmentImageCache {
 class EquipmentCacheManager {
   private static instance: EquipmentCacheManager;
   private cache: EquipmentImageCache | null = null;
-  private readonly CACHE_KEY = 'equipment_image_cache';
+  private readonly CACHE_KEY = CACHE_KEYS.EQUIPMENT_IMAGE_CACHE;
   // 装备图片是静态资源，可以长期缓存，设置为23小时（接近24小时最大有效期）
   private readonly CACHE_DURATION = 23 * 60 * 60 * 1000; // 23小时缓存
   private readonly DEFAULT_AVATAR_PATH = '../images/unused/default-avatar.png';
@@ -22,7 +23,8 @@ class EquipmentCacheManager {
       logger.info('装备图片缓存管理器初始化完成', {
         cacheDuration: '23小时',
         strategy: '装备图片为静态资源，可长期缓存以减少云函数调用',
-        maxTempUrlValidity: '24小时（云存储限制）'
+        maxTempUrlValidity: '24小时（云存储限制）',
+        cacheKey: CACHE_KEYS.EQUIPMENT_IMAGE_CACHE
       });
     }
     return EquipmentCacheManager.instance;
@@ -92,17 +94,15 @@ class EquipmentCacheManager {
           this.setCachedData(this.cache!);
           logger.info('装备图片URL获取完成', { 
             total: uncachedNames.length, 
-            success: Object.keys(this.cache!.imageUrls).length 
+            success: Object.keys(this.cache!.imageUrls).length,
+            cacheKey: this.CACHE_KEY
           });
         } catch (error) {
           logger.error('获取装备图片URL失败', error);
           // 为失败的装备设置默认图片
           uncachedNames.forEach(name => {
-            if (!this.cache!.imageUrls[name]) {
-              this.cache!.imageUrls[name] = this.DEFAULT_AVATAR_PATH;
-            }
+            this.cache!.imageUrls[name] = this.DEFAULT_AVATAR_PATH;
           });
-          this.setCachedData(this.cache!);
         }
       }
     }
@@ -110,76 +110,162 @@ class EquipmentCacheManager {
     return this.cache!.imageUrls;
   }
 
-  // 智能缓存检测：检查是否所有装备都是默认路径
-  private isAllDefaultPaths(imageUrls: Record<string, string>, equipmentNames: string[]): boolean {
-    if (equipmentNames.length === 0) return false;
-    
-    const defaultPathCount = equipmentNames.filter(name => 
-      imageUrls[name] === this.DEFAULT_AVATAR_PATH
-    ).length;
-    
-    // 如果超过80%的装备都是默认路径，认为缓存有问题
-    return defaultPathCount / equipmentNames.length > 0.8;
-  }
-
   // 获取单个装备图片URL
   async getEquipmentImageUrl(equipmentName: string): Promise<string> {
-    const urls = await this.getEquipmentImageUrls([equipmentName]);
-    const url = urls[equipmentName] || this.DEFAULT_AVATAR_PATH;
-    return url;
+    const imageUrls = await this.getEquipmentImageUrls([equipmentName]);
+    return imageUrls[equipmentName] || this.DEFAULT_AVATAR_PATH;
   }
 
-  // 清除缓存
-  clearCache(): void {
-    this.cache = null;
-    wx.removeStorageSync(this.CACHE_KEY);
+  // 获取缓存的装备图片URL
+  getCachedEquipmentImageUrl(equipmentName: string): string | null {
+    const cached = this.getCachedData();
+    if (cached && this.isCacheValid(cached.lastUpdate)) {
+      return cached.imageUrls[equipmentName] || null;
+    }
+    return null;
   }
 
+  // 获取缓存数据
   private getCachedData(): EquipmentImageCache | null {
-    if (this.cache) return this.cache;
-    
-    try {
-      const data = wx.getStorageSync(this.CACHE_KEY);
-      this.cache = data || null;
+    if (this.cache) {
       return this.cache;
-    } catch (error) {
-      return null;
     }
-  }
 
-  private setCachedData(data: EquipmentImageCache): void {
-    this.cache = data;
     try {
-      wx.setStorageSync(this.CACHE_KEY, data);
+      const cached = wx.getStorageSync(this.CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.imageUrls && typeof parsed.imageUrls === 'object' && typeof parsed.lastUpdate === 'number') {
+          this.cache = parsed;
+          return parsed;
+        }
+      }
     } catch (error) {
-      // 静默处理存储错误
+      logger.error('读取装备图片缓存失败', error);
+    }
+
+    return null;
+  }
+
+  // 设置缓存数据
+  private setCachedData(data: EquipmentImageCache): void {
+    try {
+      wx.setStorageSync(this.CACHE_KEY, JSON.stringify(data));
+      this.cache = data;
+    } catch (error) {
+      logger.error('保存装备图片缓存失败', error);
     }
   }
 
+  // 检查缓存是否有效
   private isCacheValid(lastUpdate: number): boolean {
-    const now = Date.now();
-    const timeSinceUpdate = now - lastUpdate;
-    const isValid = timeSinceUpdate < this.CACHE_DURATION;
-    
-    if (isValid) {
-      const remainingTime = this.CACHE_DURATION - timeSinceUpdate;
-      const remainingHours = Math.floor(remainingTime / (60 * 60 * 1000));
-      const remainingMinutes = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
-      
-      logger.debug('装备图片缓存仍然有效', { 
-        remainingTime: `${remainingHours}小时${remainingMinutes}分钟`,
-        lastUpdate: new Date(lastUpdate),
-        cacheDuration: `${this.CACHE_DURATION / (60 * 60 * 1000)}小时`
-      });
-    } else {
-      logger.info('装备图片缓存已过期，需要重新获取', { 
-        lastUpdate: new Date(lastUpdate),
-        expiredBy: `${Math.floor(timeSinceUpdate / (60 * 60 * 1000))}小时${Math.floor((timeSinceUpdate % (60 * 60 * 1000)) / (60 * 1000))}分钟`
-      });
+    return Date.now() - lastUpdate < this.CACHE_DURATION;
+  }
+
+  // 检查是否所有装备都是默认路径
+  private isAllDefaultPaths(imageUrls: Record<string, string>, equipmentNames: string[]): boolean {
+    return equipmentNames.every(name => 
+      imageUrls[name] === this.DEFAULT_AVATAR_PATH
+    );
+  }
+
+  // 清理缓存
+  clearCache(): void {
+    try {
+      wx.removeStorageSync(this.CACHE_KEY);
+      this.cache = null;
+      logger.info('装备图片缓存已清理', { cacheKey: this.CACHE_KEY });
+    } catch (error) {
+      logger.error('清理装备图片缓存失败', error);
     }
-    
-    return isValid;
+  }
+
+  // 获取缓存统计信息
+  getCacheStats(): {
+    hasCache: boolean;
+    totalEquipment: number;
+    lastUpdate?: number;
+    cacheKey: string;
+  } {
+    const cached = this.getCachedData();
+    if (!cached) {
+      return {
+        hasCache: false,
+        totalEquipment: 0,
+        cacheKey: this.CACHE_KEY
+      };
+    }
+
+    return {
+      hasCache: true,
+      totalEquipment: Object.keys(cached.imageUrls).length,
+      lastUpdate: cached.lastUpdate,
+      cacheKey: this.CACHE_KEY
+    };
+  }
+
+  // 检查缓存是否过期
+  isCacheExpired(): boolean {
+    const cached = this.getCachedData();
+    if (!cached) return true;
+
+    return !this.isCacheValid(cached.lastUpdate);
+  }
+
+  // 获取缓存过期时间
+  getCacheExpiryTime(): number | null {
+    const cached = this.getCachedData();
+    if (!cached) return null;
+
+    return cached.lastUpdate + this.CACHE_DURATION;
+  }
+
+  // 获取缓存剩余时间
+  getCacheRemainingTime(): number {
+    const expiryTime = this.getCacheExpiryTime();
+    if (!expiryTime) return 0;
+
+    const remaining = expiryTime - Date.now();
+    return Math.max(0, remaining);
+  }
+
+  // 强制刷新缓存
+  forceRefreshCache(): void {
+    this.clearCache();
+    logger.info('装备图片缓存已强制刷新', { cacheKey: this.CACHE_KEY });
+  }
+
+  // 预加载装备图片
+  async preloadEquipmentImages(equipmentNames: string[]): Promise<void> {
+    if (equipmentNames.length === 0) return;
+
+    try {
+      await this.getEquipmentImageUrls(equipmentNames);
+      logger.info('装备图片预加载完成', { 
+        count: equipmentNames.length,
+        cacheKey: this.CACHE_KEY
+      });
+    } catch (error) {
+      logger.error('装备图片预加载失败', error);
+    }
+  }
+
+  // 获取所有缓存的装备名称
+  getCachedEquipmentNames(): string[] {
+    const cached = this.getCachedData();
+    if (!cached) return [];
+
+    return Object.keys(cached.imageUrls);
+  }
+
+  // 检查特定装备是否已缓存
+  isEquipmentCached(equipmentName: string): boolean {
+    const cached = this.getCachedData();
+    if (!cached) return false;
+
+    return cached.imageUrls.hasOwnProperty(equipmentName);
   }
 }
 
+// 导出单例实例
 export const equipmentCache = EquipmentCacheManager.getInstance(); 

@@ -1,5 +1,6 @@
 // 配置化日志系统
-import { getCurrentConfig } from './config';
+// 移除循环依赖的导入
+// import { getCurrentConfig } from './config';
 
 // 日志级别枚举
 export enum LogLevel {
@@ -134,7 +135,12 @@ class Logger {
       return;
     }
 
-    const currentConfig = getCurrentConfig();
+    // 使用默认配置，移除循环依赖
+    const currentConfig = {
+      enableLogs: true, // 默认启用日志
+      ...this.config
+    };
+
     if (!currentConfig.enableLogs) {
       return;
     }

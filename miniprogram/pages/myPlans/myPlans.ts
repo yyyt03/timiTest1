@@ -1,6 +1,8 @@
 // 我的方案页面
 import { getHeroByName } from '../../data/localHeroData';
-import { cacheManager } from '../../utils/cacheManager';
+import cacheManager from '../../utils/cacheManager';
+import { CacheKeyGenerator } from '../../utils/cacheKeys';
+import { avatarCache } from '../../utils/avatarCache';
 
 // 缓存数据接口
 interface PlansCacheData {
@@ -79,11 +81,11 @@ Page({
   onPullDownRefresh() {
     // 清除相关缓存
     if (this.data.isAdminReview) {
-      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      const adminCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
       cacheManager.delete(adminCacheKey);
       console.log('下拉刷新，已清除管理员审核缓存:', adminCacheKey);
     } else {
-      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      const userCacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
       cacheManager.delete(userCacheKey);
       console.log('下拉刷新，已清除用户方案缓存:', userCacheKey);
     }
@@ -115,12 +117,12 @@ Page({
   },
 
   // 加载用户方案
-  loadUserPlans() {
+  async loadUserPlans() {
     // 如果已经在加载中，则返回
     if (this.data.loading && this.data.userPlans.length > 0) return;
     
     // 先尝试从缓存获取数据
-    const cacheKey = `my_plans_user_${this.data.selectedHero}`;
+    const cacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
     const cachedData = cacheManager.get<PlansCacheData>(cacheKey);
     
     if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
@@ -211,7 +213,7 @@ Page({
     if (this.data.loading && this.data.userPlans.length > 0) return;
 
     // 先尝试从缓存获取数据
-    const cacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+    const cacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
     const cachedData = cacheManager.get<PlansCacheData>(cacheKey);
     
     if (cachedData && cachedData.plans && cachedData.plans.length > 0) {
@@ -282,7 +284,7 @@ Page({
       console.log('管理员审核方案数据已缓存');
 
       // 生成英雄分类
-      this.generateHeroCategories();
+      await this.generateHeroCategories();
     } catch (error) {
       console.error('管理员模式获取方案失败:', error);
       wx.showToast({ title: '获取方案失败', icon: 'none' });
@@ -298,7 +300,7 @@ Page({
     this.setData({ adminStatusFilter: status });
     
     // 清除相关缓存
-    const oldCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+    const oldCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
     cacheManager.delete(oldCacheKey);
     console.log('切换管理员状态筛选，已清除旧缓存:', oldCacheKey);
     
@@ -396,11 +398,11 @@ Page({
     
     // 清除相关缓存
     if (this.data.isAdminReview) {
-      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      const adminCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
       cacheManager.delete(adminCacheKey);
       console.log('更新方案状态，已清除管理员审核缓存:', adminCacheKey);
     } else {
-      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      const userCacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
       cacheManager.delete(userCacheKey);
       console.log('更新方案状态，已清除用户方案缓存:', userCacheKey);
     }
@@ -451,11 +453,11 @@ Page({
     
     // 清除相关缓存
     if (this.data.isAdminReview) {
-      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      const adminCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
       cacheManager.delete(adminCacheKey);
       console.log('更新方案状态（带原因），已清除管理员审核缓存:', adminCacheKey);
     } else {
-      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      const userCacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
       cacheManager.delete(userCacheKey);
       console.log('更新方案状态（带原因），已清除用户方案缓存:', userCacheKey);
     }
@@ -586,11 +588,11 @@ Page({
     
     // 清除相关缓存
     if (this.data.isAdminReview) {
-      const adminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      const adminCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
       cacheManager.delete(adminCacheKey);
       console.log('删除方案，已清除管理员审核缓存:', adminCacheKey);
     } else {
-      const userCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      const userCacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
       cacheManager.delete(userCacheKey);
       console.log('删除方案，已清除用户方案缓存:', userCacheKey);
     }
@@ -648,7 +650,7 @@ Page({
       this.setData({ emptyIcon: 'cloud://cloudbase-1gk9t6w2d1d090af.636c-cloudbase-1gk9t6w2d1d090af-1371508497/images/icons/empty-favorites.png' });
     } catch (_e) {
       // 本地兜底
-      this.setData({ emptyIcon: '/pages/images/unused/default-avatar.png' });
+      this.setData({ emptyIcon: '/images/unused/default-avatar.png' });
     }
   },
 
@@ -665,11 +667,11 @@ Page({
     
     // 清除相关缓存
     if (this.data.isAdminReview) {
-      const oldAdminCacheKey = `my_plans_admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`;
+      const oldAdminCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
       cacheManager.delete(oldAdminCacheKey);
       console.log('切换英雄筛选，已清除管理员审核缓存:', oldAdminCacheKey);
     } else {
-      const oldUserCacheKey = `my_plans_user_${this.data.selectedHero}`;
+      const oldUserCacheKey = CacheKeyGenerator.plan('data', `user_${this.data.selectedHero}`);
       cacheManager.delete(oldUserCacheKey);
       console.log('切换英雄筛选，已清除用户方案缓存:', oldUserCacheKey);
     }
@@ -702,7 +704,7 @@ Page({
   },
 
   // 生成英雄分类列表
-  generateHeroCategories() {
+  async generateHeroCategories() {
     const { allUserPlans } = this.data;
     const heroMap = new Map();
     
@@ -732,7 +734,7 @@ Page({
     heroCategories.sort((a, b) => b.count - a.count);
     
     // 为没有头像的英雄获取头像
-    const heroCategoriesWithAvatars = this.processHeroAvatars(heroCategories);
+    const heroCategoriesWithAvatars = await this.processHeroAvatars(heroCategories);
     
     this.setData({
       heroCategories: heroCategoriesWithAvatars
@@ -740,25 +742,68 @@ Page({
   },
 
   // 处理英雄头像
-  processHeroAvatars(heroCategories: any[]) {
+  async processHeroAvatars(heroCategories: any[]) {
     try {
+      console.log('开始处理英雄头像，英雄数量:', heroCategories.length);
+      
       // 为每个英雄分类添加头像信息
       const processedCategories = heroCategories.map(heroCategory => {
         const hero = getHeroByName(heroCategory.heroName);
         
         if (hero && hero.avatar) {
+          console.log(`英雄 ${heroCategory.heroName} 找到头像:`, hero.avatar);
           return {
             ...heroCategory,
             heroAvatar: hero.avatar
           };
         } else {
+          console.log(`英雄 ${heroCategory.heroName} 未找到头像，使用默认头像`);
           return {
             ...heroCategory,
-            heroAvatar: '../images/unused/default-avatar.png'
+            heroAvatar: '/images/unused/default-avatar.png'
           };
         }
       });
       
+      // 使用新的头像缓存管理器批量获取头像临时URL
+      const avatarUrls = processedCategories
+        .map(hero => hero.heroAvatar)
+        .filter(avatar => avatar && !avatar.startsWith('http') && !avatar.startsWith('/'));
+      
+      console.log('需要处理的头像URL数量:', avatarUrls.length);
+      console.log('头像URL列表:', avatarUrls);
+      
+      if (avatarUrls.length > 0) {
+        try {
+          console.log('开始获取英雄头像临时URL，数量:', avatarUrls.length);
+          const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+          console.log('头像临时URL获取完成，结果:', avatarUrlMap);
+          
+          // 更新头像URL
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
+              const tempUrl = avatarUrlMap[heroCategory.heroAvatar];
+              if (tempUrl && tempUrl.startsWith('http')) {
+                console.log(`英雄 ${heroCategory.heroName} 头像URL更新成功:`, tempUrl);
+                heroCategory.heroAvatar = tempUrl;
+              } else {
+                console.warn(`英雄 ${heroCategory.heroName} 头像临时URL获取失败，使用默认头像`);
+                heroCategory.heroAvatar = '/images/unused/default-avatar.png';
+              }
+            }
+          });
+        } catch (error) {
+          console.error('获取头像临时URL失败:', error);
+          // 如果获取失败，使用默认头像
+          processedCategories.forEach(heroCategory => {
+            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
+              heroCategory.heroAvatar = '/images/unused/default-avatar.png';
+            }
+          });
+        }
+      }
+      
+      console.log('英雄头像处理完成，结果:', processedCategories);
       return processedCategories;
     } catch (error) {
       console.error('处理英雄头像失败:', error);
@@ -793,7 +838,7 @@ Page({
     return {
       title: '我的攻略方案 - 觉醒天赋推荐',
       path: '/pages/myPlans/myPlans',
-      imageUrl: '/pages/images/share-my-plans.png'
+      imageUrl: '/images/share-my-plans.png'
     };
   },
 
@@ -801,7 +846,7 @@ Page({
   onShareTimeline() {
     return {
       title: '我的攻略方案 - 觉醒天赋推荐',
-      imageUrl: '/pages/images/share-my-plans.png'
+      imageUrl: '/images/share-my-plans.png'
     };
   },
 

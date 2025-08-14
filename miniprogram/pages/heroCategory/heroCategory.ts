@@ -1,5 +1,5 @@
 // 英雄分类页面
-import { heroCache } from '../../utils/heroCache';
+import heroCache from '../../utils/heroCache';
 import { avatarCache } from '../../utils/avatarCache';
 import { getHeroesByCategory } from '../../data/localHeroData';
 import { log } from '../../utils/logger';
@@ -91,8 +91,10 @@ Page({
         
         // 使用新的头像缓存机制获取临时URL
         console.log('heroCategory: 开始获取头像临时URL，总数:', fileIDs.length);
+        console.log('heroCategory: 头像fileIDs:', fileIDs);
         const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
         console.log('heroCategory: 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
+        console.log('heroCategory: 头像URL映射:', avatarUrlMap);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};
@@ -155,8 +157,10 @@ Page({
         
         // 使用新的头像缓存机制获取临时URL并缓存
         console.log('heroCategory: 云函数回退 - 开始获取头像临时URL，总数:', fileIDs.length);
+        console.log('heroCategory: 云函数回退 - 头像fileIDs:', fileIDs);
         const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
         console.log('heroCategory: 云函数回退 - 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
+        console.log('heroCategory: 云函数回退 - 头像URL映射:', avatarUrlMap);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};

@@ -61,24 +61,26 @@ export function downloadFile(fileID: string) {
 }
 
 // 获取临时文件URL
-export function getTempFileURLs(fileList: string[]): Promise<string[]> {
+export function getTempFileURLs(fileList: string[]): Promise<Record<string, string>> {
   if (fileList.length === 0) {
-    return Promise.resolve([]);
+    return Promise.resolve({});
   }
 
   return new Promise(function(resolve, reject) {
     wx.cloud.getTempFileURL({
       fileList: fileList
     }).then(function(res) {
-      var urls = res.fileList.map(function(item) {
-        return item.tempFileURL || '';
+      const urlMap: Record<string, string> = {};
+      res.fileList.forEach(function(item) {
+        if (item.fileID && item.tempFileURL) {
+          urlMap[item.fileID] = item.tempFileURL;
+        }
       });
-      resolve(urls);
+      resolve(urlMap);
     }).catch(function(error) {
       console.error('获取临时文件URL失败:', error);
-      resolve(fileList.map(function() {
-        return '';
-      }));
+      // 返回空的映射对象
+      resolve({});
     });
   });
 }

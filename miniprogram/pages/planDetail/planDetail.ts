@@ -1,9 +1,10 @@
 // 方案详情页面 - 优化头像获取
 import { getHeroById, getHeroByName } from '../../data/localHeroData';
 import { callFunction } from '../../utils/cloud';
-import { cacheManager } from '../../utils/cacheManager';
+import cacheManager from '../../utils/cacheManager';
 import { notifyFavoriteAdded, notifyFavoriteRemoved } from '../../utils/favoriteSync';
 import { avatarCache } from '../../utils/avatarCache';
+import { CACHE_KEYS } from '../../utils/cacheKeys';
 
 interface PlanData {
   _id?: string;
@@ -164,7 +165,7 @@ Page({
     try {
       // 如果不是强制刷新，先尝试从缓存获取数据
       if (!forceRefresh) {
-        const cacheKey = `plan_detail_${planId}`;
+        const cacheKey = CACHE_KEYS.PLAN_DETAIL_WITH_ID(planId);
         const cachedData = cacheManager.get<PlanDetailCacheData>(cacheKey);
         
         if (cachedData && cachedData.plan && cachedData.plan._id === planId) {
@@ -244,7 +245,7 @@ Page({
         });
         
         // 缓存方案详情数据，延长TTL到30分钟
-        const cacheKey = `plan_detail_${planId}`;
+        const cacheKey = CACHE_KEYS.PLAN_DETAIL_WITH_ID(planId);
         const cacheData: PlanDetailCacheData = {
           plan: finalPlan,
           timestamp: Date.now(),
@@ -383,7 +384,7 @@ Page({
         
         // 更新缓存中的收藏状态
         if (plan._id) {
-          const cacheKey = `plan_detail_${plan._id}`;
+          const cacheKey = CACHE_KEYS.PLAN_DETAIL_WITH_ID(plan._id);
           const cachedData = cacheManager.get<PlanDetailCacheData>(cacheKey);
           if (cachedData) {
             cachedData.plan.isFavorited = isFavorited;
@@ -426,7 +427,7 @@ Page({
       // 缓存当前方案详情数据，供其他页面使用
       const plan = this.data.plan;
       if (plan && plan._id) {
-        const cacheKey = `plan_detail_${plan._id}`;
+        const cacheKey = CACHE_KEYS.PLAN_DETAIL_WITH_ID(plan._id);
         const cacheData: PlanDetailCacheData = {
           plan: plan,
           timestamp: Date.now(),

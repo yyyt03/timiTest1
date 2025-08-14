@@ -317,7 +317,7 @@ Page({
       }
       
       // 如果是云存储路径，使用头像缓存获取临时URL
-      if (avatarUrl && avatarUrl.startsWith('cloud://')) {
+      if (avatarUrl && (avatarUrl.startsWith('cloud://') || avatarUrl.startsWith('@cloud://'))) {
         try {
           console.log('获取头像临时URL:', avatarUrl);
           

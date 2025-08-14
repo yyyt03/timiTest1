@@ -448,7 +448,7 @@ Page({
         const hero = getHeroByName(heroCategory.heroName);
         
         if (hero && hero.avatar) {
-          console.log(`favorites: 英雄 ${heroCategory.heroName} 找到头像:`, hero.avatar);
+          // 移除每个英雄的详细日志
           return {
             ...heroCategory,
             heroAvatar: hero.avatar
@@ -467,44 +467,22 @@ Page({
         .map(hero => hero.heroAvatar)
         .filter(avatar => avatar && !avatar.startsWith('http') && !avatar.startsWith('/'));
       
-      console.log('favorites: 需要处理的头像URL数量:', avatarUrls.length);
-      console.log('favorites: 头像URL列表:', avatarUrls);
-      
+      // 简化日志输出
       if (avatarUrls.length > 0) {
-        try {
-          console.log('favorites: 开始获取英雄头像临时URL，数量:', avatarUrls.length);
-          const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
-          console.log('favorites: 头像临时URL获取完成，结果:', avatarUrlMap);
-          
-          // 更新头像URL
-          processedCategories.forEach(heroCategory => {
-            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
-              const tempUrl = avatarUrlMap[heroCategory.heroAvatar];
-              if (tempUrl && tempUrl.startsWith('http')) {
-                console.log(`favorites: 英雄 ${heroCategory.heroName} 头像URL更新成功:`, tempUrl);
-                heroCategory.heroAvatar = tempUrl;
-              } else {
-                console.warn(`favorites: 英雄 ${heroCategory.heroName} 头像临时URL获取失败，使用默认头像`);
-                heroCategory.heroAvatar = '/images/unused/default-avatar.png';
-              }
-            }
-          });
-        } catch (error) {
-          console.error('favorites: 获取头像临时URL失败:', error);
-          // 如果获取失败，使用默认头像
-          processedCategories.forEach(heroCategory => {
-            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
-              heroCategory.heroAvatar = '/images/unused/default-avatar.png';
-            }
-          });
-        }
+        const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+        console.log('favorites: 头像临时URL获取完成，处理数量:', avatarUrls.length);
+        
+        // 更新英雄头像URL
+        processedCategories.forEach(heroCategory => {
+          if (heroCategory.heroAvatar && avatarUrlMap[heroCategory.heroAvatar]) {
+            heroCategory.heroAvatar = avatarUrlMap[heroCategory.heroAvatar];
+          }
+        });
       }
       
-      console.log('favorites: 英雄头像处理完成，结果:', processedCategories);
       return processedCategories;
     } catch (error) {
       console.error('favorites: 处理英雄头像失败:', error);
-      // 如果处理失败，返回原始数据
       return heroCategories;
     }
   },

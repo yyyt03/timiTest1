@@ -173,7 +173,7 @@ export class CacheKeyValidator {
    * @returns 是否符合规范
    */
   static isValid(key: string): boolean {
-    const pattern = /^timi:[a-z]+:[a-z]+:[a-z_\-]+:v[0-9]+$/;
+    const pattern = /^timi:[a-z]+:[a-z]+:[a-z0-9_\-]+:v[0-9]+$/;
     return pattern.test(key);
   }
 

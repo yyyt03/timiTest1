@@ -67,7 +67,11 @@ Page({
     filterDebounceTimer: null as any, // 防抖定时器
     
     // 添加请求状态管理
-    currentRequestId: 0 // 当前请求ID，用于取消过期的请求
+    currentRequestId: 0, // 当前请求ID，用于取消过期的请求
+    
+    // 添加云函数调用计数器，确保只调用一次
+    cloudFunctionCallCount: 0, // 云函数调用次数
+    hasInitialized: false // 是否已经完成初始化
   },
 
   // 收藏状态变化处理器
@@ -84,11 +88,18 @@ Page({
   onLoad() {
     console.log('推荐方案页面 onLoad 触发');
     
+    // 检查是否已经初始化过，避免重复初始化
+    if (this.data.hasInitialized) {
+      console.log('页面已经初始化过，跳过重复初始化');
+      return;
+    }
+    
     // 初始化时间状态，避免时间判断错误
     const now = Date.now();
     this.setData({
       lastLoadTime: now,
-      lastModeSwitchTime: now
+      lastModeSwitchTime: now,
+      hasInitialized: true // 标记已初始化
     });
     
     // 设置收藏状态变化监听器
@@ -109,10 +120,10 @@ Page({
     console.log('从strategy进入，强制重置为全部英雄状态');
     this.resetFilterState();
     
-    // 然后初始化页面数据 - 根据当前模式加载对应数据
+    // 优化：只调用一次云函数，同时完成英雄分类初始化和推荐方案显示
     console.log('初始化页面数据，模式:', this.data.currentMode, '英雄:', this.data.selectedHero);
-    this.initModeHeroList(this.data.currentMode, this.data.currentRequestId); // 根据当前模式初始化
-    this.loadRecommendPlans(false, this.data.currentRequestId);
+    console.log('[优化] 开始唯一一次云函数调用，同时完成英雄分类和推荐方案显示');
+    this.initModeHeroList(this.data.currentMode, this.data.currentRequestId); // 根据当前模式初始化，包含数据加载
   },
 
   // 页面数据变化监听
@@ -125,9 +136,20 @@ Page({
     
     // 优先检查交互状态变化（收藏和点赞）
     if (this.checkInteractionChanges()) {
-      console.log('检测到交互状态变化，需要刷新数据');
-      this.loadRecommendPlans(false, this.data.currentRequestId);
-      return;
+      console.log('检测到交互状态变化，优先使用本地缓存数据');
+      // 优化：优先使用本地缓存，避免重复调用云函数
+      if (this.data.isDataLoaded && this.data.allRecommendPlans.length > 0) {
+        console.log('使用本地缓存数据，避免重复调用云函数');
+        // 只清除相关缓存，不重新调用云函数
+        this.clearInteractionRelatedCache();
+        // 重新筛选数据以反映交互状态变化
+        this.filterRecommendPlansByHero();
+        return;
+      } else {
+        console.log('本地无缓存数据，需要调用云函数');
+        this.loadRecommendPlans(false, this.data.currentRequestId);
+        return;
+      }
     }
     
     const now = Date.now();
@@ -144,6 +166,19 @@ Page({
     
     // 等待状态稳定后再处理数据
     setTimeout(() => {
+      // 检查是否已经调用过云函数，如果已调用则跳过
+      if (this.data.cloudFunctionCallCount > 0) {
+        console.log(`[优化] 云函数已调用${this.data.cloudFunctionCallCount}次，跳过重复调用`);
+        // 如果数据已加载且未过期，且当前有英雄筛选，需要重新筛选数据
+        if (this.data.allRecommendPlans.length > 0 && this.data.selectedHero !== 'all') {
+          console.log('当前有英雄筛选，重新筛选数据，当前数据量:', this.data.allRecommendPlans.length);
+          this.filterRecommendPlansByHero();
+        } else {
+          console.log('当前显示全部英雄或无数据，跳过筛选');
+        }
+        return;
+      }
+      
       // 只有在以下情况才重新加载：
       // 1. 数据未加载
       // 2. 距离上次加载超过10分钟
@@ -155,7 +190,12 @@ Page({
       
       if (shouldReload) {
         console.log('需要重新加载数据');
-        this.loadRecommendPlans(false, this.data.currentRequestId);
+        // 优化：如果数据未加载，调用initModeHeroList而不是loadRecommendPlans
+        if (!this.data.isDataLoaded) {
+          this.initModeHeroList(this.data.currentMode, this.data.currentRequestId);
+        } else {
+          this.loadRecommendPlans(false, this.data.currentRequestId);
+        }
       } else {
         console.log('数据已加载且未过期，保持现有数据');
         // 如果数据已加载且未过期，且当前有英雄筛选，需要重新筛选数据
@@ -353,7 +393,14 @@ Page({
   // 初始化指定模式的英雄分类
   async initModeHeroList(mode: string, requestId: number) {
     try {
-      console.log(`开始初始化${mode}模式的英雄分类，请求ID:`, requestId);
+      console.log(`[优化] 开始初始化${mode}模式的英雄分类，请求ID:`, requestId);
+      console.log(`[优化] 本次调用将同时完成英雄分类初始化和推荐方案显示，避免重复调用云函数`);
+      
+      // 检查是否已经调用过云函数，避免重复调用
+      if (this.data.cloudFunctionCallCount > 0) {
+        console.log(`[优化] 云函数已经调用过${this.data.cloudFunctionCallCount}次，跳过重复调用`);
+        return;
+      }
       
       // 检查请求是否已被取消
       if (requestId !== this.data.currentRequestId) {
@@ -382,9 +429,11 @@ Page({
         this.setData({
           heroCategories: heroCategories,
           originalAllPlans: allPlans,
-          allRecommendPlans: allPlans,
-          recommendPlans: allPlans,
+          allRecommendPlans: allPlans, // 保存完整数据用于筛选和分页
+          recommendPlans: allPlans.slice(0, this.data.pageSize), // 只显示前pageSize条数据
           total: allPlans.length,
+          page: 1, // 重置页码
+          hasMore: allPlans.length > this.data.pageSize, // 设置是否有更多数据
           isDataLoaded: true,
           lastLoadTime: Date.now()
         });
@@ -418,6 +467,12 @@ Page({
           }
         }, 100);
         
+        console.log(`[优化] ${mode}模式数据加载完成，一次云函数调用完成两个功能:`);
+        console.log(`[优化] - 英雄分类初始化完成，英雄数量: ${heroCategories.length}`);
+        console.log(`[优化] - 推荐方案显示完成，总方案数: ${allPlans.length}，显示数量: ${this.data.pageSize}`);
+        console.log(`[优化] - 避免了重复调用云函数，提升了页面加载性能`);
+        console.log(`[优化] - 云函数调用次数: ${this.data.cloudFunctionCallCount}，目标: 1次`);
+        
         return; // 成功使用缓存数据，直接返回
       }
       
@@ -442,6 +497,13 @@ Page({
       }
       
       console.log(`调用云函数getRecommendPlans，模式: ${mode}，请求参数:`, requestData);
+      
+      // 增加云函数调用计数
+      this.setData({
+        cloudFunctionCallCount: this.data.cloudFunctionCallCount + 1
+      });
+      console.log(`[优化] 云函数调用计数增加，当前次数: ${this.data.cloudFunctionCallCount}`);
+      
       const result = await wx.cloud.callFunction({
         name: 'getRecommendPlans',
         data: requestData
@@ -548,6 +610,13 @@ Page({
             console.log('英雄分类初始化完成，当前显示全部方案，无需筛选');
           }
         }, 100);
+        
+        // 添加优化完成日志
+        console.log(`[优化] ${mode}模式数据加载完成，一次云函数调用完成两个功能:`);
+        console.log(`[优化] - 英雄分类初始化完成，英雄数量: ${heroCategories.length}`);
+        console.log(`[优化] - 推荐方案显示完成，总方案数: ${allPlans.length}，显示数量: ${this.data.pageSize}`);
+        console.log(`[优化] - 避免了重复调用云函数，提升了页面加载性能`);
+        console.log(`[优化] - 云函数调用次数: ${this.data.cloudFunctionCallCount}，目标: 1次`);
       } else {
         console.error(`${mode}模式数据获取失败:`, result);
       }
@@ -1145,6 +1214,7 @@ Page({
   // 处理英雄头像
   async processHeroAvatars(heroCategories: any[]) {
     try {
+      // 简化日志，只保留关键信息
       console.log('recommendPlan: 开始处理英雄头像，英雄数量:', heroCategories.length);
       
       // 为每个英雄分类添加头像信息
@@ -1152,7 +1222,7 @@ Page({
         const hero = getHeroByName(heroCategory.heroName);
         
         if (hero && hero.avatar) {
-          console.log(`recommendPlan: 英雄 ${heroCategory.heroName} 找到头像:`, hero.avatar);
+          // 移除每个英雄的详细日志
           return {
             ...heroCategory,
             heroAvatar: hero.avatar
@@ -1171,44 +1241,22 @@ Page({
         .map(hero => hero.heroAvatar)
         .filter(avatar => avatar && !avatar.startsWith('http') && !avatar.startsWith('/'));
       
-      console.log('recommendPlan: 需要处理的头像URL数量:', avatarUrls.length);
-      console.log('recommendPlan: 头像URL列表:', avatarUrls);
-      
+      // 简化日志输出
       if (avatarUrls.length > 0) {
-        try {
-          console.log('recommendPlan: 开始获取英雄头像临时URL，数量:', avatarUrls.length);
-          const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
-          console.log('recommendPlan: 头像临时URL获取完成，结果:', avatarUrlMap);
-          
-          // 更新头像URL
-          processedCategories.forEach(heroCategory => {
-            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
-              const tempUrl = avatarUrlMap[heroCategory.heroAvatar];
-              if (tempUrl && tempUrl.startsWith('http')) {
-                console.log(`recommendPlan: 英雄 ${heroCategory.heroName} 头像URL更新成功:`, tempUrl);
-                heroCategory.heroAvatar = tempUrl;
-              } else {
-                console.warn(`recommendPlan: 英雄 ${heroCategory.heroName} 头像临时URL获取失败，使用默认头像`);
-                heroCategory.heroAvatar = '/images/unused/default-avatar.png';
-              }
-            }
-          });
-        } catch (error) {
-          console.error('recommendPlan: 获取头像临时URL失败:', error);
-          // 如果获取失败，使用默认头像
-          processedCategories.forEach(heroCategory => {
-            if (heroCategory.heroAvatar && !heroCategory.heroAvatar.startsWith('http') && !heroCategory.heroAvatar.startsWith('/')) {
-              heroCategory.heroAvatar = '/images/unused/default-avatar.png';
-            }
-          });
-        }
+        const avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+        console.log('recommendPlan: 头像临时URL获取完成，处理数量:', avatarUrls.length);
+        
+        // 更新英雄头像URL
+        processedCategories.forEach(heroCategory => {
+          if (heroCategory.heroAvatar && avatarUrlMap[heroCategory.heroAvatar]) {
+            heroCategory.heroAvatar = avatarUrlMap[heroCategory.heroAvatar];
+          }
+        });
       }
       
-      console.log('recommendPlan: 英雄头像处理完成，结果:', processedCategories);
       return processedCategories;
     } catch (error) {
       console.error('recommendPlan: 处理英雄头像失败:', error);
-      // 如果处理失败，返回原始数据
       return heroCategories;
     }
   },
@@ -1784,6 +1832,25 @@ Page({
 
   // 加载更多数据
   async loadMorePlans() {
+    // 优化：优先从本地缓存数据中加载更多
+    if (this.data.allRecommendPlans.length > 0 && this.data.recommendPlans.length < this.data.allRecommendPlans.length) {
+      console.log('从本地缓存数据加载更多');
+      const currentLength = this.data.recommendPlans.length;
+      const nextPageData = this.data.allRecommendPlans.slice(currentLength, currentLength + this.data.pageSize);
+      
+      if (nextPageData.length > 0) {
+        this.setData({
+          recommendPlans: [...this.data.recommendPlans, ...nextPageData],
+          page: this.data.page + 1,
+          hasMore: currentLength + nextPageData.length < this.data.allRecommendPlans.length
+        });
+        console.log('本地加载更多完成，当前显示数量:', this.data.recommendPlans.length);
+        return;
+      }
+    }
+    
+    // 如果本地数据不足，才调用云函数
+    console.log('本地数据不足，调用云函数加载更多');
     await this.loadRecommendPlans(true, this.data.currentRequestId);
   },
 

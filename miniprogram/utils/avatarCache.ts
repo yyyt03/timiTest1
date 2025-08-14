@@ -44,9 +44,7 @@ class AvatarCacheManager {
       cacheKey: this.CACHE_KEY
     });
     
-    // 输出缓存键信息用于调试
-    console.log('头像缓存管理器初始化完成，缓存键:', this.CACHE_KEY);
-    console.log('缓存键解析:', CACHE_KEYS.AVATAR_URL_CACHE);
+    // 移除调试用的console.log
   }
 
   static getInstance(): AvatarCacheManager {
@@ -176,7 +174,6 @@ class AvatarCacheManager {
     try {
       // 构建完整的云存储fileID
       const fullFileID = this.buildFullFileID(fileID);
-      logger.debug(`构建完整fileID: ${fileID} -> ${fullFileID}`);
       
       const result = await getTempFileURLs([fullFileID]);
       if (result && result[fullFileID]) {
@@ -192,7 +189,6 @@ class AvatarCacheManager {
         };
         
         this.saveCache();
-        logger.debug(`头像URL已缓存: ${fileID}`);
         return url;
       }
     } catch (error) {
@@ -210,7 +206,6 @@ class AvatarCacheManager {
     try {
       // 构建完整的云存储fileID列表
       const fullFileIDs = fileIDs.map(fileID => this.buildFullFileID(fileID));
-      logger.debug(`批量构建完整fileID: ${fileIDs.length} 个`);
       
       const tempUrls = await getTempFileURLs(fullFileIDs);
       

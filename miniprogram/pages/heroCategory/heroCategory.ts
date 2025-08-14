@@ -19,6 +19,7 @@ Page({
         source: options.source
       });
     }
+    
     // 智能缓存检查，只在必要时清除缓存
     this.checkAndUpdateCache().then(() => {
       this.getHeroList();
@@ -30,35 +31,40 @@ Page({
 
   // 智能缓存检查和更新
   async checkAndUpdateCache() {
-    const cacheInfo = heroCache.getCacheInfo();
-    
-    // 如果缓存不存在，清除缓存
-    if (!cacheInfo.hasCache) {
-      log('缓存不存在，清除旧缓存');
-      heroCache.clearCache();
-      return;
-    }
-
-    // 检查缓存是否过期
-    if (cacheInfo.age > 10 * 60 * 1000) { // 10分钟
-      log('缓存已过期，清除旧缓存');
-      heroCache.clearCache();
-      return;
-    }
-
-    // 检查数据版本是否有变化
     try {
-      const needsRefresh = await heroCache.checkDataVersion();
-      if (needsRefresh) {
-        log('数据版本已变化，清除旧缓存');
+      const cacheInfo = heroCache.getCacheInfo();
+      
+      // 如果缓存不存在，清除缓存
+      if (!cacheInfo.hasCache) {
+        log('缓存不存在，清除旧缓存');
         heroCache.clearCache();
         return;
       }
-    } catch (error) {
-      log('版本检查失败，保留现有缓存:', error);
-    }
 
-    log('缓存有效，保留现有缓存');
+      // 检查缓存是否过期（改为23小时，与头像缓存保持一致）
+      if (cacheInfo.age > 23 * 60 * 60 * 1000) { // 23小时
+        log('缓存已过期，清除旧缓存');
+        heroCache.clearCache();
+        return;
+      }
+
+      // 检查数据版本是否有变化
+      try {
+        const needsRefresh = await heroCache.checkDataVersion();
+        if (needsRefresh) {
+          log('数据版本已变化，清除旧缓存');
+          heroCache.clearCache();
+          return;
+        }
+      } catch (error) {
+        log('版本检查失败，保留现有缓存:', error);
+      }
+
+      log('缓存有效，保留现有缓存');
+    } catch (error) {
+      log('缓存检查过程出错，保留现有缓存:', error);
+      // 缓存检查失败时，不要清除缓存，避免反复调用云函数
+    }
   },
 
   // 获取英雄列表（本地化版本）
@@ -90,11 +96,10 @@ Page({
         });
         
         // 使用新的头像缓存机制获取临时URL
-        console.log('heroCategory: 开始获取头像临时URL，总数:', fileIDs.length);
-        console.log('heroCategory: 头像fileIDs:', fileIDs);
+        log('开始获取头像URL，总数:', fileIDs.length);
         const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
-        console.log('heroCategory: 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
-        console.log('heroCategory: 头像URL映射:', avatarUrlMap);
+        const successCount = Object.keys(avatarUrlMap).filter(key => avatarUrlMap[key].startsWith('http')).length;
+        log('头像URL获取完成，成功数量:', successCount);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};
@@ -119,9 +124,13 @@ Page({
         // 缓存数据
         await heroCache.setCache(localData, avatarURLs);
         
-        // 调试：显示头像缓存状态
+        // 显示头像缓存状态
         const cacheStats = avatarCache.getCacheStats();
-        console.log('heroCategory: 头像缓存状态:', cacheStats);
+        log('头像缓存状态:', {
+          totalAvatars: cacheStats.totalAvatars,
+          lastUpdate: new Date(cacheStats.lastUpdate).toLocaleString(),
+          cacheKey: cacheStats.cacheKey
+        });
         
         that.setData({
           heroCategories: categoriesData,
@@ -156,11 +165,10 @@ Page({
         });
         
         // 使用新的头像缓存机制获取临时URL并缓存
-        console.log('heroCategory: 云函数回退 - 开始获取头像临时URL，总数:', fileIDs.length);
-        console.log('heroCategory: 云函数回退 - 头像fileIDs:', fileIDs);
+        log('云函数回退 - 开始获取头像URL，总数:', fileIDs.length);
         const avatarUrlMap = await avatarCache.getAvatarUrls(fileIDs);
-        console.log('heroCategory: 云函数回退 - 头像临时URL获取完成，结果数量:', Object.keys(avatarUrlMap).length);
-        console.log('heroCategory: 云函数回退 - 头像URL映射:', avatarUrlMap);
+        const successCount = Object.keys(avatarUrlMap).filter(key => avatarUrlMap[key].startsWith('http')).length;
+        log('云函数回退 - 头像URL获取完成，成功数量:', successCount);
         
         // 构建头像URL映射
         const avatarURLs: { [key: string]: string } = {};
@@ -185,9 +193,13 @@ Page({
         // 缓存数据
         heroCache.setCache(result.result.data, avatarURLs);
         
-        // 调试：显示头像缓存状态
+        // 显示头像缓存状态
         const cacheStats = avatarCache.getCacheStats();
-        console.log('heroCategory: 云函数回退 - 头像缓存状态:', cacheStats);
+        log('云函数回退 - 头像缓存状态:', {
+          totalAvatars: cacheStats.totalAvatars,
+          lastUpdate: new Date(cacheStats.lastUpdate).toLocaleString(),
+          cacheKey: cacheStats.cacheKey
+        });
         
         that.setData({
           heroCategories: categoriesData,

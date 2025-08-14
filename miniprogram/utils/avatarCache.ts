@@ -30,21 +30,16 @@ class AvatarCacheManager {
   private constructor() {
     this.cache = {
       avatars: {},
-      lastUpdate: 0,
+      lastUpdate: Date.now(), // 修复：初始化为当前时间戳而不是0
       batchSize: this.BATCH_SIZE
     };
     this.loadCache();
     
     // 记录缓存策略初始化
-    logger.info('英雄头像缓存管理器初始化完成', {
+    logger.info('头像缓存管理器初始化完成', {
       cacheDuration: '23小时',
-      refreshThreshold: '21小时',
-      strategy: '英雄头像为静态资源，可长期缓存以减少云函数调用',
-      maxTempUrlValidity: '24小时（云存储限制）',
       cacheKey: this.CACHE_KEY
     });
-    
-    // 移除调试用的console.log
   }
 
   static getInstance(): AvatarCacheManager {
@@ -62,6 +57,13 @@ class AvatarCacheManager {
         const parsed = JSON.parse(cached);
         // 验证缓存数据完整性
         if (parsed.avatars && typeof parsed.avatars === 'object') {
+          // 修复：检查并清理lastUpdate为0的旧缓存数据
+          if (parsed.lastUpdate === 0 || parsed.lastUpdate === '0') {
+            logger.warn('检测到旧版本缓存数据（lastUpdate为0），清理旧缓存');
+            this.clearCache();
+            return;
+          }
+          
           this.cache = parsed;
           this.cleanupExpiredAvatars();
           logger.info('头像缓存加载成功', { 
@@ -70,13 +72,19 @@ class AvatarCacheManager {
             cacheKey: this.CACHE_KEY
           });
         } else {
-          logger.warn('缓存数据格式无效', { parsed });
+          logger.warn('缓存数据格式无效，使用默认配置', { parsed });
+          // 修复：设置正确的lastUpdate值
+          this.cache.lastUpdate = Date.now();
         }
       } else {
         logger.info('没有找到头像缓存数据，使用默认配置');
+        // 修复：确保lastUpdate有正确的值
+        this.cache.lastUpdate = Date.now();
       }
     } catch (error) {
       logger.warn('加载头像缓存失败，使用默认配置', error);
+      // 修复：确保lastUpdate有正确的值
+      this.cache.lastUpdate = Date.now();
     }
   }
 
@@ -131,8 +139,15 @@ class AvatarCacheManager {
       }
     }
     
+    // 记录缓存命中率
+    const cachedCount = fileIDs.length - uncachedFileIDs.length;
+    if (cachedCount > 0) {
+      logger.info(`头像缓存命中: ${cachedCount}/${fileIDs.length}`);
+    }
+    
     // 如果有未缓存的文件ID，批量获取
     if (uncachedFileIDs.length > 0) {
+      logger.info(`需要获取新头像URL: ${uncachedFileIDs.length}个`);
       try {
         const newUrls = await this.fetchAvatarUrls(uncachedFileIDs);
         Object.assign(result, newUrls);
@@ -188,6 +203,8 @@ class AvatarCacheManager {
           fileID
         };
         
+        // 修复：更新lastUpdate时间戳
+        this.cache.lastUpdate = Date.now();
         this.saveCache();
         return url;
       }
@@ -230,8 +247,10 @@ class AvatarCacheManager {
         }
       }
       
+      // 修复：更新lastUpdate时间戳
+      this.cache.lastUpdate = Date.now();
       this.saveCache();
-      logger.info(`批量获取头像URL完成，成功: ${Object.keys(result).length}/${fileIDs.length}`);
+      logger.info(`头像URL获取完成: ${Object.keys(result).length}/${fileIDs.length}`);
     } catch (error) {
       logger.error('批量获取头像URL失败', error);
       
@@ -248,11 +267,29 @@ class AvatarCacheManager {
   clearCache(): void {
     this.cache = {
       avatars: {},
-      lastUpdate: 0,
+      lastUpdate: Date.now(), // 修复：清理缓存时设置正确的时间戳
       batchSize: this.BATCH_SIZE
     };
     this.saveCache();
     logger.info('头像缓存已清理');
+  }
+
+  // 强制清理旧版本缓存（用于修复lastUpdate为0的问题）
+  forceCleanOldCache(): void {
+    try {
+      // 直接删除存储中的旧缓存数据
+      wx.removeStorageSync(this.CACHE_KEY);
+      // 重新初始化缓存
+      this.cache = {
+        avatars: {},
+        lastUpdate: Date.now(),
+        batchSize: this.BATCH_SIZE
+      };
+      this.saveCache();
+      logger.info('旧版本头像缓存已强制清理');
+    } catch (error) {
+      logger.error('强制清理旧缓存失败', error);
+    }
   }
 
   // 获取缓存统计信息

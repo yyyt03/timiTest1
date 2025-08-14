@@ -180,7 +180,7 @@ class SmartCacheManager {
 
   // 从推荐方案中筛选体验服方案
   getBetaPlansFromRecommend(mode: string): any[] | null {
-    const cacheKey = `plans_recommend_${mode}`;
+    const cacheKey = `timi:plan:data:recommend_${mode}:v1`;
     const reusableData = this.getReusableData<any[]>(cacheKey);
     
     if (reusableData) {
@@ -191,7 +191,7 @@ class SmartCacheManager {
 
   // 从推荐方案中筛选指定英雄方案
   getHeroPlansFromRecommend(mode: string, heroId: string): any[] | null {
-    const cacheKey = `plans_recommend_${mode}`;
+    const cacheKey = `timi:plan:data:recommend_${mode}:v1`;
     const reusableData = this.getReusableData<any[]>(cacheKey, heroId);
     
     if (reusableData) {
@@ -202,7 +202,7 @@ class SmartCacheManager {
 
   // 从英雄数据中获取英雄详情
   getHeroDetailFromHeroData(heroId: string): any | null {
-    const cacheKey = `hero_data_list`;
+    const cacheKey = `timi:hero:data:list:v1`;
     const reusableData = this.getReusableData<any>(cacheKey, heroId);
     
     if (reusableData) {
@@ -213,7 +213,7 @@ class SmartCacheManager {
 
   // 从装备分类中获取装备列表
   getEquipmentListFromCategory(category: string): any[] | null {
-    const cacheKey = `equipment_category_${category}`;
+    const cacheKey = `timi:equipment:data:category_${category}:v1`;
     const reusableData = this.getReusableData<any[]>(cacheKey, category);
     
     if (reusableData) {

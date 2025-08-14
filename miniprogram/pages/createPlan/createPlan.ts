@@ -421,7 +421,7 @@ Page({
     }
 
     // 先尝试从缓存获取数据
-    const cacheKey = `hero_skills_${this.data.heroId}`;
+    const cacheKey = `timi:hero:data:skills_${this.data.heroId}:v1`;
     const cachedData = cacheManager.get<HeroSkillsCacheData>(cacheKey);
     
     if (cachedData && cachedData.skills) {

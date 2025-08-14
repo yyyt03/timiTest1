@@ -3,6 +3,7 @@ import { getEmptyIcon, getLocalFallbackIcon } from '../../utils/iconManager'
 import { getHeroByName } from '../../data/localHeroData'
 import { avatarCache } from '../../utils/avatarCache'
 import cacheManager from '../../utils/cacheManager'
+import { CACHE_KEYS } from '../../utils/cacheKeys'
 import { favoriteSyncManager, FavoriteAction } from '../../utils/favoriteSync'
 import type { FavoritesCacheData, FavoriteItem } from '../../typings/types/favorites'
 
@@ -50,7 +51,7 @@ Page({
 
   // 检查缓存状态并在必要时刷新
   checkAndRefreshIfNeeded() {
-    const cacheKey = 'user_favorites';
+    const cacheKey = CACHE_KEYS.USER_FAVORITES_DATA;
     const cachedData = cacheManager.get<FavoritesCacheData>(cacheKey);
     
     if (cachedData && !this.isDataStale()) {
@@ -106,7 +107,7 @@ Page({
     
     // 如果不是刷新模式，先尝试从缓存加载
     if (!refresh) {
-      const cacheKey = 'user_favorites';
+      const cacheKey = CACHE_KEYS.USER_FAVORITES_DATA;
       const cachedData = cacheManager.get<FavoritesCacheData>(cacheKey);
       
       if (cachedData) {
@@ -247,7 +248,7 @@ Page({
 
   // 更新缓存
   updateCache(favorites: FavoriteItem[], total: number) {
-    const cacheKey = 'user_favorites';
+    const cacheKey = CACHE_KEYS.USER_FAVORITES_DATA;
     const cacheData: FavoritesCacheData = {
       favorites,
       allFavorites: favorites,
@@ -534,7 +535,7 @@ Page({
   // 处理收藏状态变化
   handleFavoriteChange(event: any) {
     // 清除缓存，强制刷新数据
-    cacheManager.delete('user_favorites');
+    cacheManager.delete(CACHE_KEYS.USER_FAVORITES_DATA);
     this.setData({
       lastUpdateTime: 0
     });
@@ -557,7 +558,7 @@ Page({
       console.log('检测到全局收藏状态变化，需要刷新数据');
       
       // 清除缓存，强制刷新
-      cacheManager.delete('user_favorites');
+      cacheManager.delete(CACHE_KEYS.USER_FAVORITES_DATA);
       this.setData({
         lastUpdateTime: 0
       });
@@ -574,7 +575,7 @@ Page({
       wx.setStorageSync('last_favorite_count', currentFavoriteCount);
       
       if (this.data.lastUpdateTime > 0) {
-        cacheManager.delete('user_favorites');
+        cacheManager.delete(CACHE_KEYS.USER_FAVORITES_DATA);
         this.setData({
           lastUpdateTime: 0
         });

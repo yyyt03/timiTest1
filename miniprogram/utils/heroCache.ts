@@ -53,9 +53,7 @@ class HeroCache {
       // 记录英雄数据缓存策略（首次使用时）
       if (!this._hasLoggedCacheStrategy) {
         log('英雄数据缓存策略初始化', {
-          heroDataExpireTime: '23小时（英雄数据为静态资源，可长期缓存）',
-          avatarURLExpireTime: '2小时（临时URL有效期）',
-          strategy: '英雄数据为静态资源，可长期缓存以减少云函数调用',
+          heroDataExpireTime: '23小时',
           cacheKey: this.cacheKey
         });
         this._hasLoggedCacheStrategy = true;
@@ -277,6 +275,68 @@ class HeroCache {
       newConfig: this.config,
       cacheKey: this.cacheKey
     });
+  }
+
+  // 获取缓存信息（供页面使用）
+  getCacheInfo(): {
+    hasCache: boolean;
+    age: number;
+    dataVersion: string;
+  } {
+    try {
+      const cacheStr = wx.getStorageSync(this.cacheKey);
+      if (!cacheStr) {
+        return {
+          hasCache: false,
+          age: 0,
+          dataVersion: 'unknown'
+        };
+      }
+
+      const cache: HeroCacheData = JSON.parse(cacheStr);
+      const now = Date.now();
+      const age = now - cache.timestamp;
+
+      return {
+        hasCache: true,
+        age: age,
+        dataVersion: cache.dataVersion || 'unknown'
+      };
+    } catch (error) {
+      return {
+        hasCache: false,
+        age: 0,
+        dataVersion: 'unknown'
+      };
+    }
+  }
+
+  // 检查数据版本（供页面使用）
+  async checkDataVersion(): Promise<boolean> {
+    try {
+      const currentVersion = await this.getCurrentDataVersion();
+      const cacheInfo = this.getCacheInfo();
+      
+      // 如果缓存不存在，需要刷新
+      if (!cacheInfo.hasCache) {
+        return true;
+      }
+      
+      // 如果版本不匹配，需要刷新
+      if (cacheInfo.dataVersion !== currentVersion) {
+        log('数据版本不匹配，需要刷新缓存', {
+          cacheVersion: cacheInfo.dataVersion,
+          currentVersion: currentVersion
+        });
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      log('版本检查失败', error);
+      // 版本检查失败时，保守起见返回true（需要刷新）
+      return true;
+    }
   }
 }
 

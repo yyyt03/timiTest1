@@ -327,7 +327,7 @@ class CacheManager {
 
   // 从推荐方案中筛选体验服方案
   getBetaPlansFromRecommend(mode: string): any[] | null {
-    const cacheKey = `plans_recommend_${mode}`;
+    const cacheKey = `timi:plan:data:recommend_${mode}:v1`;
     const reusableData = this.getReusableData(cacheKey, (data) => {
       if (data?.allPlans) {
         return data.allPlans.filter((plan: any) => plan.isBetaPlan === true);
@@ -349,7 +349,7 @@ class CacheManager {
 
   // 从推荐方案中筛选指定英雄方案
   getHeroPlansFromRecommend(mode: string, heroId: string): any[] | null {
-    const cacheKey = `plans_recommend_${mode}`;
+    const cacheKey = `timi:plan:data:recommend_${mode}:v1`;
     const reusableData = this.getReusableData(cacheKey, (data) => {
       if (data?.allPlans) {
         return data.allPlans.filter((plan: any) => plan.heroId === heroId);

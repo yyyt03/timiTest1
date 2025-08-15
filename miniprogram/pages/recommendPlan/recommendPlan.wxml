@@ -60,7 +60,7 @@
     </view>
     
     <!-- 方案列表 -->
-    <view class="plans-grid" wx:else>
+    <view class="plans-grid" wx:elif="{{!loading && recommendPlans.length > 0}}">
       <view class="plan-card" 
             wx:for="{{recommendPlans}}" 
             wx:key="_id" 
@@ -107,8 +107,8 @@
       </view>
     </view>
     
-    <!-- 无数据提示 -->
-    <view class="no-data" wx:if="{{!loading && recommendPlans.length === 0}}">
+    <!-- 无数据提示 - 只有在非加载状态且数据已加载但为空时才显示 -->
+    <view class="no-data" wx:if="{{!loading && isDataLoaded && recommendPlans.length === 0}}">
       <image class="no-data-icon" src="{{emptyIcon}}" mode="aspectFit"></image>
       <view class="no-data-text">
         {{currentMode === 'recommended' ? '暂无推荐方案' : (currentMode === 'hot' ? '暂无热门方案' : '暂无最新方案')}}

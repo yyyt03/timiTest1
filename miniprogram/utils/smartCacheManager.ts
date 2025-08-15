@@ -1,6 +1,5 @@
 // 智能缓存复用管理器
 import { logger } from './logger';
-import { CACHE_KEYS, CacheKeyValidator } from './cacheKeys';
 
 // 可复用数据接口
 export interface ReusableData<T = any> {

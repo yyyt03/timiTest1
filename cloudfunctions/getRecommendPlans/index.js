@@ -50,7 +50,10 @@ exports.main = async function(event, context) {
     };
     
     // 根据模式设置不同的筛选和排序逻辑
-    if (mode === 'recommended' || event.isRecommended === true) {
+    if (mode === 'all') {
+      // 全局模式：获取所有已发布的方案，不做额外筛选
+      console.log('全局模式：获取所有已发布的方案');
+    } else if (mode === 'recommended' || event.isRecommended === true) {
       // 推荐模式：只显示被标记为推荐的方案
       whereCondition.isRecommended = true;
       console.log('推荐模式：只显示推荐方案，查询条件:', whereCondition);
@@ -104,7 +107,17 @@ exports.main = async function(event, context) {
     // 根据模式决定数据获取方式
     let plansResult, countResult;
     
-    if (mode === 'hot') {
+    if (mode === 'all') {
+      // 全局模式：获取所有方案，不分页
+      [plansResult, countResult] = await Promise.all([
+        db.collection('plans')
+          .where(whereCondition)
+          .get(),
+        db.collection('plans')
+          .where(whereCondition)
+          .count()
+      ]);
+    } else if (mode === 'hot') {
       // 热门模式：获取所有方案用于排序
       [plansResult, countResult] = await Promise.all([
         db.collection('plans')
@@ -216,16 +229,18 @@ exports.main = async function(event, context) {
       favoriteCount: favoriteCountMap[plan._id] || 0
     }));
     
-    // 如果是热门模式，按点赞数和收藏数重新排序
-    if (mode === 'hot') {
+    // 如果是热门模式或全局模式，按点赞数和收藏数重新排序
+    if (mode === 'hot' || mode === 'all') {
       plans.sort((a, b) => {
         const aScore = a.likeCount + a.favoriteCount;
         const bScore = b.likeCount + b.favoriteCount;
         return bScore - aScore;
       });
       
-      // 排序后应用分页
-      plans = plans.slice(skip, skip + pageSize);
+      // 如果是热门模式，排序后应用分页；全局模式不分页
+      if (mode === 'hot') {
+        plans = plans.slice(skip, skip + pageSize);
+      }
     }
     
     const resultData = {

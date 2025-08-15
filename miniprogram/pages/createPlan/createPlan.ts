@@ -1,5 +1,6 @@
 // 方案创作页面
 import cacheManager from '../../utils/cacheManager';
+import { CacheKeyGenerator } from '../../utils/cacheKeys';
 
 // 英雄技能缓存数据接口
 interface HeroSkillsCacheData {

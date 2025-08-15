@@ -184,8 +184,8 @@
 .hero-list {
   display: grid;
   grid-template-columns: repeat(6, 1fr); /* 固定每行6个英雄 */
-  gap: 12rpx; /* 减小间距，让6个英雄能更好地适应 */
-  padding: 16rpx; /* 减小内边距 */
+  gap: 20rpx; /* 使用recommendPlan的间距 */
+  padding: 24rpx; /* 使用recommendPlan的内边距 */
   background: #fff;
   box-sizing: border-box;
   max-width: 100%;
@@ -206,43 +206,50 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8rpx 4rpx;
-  border-radius: 16rpx;
+  justify-content: center;
+  padding: 16rpx 8rpx; /* 使用recommendPlan的内边距 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-sizing: border-box;
   background: transparent;
   border: none;
-  margin: 0;
   position: relative;
-  overflow: hidden;
 }
 
 .hero-item.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+  background: transparent; /* 使用recommendPlan的选中样式 */
+  color: #667eea;
+  border: none;
+}
+
+.hero-item:not(.selected):hover {
+  transform: translateY(-4rpx); /* 使用recommendPlan的悬停效果 */
+}
+
+.hero-item:not(.selected):active {
+  background: transparent;
+  transform: scale(0.95) translateY(-2rpx);
 }
 
 /* 英雄头像样式 */
 .hero-avatar {
-  width: 60rpx; /* 减小头像尺寸 */
+  width: 60rpx; /* 保持原有大小 */
   height: 60rpx;
   border-radius: 50%;
   background: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 6rpx; /* 减小底部间距 */
-  border: 2rpx solid #ffffff; /* 减小边框 */
-  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.25); /* 减小阴影 */
+  margin-bottom: 12rpx; /* 使用recommendPlan的底部间距 */
+  border: 3rpx solid #ffffff; /* 使用recommendPlan的边框 */
+  box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.25); /* 使用recommendPlan的阴影 */
   overflow: hidden;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
 }
 
 .hero-item:hover .hero-avatar {
-  box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.35);
+  box-shadow: 0 8rpx 28rpx rgba(102, 126, 234, 0.35); /* 使用recommendPlan的悬停阴影 */
   transform: scale(1.05);
 }
 
@@ -263,7 +270,7 @@
 }
 
 .hero-item .hero-name {
-  font-size: 20rpx; /* 减小字体大小 */
+  font-size: 20rpx; /* 保持原有字体大小 */
   font-weight: 500;
   color: #4a5568;
   text-align: center;
@@ -550,24 +557,24 @@
   
   .hero-list {
     grid-template-columns: repeat(6, 1fr); /* 小屏幕下仍然保持6个 */
-    gap: 8rpx; /* 进一步减小间距 */
-    padding: 12rpx; /* 减小内边距 */
+    gap: 16rpx; /* 使用recommendPlan的间距比例 */
+    padding: 18rpx; /* 使用recommendPlan的内边距比例 */
     overflow: hidden;
   }
   
   .hero-item {
-    padding: 6rpx 2rpx; /* 减小内边距 */
+    padding: 12rpx 6rpx; /* 使用recommendPlan的内边距比例 */
   }
   
   .hero-avatar {
-    width: 50rpx; /* 减小头像尺寸 */
+    width: 50rpx; /* 保持原有头像尺寸 */
     height: 50rpx;
-    margin-bottom: 4rpx; /* 减小底部间距 */
+    margin-bottom: 8rpx; /* 使用recommendPlan的底部间距比例 */
     border: 2rpx solid #ffffff;
   }
   
   .hero-item .hero-name {
-    font-size: 16rpx; /* 减小字体大小 */
+    font-size: 16rpx; /* 保持原有字体大小 */
     margin-bottom: 0;
   }
 }
@@ -581,17 +588,17 @@
   
   .hero-list {
     grid-template-columns: repeat(6, 1fr); /* 超小屏幕下仍然保持6个 */
-    gap: 6rpx; /* 进一步减小间距 */
-    padding: 10rpx; /* 减小内边距 */
+    gap: 12rpx; /* 使用recommendPlan的间距比例 */
+    padding: 16rpx; /* 使用recommendPlan的内边距比例 */
   }
   
   .hero-avatar {
-    width: 45rpx; /* 进一步减小头像尺寸 */
+    width: 45rpx; /* 保持原有头像尺寸 */
     height: 45rpx;
   }
   
   .hero-item .hero-name {
-    font-size: 14rpx; /* 进一步减小字体大小 */
+    font-size: 14rpx; /* 保持原有字体大小 */
   }
 }
 
@@ -599,12 +606,12 @@
 @media screen and (min-width: 751rpx) and (max-width: 900rpx) {
   .hero-list {
     grid-template-columns: repeat(6, 1fr); /* 中等屏幕下保持6个 */
-    gap: 14rpx; /* 适当增加间距 */
-    padding: 18rpx; /* 适当增加内边距 */
+    gap: 18rpx; /* 使用recommendPlan的间距比例 */
+    padding: 22rpx; /* 使用recommendPlan的内边距比例 */
   }
   
   .hero-avatar {
-    width: 65rpx; /* 适当增加头像尺寸 */
+    width: 65rpx; /* 保持原有头像尺寸 */
     height: 65rpx;
   }
 }
@@ -613,12 +620,12 @@
 @media screen and (min-width: 901rpx) {
   .hero-list {
     grid-template-columns: repeat(6, 1fr); /* 大屏幕下保持6个 */
-    gap: 16rpx; /* 适当增加间距 */
-    padding: 20rpx; /* 适当增加内边距 */
+    gap: 20rpx; /* 使用recommendPlan的间距 */
+    padding: 24rpx; /* 使用recommendPlan的内边距 */
   }
   
   .hero-avatar {
-    width: 70rpx; /* 适当增加头像尺寸 */
+    width: 70rpx; /* 保持原有头像尺寸 */
     height: 70rpx;
   }
 }

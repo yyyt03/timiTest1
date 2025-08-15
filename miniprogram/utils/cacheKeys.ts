@@ -105,6 +105,20 @@ export class CacheKeyGenerator {
   }
 
   /**
+   * 生成推荐方案缓存键
+   */
+  static planRecommend(mode: string, hero: string = 'all', version?: string): string {
+    return this.generate(MODULES.PLAN, TYPES.DATA, `recommend_${mode}_${hero}`, version);
+  }
+
+  /**
+   * 生成英雄列表缓存键
+   */
+  static heroList(mode: string, version?: string): string {
+    return this.generate(MODULES.HERO, TYPES.LIST, `categories_${mode}`, version);
+  }
+
+  /**
    * 生成收藏相关缓存键
    */
   static favorite(type: string, identifier: string, version?: string): string {
@@ -148,6 +162,15 @@ export const CACHE_KEYS = {
   PLAN_DETAIL_DATA: CacheKeyGenerator.plan(TYPES.DATA, 'detail'),
   PLAN_DETAIL_WITH_ID: (planId: string) => CacheKeyGenerator.planDetail(planId),
   PLAN_RECOMMEND_DATA: CacheKeyGenerator.plan(TYPES.DATA, 'recommend'),
+  
+  // 推荐方案专用缓存键生成器
+  PLAN_RECOMMEND_MODE: (mode: string, hero: string = 'all') => CacheKeyGenerator.planRecommend(mode, hero),
+  
+  // 全局方案缓存键
+  ALL_PLANS_CACHE_KEY: CacheKeyGenerator.plan(TYPES.DATA, 'all_plans_cache'),
+
+  // 英雄列表专用缓存键生成器  
+  HERO_LIST_MODE: (mode: string) => CacheKeyGenerator.heroList(mode),
 
   // 收藏相关缓存键
   FAVORITE_LIST_DATA: CacheKeyGenerator.favorite(TYPES.DATA, 'list'),

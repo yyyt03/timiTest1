@@ -86,8 +86,41 @@ Page({
     // 调试：检查全局缓存状态
     console.log('[DEBUG] onLoad时检查全局缓存状态');
     console.log('[DEBUG] 缓存键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
-    const debugCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
-    console.log('[DEBUG] 缓存状态:', debugCache ? `找到缓存，数量: ${debugCache.length}` : '未找到缓存');
+    console.log('[DEBUG] 缓存键名值:', `"${CACHE_KEYS.ALL_PLANS_CACHE_KEY}"`);
+    console.log('[DEBUG] cacheManager实例:', typeof cacheManager);
+    
+    let debugCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+    console.log('[DEBUG] 内存缓存状态:', debugCache ? `找到缓存，数量: ${debugCache.length}` : '未找到缓存');
+    
+    // 如果内存缓存不存在，尝试从持久化存储恢复
+    if (!debugCache) {
+      try {
+        const persistentCache = wx.getStorageSync('global_all_plans_cache');
+        if (persistentCache && persistentCache.data) {
+          // 检查是否过期
+          const now = Date.now();
+          if (now - persistentCache.timestamp < persistentCache.ttl) {
+            console.log('[DEBUG] 从持久化存储恢复缓存，数量:', persistentCache.data.length);
+            // 恢复到内存缓存
+            cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, persistentCache.data, 30 * 60 * 1000);
+            debugCache = persistentCache.data;
+          } else {
+            console.log('[DEBUG] 持久化缓存已过期');
+            wx.removeStorageSync('global_all_plans_cache');
+          }
+        } else {
+          console.log('[DEBUG] 无持久化缓存备份');
+        }
+      } catch (error) {
+        console.warn('[DEBUG] 恢复持久化缓存失败:', error);
+      }
+    }
+    
+    // 再次尝试手动构造键名检查
+    const manualKey = 'timi:plan:data:all_plans_cache:v1';
+    const manualCache = cacheManager.get(manualKey) as any[];
+    console.log('[DEBUG] 手动键名缓存:', manualCache ? `找到缓存，数量: ${manualCache.length}` : '未找到缓存');
+    console.log('[DEBUG] 最终缓存状态:', debugCache ? `找到缓存，数量: ${debugCache.length}` : '未找到缓存');
     
     // 初始化时间状态，避免时间判断错误
     const now = Date.now();
@@ -812,8 +845,35 @@ Page({
       if (!isLoadMore && !forceRefresh) {
         console.log('[loadBetaPlans] 检查全局缓存是否可用');
         console.log('[loadBetaPlans] 缓存键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
-        const allPlansCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
-        console.log('[loadBetaPlans] 缓存检查结果:', allPlansCache ? `找到缓存，数量: ${allPlansCache.length}` : '未找到缓存');
+        
+        let allPlansCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+        console.log('[loadBetaPlans] 内存缓存检查结果:', allPlansCache ? `找到缓存，数量: ${allPlansCache.length}` : '未找到缓存');
+        
+        // 如果内存缓存不存在，尝试从持久化存储恢复
+        if (!allPlansCache) {
+          try {
+            console.log('[loadBetaPlans] 内存缓存缺失，尝试从持久化存储恢复');
+            const persistentCache = wx.getStorageSync('global_all_plans_cache');
+            if (persistentCache && persistentCache.data) {
+              // 检查是否过期
+              const now = Date.now();
+              if (now - persistentCache.timestamp < persistentCache.ttl) {
+                console.log('[loadBetaPlans] 从持久化存储恢复缓存，数量:', persistentCache.data.length);
+                // 恢复到内存缓存
+                cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, persistentCache.data, 30 * 60 * 1000);
+                allPlansCache = persistentCache.data;
+                console.log('[loadBetaPlans] 成功恢复全局缓存');
+              } else {
+                console.log('[loadBetaPlans] 持久化缓存已过期，清除');
+                wx.removeStorageSync('global_all_plans_cache');
+              }
+            } else {
+              console.log('[loadBetaPlans] 无持久化缓存备份');
+            }
+          } catch (error) {
+            console.warn('[loadBetaPlans] 恢复持久化缓存失败:', error);
+          }
+        }
         
         if (allPlansCache) { // 只要有全局缓存就使用，即使体验服方案为空
           console.log(`[loadBetaPlans] 使用全局缓存数据进行本地筛选，模式: ${this.data.currentMode}，总缓存数量: ${allPlansCache.length}`);

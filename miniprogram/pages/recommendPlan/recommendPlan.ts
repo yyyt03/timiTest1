@@ -731,7 +731,29 @@ Page({
         
         // 重要：额外设置统一的全局缓存，实现与betaPlan等页面的缓存共享
         // 这样可以统一所有页面的缓存机制
+        console.log(`[recommendPlan] 正在设置全局缓存，键名: "${CACHE_KEYS.ALL_PLANS_CACHE_KEY}"`);
+        console.log(`[recommendPlan] 缓存数据量: ${allPlans.length}，前3个方案:`, allPlans.slice(0, 3).map(p => ({ id: p._id, title: p.title })));
+        
+        // 使用内存缓存
         cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, allPlans, 30 * 60 * 1000); // 30分钟TTL
+        
+        // 同时使用微信存储作为备份，确保页面切换时不丢失
+        try {
+          const cacheData = {
+            data: allPlans,
+            timestamp: Date.now(),
+            ttl: 30 * 60 * 1000, // 30分钟
+            version: 'v1'
+          };
+          wx.setStorageSync('global_all_plans_cache', cacheData);
+          console.log(`[recommendPlan] 已同时设置持久化缓存备份，数据量: ${allPlans.length}`);
+        } catch (error) {
+          console.warn('[recommendPlan] 设置持久化缓存失败:', error);
+        }
+        
+        // 立即验证缓存是否设置成功
+        const verifyCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+        console.log(`[recommendPlan] 缓存设置验证: ${verifyCache ? `成功，数量: ${verifyCache.length}` : '失败'}`);
         console.log(`[recommendPlan] 已设置统一全局缓存: ${CACHE_KEYS.ALL_PLANS_CACHE_KEY}，数据量: ${allPlans.length}`);
         
         // 强制刷新页面数据，确保头像能正确显示
@@ -1920,7 +1942,7 @@ Page({
         // 首次加载：替换现有数据
         this.setData({
           recommendPlans: formattedPlans,
-          allRecommendPlans: filteredPlans, // 保存完整的筛选后数据
+          allRecommendPlans: plans, // 保存当前模式的完整数据，用于英雄筛选
           originalAllPlans: plans, // 保存未筛选的完整数据，用于切换到"全部"时恢复
           page: 1,
           hasMore: hasMore,
@@ -1929,12 +1951,23 @@ Page({
           lastLoadTime: Date.now()
         });
         
-        // 重要：更新全局缓存，需要获取完整的原始数据（不是筛选后的数据）
-        const allOriginalPlans = await planService.getAllPlans(forceRefresh);
-        cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, allOriginalPlans, 30 * 60 * 1000);
-        console.log(`已更新全局方案缓存，完整数据量: ${allOriginalPlans.length}`);
+        // 确保全局缓存包含完整数据（planService内部已经设置，这里只是确保一致性）
+        // 获取并验证全局缓存是否正确设置
+        const globalCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+        if (!globalCache || !Array.isArray(globalCache)) {
+          console.warn('全局缓存未正确设置，尝试从planService获取完整数据');
+          try {
+            const allOriginalPlans = await planService.getAllPlans(false); // 不强制刷新，应该有缓存
+            cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, allOriginalPlans, 30 * 60 * 1000);
+            console.log(`[备用方案] 已设置全局缓存，数据量: ${allOriginalPlans.length}`);
+          } catch (error) {
+            console.warn('备用全局缓存设置失败:', error);
+          }
+        } else {
+          console.log(`[验证] 全局缓存已存在，数据量: ${globalCache.length}`);
+        }
         
-        console.log(`首次加载完成，方案数: ${formattedPlans.length}, 总筛选数: ${filteredPlans.length}`);
+        console.log(`首次加载完成，方案数: ${formattedPlans.length}, 总筛选数: ${filteredPlans.length}, 完整数据: ${plans.length}`);
       }
       
     } catch (error) {
@@ -2463,9 +2496,9 @@ Page({
       const lastFavoriteChange = wx.getStorageSync('last_global_favorite_change') || 0;
       const lastLikeChange = wx.getStorageSync('last_global_like_change') || 0;
       
-      // 获取缓存数据的时间戳，使用cacheManager读取
-      const cacheKey = CACHE_KEYS.PLAN_RECOMMEND_MODE(this.data.currentMode, this.data.selectedHero);
-      const cachedData = cacheManager.get<any>(cacheKey);
+      // 获取缓存数据的时间戳，使用与设置缓存时相同的键格式
+      const heroListCacheKey = `timi:plan:data:herolist_${this.data.currentMode}:v1`;
+      const cachedData = cacheManager.get<any>(heroListCacheKey);
       const cacheTimestamp = cachedData?.timestamp || 0;
       
       // 只有在过去10分钟内有交互变化且比缓存数据新时才刷新
@@ -2486,7 +2519,7 @@ Page({
         hasRecentFavoriteChange,
         hasRecentLikeChange,
         needsRefresh,
-        cacheKey
+        cacheKey: heroListCacheKey
       });
       
       return needsRefresh;

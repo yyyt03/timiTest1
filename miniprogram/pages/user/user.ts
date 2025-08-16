@@ -12,8 +12,6 @@ Page({
     favoritePlanIcon: getFavoritePlanIcon(),
     createPlanIcon: getCreatePlanIcon(),
     myPlanIcon: getMyPlanIcon(),
-    // 用户方案数量
-    userPlansCount: 0,
     // 环境控制
     isDevelopment: false
   },
@@ -32,9 +30,6 @@ Page({
     
     // 检测环境
     this.detectEnvironment();
-    
-    // 获取用户方案数量
-    this.getUserPlansCount();
   },
 
   // 检测环境
@@ -74,27 +69,6 @@ Page({
   goToFavorites() {
     wx.navigateTo({
       url: '../favorites/favorites'
-    });
-  },
-
-  // 获取用户方案数量
-  getUserPlansCount() {
-    wx.cloud.callFunction({
-      name: 'getUserPlans',
-      data: {
-        page: 1,
-        pageSize: 1
-      },
-      success: (res: any) => {
-        if (res.result.success) {
-          this.setData({
-            userPlansCount: res.result.data.total || 0
-          });
-        }
-      },
-      fail: (err) => {
-        console.error('获取用户方案数量失败:', err);
-      }
     });
   },
 

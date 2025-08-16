@@ -97,11 +97,11 @@ class Logger {
   // 初始化日志系统
   init(): void {
     if (this.isInitialized) return;
-    
+
     try {
       this.cleanupExpiredLogs();
       this.isInitialized = true;
-      
+
       this.info('日志系统初始化成功');
     } catch (error) {
       console.error('日志系统初始化失败:', error);
@@ -135,15 +135,11 @@ class Logger {
       return;
     }
 
-    // 使用默认配置，移除循环依赖
-    const currentConfig = {
-      enableLogs: true, // 默认启用日志
-      ...this.config
-    };
-
-    if (!currentConfig.enableLogs) {
-      return;
-    }
+    // 移除循环依赖，直接假设日志启用
+    // const currentConfig = getCurrentConfig();
+    // if (!currentConfig.enableLogs) {
+    //   return;
+    // }
 
     const entry: LogEntry = {
       level,
@@ -185,7 +181,7 @@ class Logger {
   // 添加日志到历史记录
   private addToHistory(entry: LogEntry): void {
     this.logHistory.push(entry);
-    
+
     // 限制历史记录数量
     if (this.logHistory.length > this.config.maxLogHistory) {
       this.logHistory = this.logHistory.slice(-this.config.maxLogHistory);
@@ -195,7 +191,7 @@ class Logger {
   // 输出到控制台
   private outputToConsole(entry: LogEntry): void {
     const formattedMessage = LogFormatter.format(entry, this.config);
-    
+
     switch (entry.level) {
       case LogLevel.DEBUG:
         console.debug(formattedMessage);
@@ -240,17 +236,9 @@ class Logger {
       // 这里可以集成第三方日志服务
       // 例如：LogRocket, Loggly 等
       
-      // 临时使用云函数上报
-      if (typeof wx !== 'undefined' && wx.cloud) {
-        wx.cloud.callFunction({
-          name: 'reportLog',
-          data: {
-            log: entry
-          }
-        }).catch(err => {
-          console.error('远程日志上报失败:', err);
-        });
-      }
+      // 注意：reportLog 云函数不存在，暂时禁用远程上报
+      // 如果需要远程日志，可以实现对应的云函数或使用其他日志服务
+      console.log('远程日志记录:', entry);
     } catch (error) {
       console.error('远程日志输出失败:', error);
     }
@@ -360,7 +348,7 @@ export function logPerformance(target: any, propertyName: string, descriptor: Pr
   descriptor.value = function (...args: any[]) {
     const start = Date.now();
     const result = method.apply(this, args);
-    
+
     if (result instanceof Promise) {
       return result.finally(() => {
         const duration = Date.now() - start;
@@ -382,9 +370,9 @@ export function logAsync(target: any, propertyName: string, descriptor: Property
 
   descriptor.value = function (...args: any[]) {
     logger.info(`开始执行异步方法 ${propertyName}`, { args }, 'Async');
-    
+
     const result = method.apply(this, args);
-    
+
     if (result instanceof Promise) {
       return result
         .then(value => {
@@ -396,9 +384,9 @@ export function logAsync(target: any, propertyName: string, descriptor: Property
           throw error;
         });
     }
-    
+
     return result;
   };
 
   return descriptor;
-} 
+}

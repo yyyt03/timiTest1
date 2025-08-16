@@ -57,8 +57,8 @@ class PlanService {
   }
 
   // 获取推荐方案（从全局缓存中筛选）
-  async getRecommendPlans(mode: string = 'hot'): Promise<any[]> {
-    const allPlans = await this.getAllPlans();
+  async getRecommendPlans(mode: string = 'hot', forceRefresh: boolean = false): Promise<any[]> {
+    const allPlans = await this.getAllPlans(forceRefresh);
     
     let filteredPlans = allPlans;
     
@@ -86,8 +86,8 @@ class PlanService {
   }
 
   // 获取体验服方案（从全局缓存中筛选）
-  async getBetaPlans(mode: string = 'hot'): Promise<any[]> {
-    const allPlans = await this.getAllPlans();
+  async getBetaPlans(mode: string = 'hot', forceRefresh: boolean = false): Promise<any[]> {
+    const allPlans = await this.getAllPlans(forceRefresh);
     
     let filteredPlans = allPlans;
     
@@ -130,7 +130,7 @@ class PlanService {
 
   // 清除缓存
   clearCache(): void {
-    cacheManager.remove(ALL_PLANS_CACHE_KEY);
+    cacheManager.delete(ALL_PLANS_CACHE_KEY);
     logger.info('已清除全局方案缓存');
   }
 }

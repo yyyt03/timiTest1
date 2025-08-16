@@ -22,8 +22,7 @@
         <view class="card-icon my-plan-icon">📋</view>
         <view class="card-content">
           <text class="card-title">我的方案</text>
-          <text class="card-desc" wx:if="{{userPlansCount > 0}}">{{userPlansCount}}个方案</text>
-          <text class="card-desc" wx:else>暂无方案</text>
+          <text class="card-desc">查看和管理方案</text>
         </view>
         <view class="card-arrow">→</view>
       </view>

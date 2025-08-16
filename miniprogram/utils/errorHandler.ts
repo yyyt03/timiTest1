@@ -157,17 +157,9 @@ class ErrorHandler {
       // 这里可以集成第三方错误监控服务
       // 例如：Sentry, Bugsnag 等
       
-      // 临时使用云函数上报
-      if (typeof wx !== 'undefined' && wx.cloud) {
-        wx.cloud.callFunction({
-          name: 'reportError',
-          data: {
-            error: error
-          }
-        }).catch(err => {
-          console.error('错误上报失败:', err);
-        });
-      }
+      // 注意：reportError 云函数不存在，暂时禁用远程上报
+      // 如果需要错误上报，可以实现对应的云函数或使用其他监控服务
+      console.error('错误信息记录:', error);
     } catch (reportError) {
       console.error('错误上报处理失败:', reportError);
     }

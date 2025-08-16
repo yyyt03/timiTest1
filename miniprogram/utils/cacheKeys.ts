@@ -59,7 +59,8 @@ export class CacheKeyGenerator {
     identifier: string,
     version: string = VERSIONS.V1
   ): string {
-    return `${APP_PREFIX}:${module}:${type}:${identifier}:${version}`;
+    const encodedIdentifier = this.encodeIdentifier(identifier);
+    return `${APP_PREFIX}:${module}:${type}:${encodedIdentifier}:${version}`;
   }
 
   /**
@@ -107,8 +108,30 @@ export class CacheKeyGenerator {
   /**
    * 生成推荐方案缓存键
    */
+  /**
+   * 对标识符进行安全编码，确保缓存键符合规范
+   * 将中文字符转换为简单哈希，其他特殊字符替换为下划线
+   */
+  private static encodeIdentifier(identifier: string): string {
+    // 如果包含中文字符，生成简单哈希
+    if (/[\u4e00-\u9fa5]/.test(identifier)) {
+      // 生成字符串哈希码
+      let hash = 0;
+      for (let i = 0; i < identifier.length; i++) {
+        const char = identifier.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 转换为32位整数
+      }
+      // 取绝对值并转换为字符串，添加前缀表示是编码后的
+      return `cn_${Math.abs(hash).toString(36)}`;
+    }
+    // 非中文字符，替换特殊字符为下划线
+    return identifier.replace(/[^a-zA-Z0-9_]/g, '_');
+  }
+
   static planRecommend(mode: string, hero: string = 'all', version?: string): string {
-    return this.generate(MODULES.PLAN, TYPES.DATA, `recommend_${mode}_${hero}`, version);
+    const encodedHero = this.encodeIdentifier(hero);
+    return this.generate(MODULES.PLAN, TYPES.DATA, `recommend_${mode}_${encodedHero}`, version);
   }
 
   /**

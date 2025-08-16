@@ -228,7 +228,6 @@ Page({
 
   // 加载方案数据 - 优先使用recommendPlan页面的缓存数据，模拟英雄筛选器
   async loadPlans(isLoadMore = false) {
-    const that = this;
     
     if (isLoadMore) {
       if (!this.data.hasMore || this.data.loadingMore) {
@@ -240,11 +239,51 @@ Page({
     }
 
     try {
-      // 如果不是加载更多，先尝试从recommendPlan页面的缓存中获取数据
+      // 如果不是加载更多，先尝试从统一缓存中获取数据
       let result: any;
       if (!isLoadMore) {
-        // 优先使用recommendPlan页面的缓存数据，实现真正的缓存共享
-        // recommendPlan页面使用 timi:plan:data:herolist_hot:v1 缓存hot模式的所有方案数据
+        // 优先使用统一的全局缓存，实现真正的缓存共享
+        log('优先检查统一的全局缓存 ALL_PLANS_CACHE_KEY');
+        const globalCacheData = cacheManager.get<any[]>(CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+        
+        if (globalCacheData && globalCacheData.length > 0) {
+          log('使用统一全局缓存数据，筛选英雄方案（统一缓存机制）');
+          
+          // 从统一缓存中筛选出当前英雄的方案
+          const heroPlans = globalCacheData.filter((plan: any) => 
+            plan.heroId === this.data.heroId || plan.heroName === this.data.hero
+          );
+          
+          if (heroPlans.length > 0) {
+            log(`从统一缓存中筛选出${this.data.hero}的方案，数量: ${heroPlans.length}（统一缓存机制）`);
+            
+            // 按点赞收藏总和降序排序，与hot模式保持一致
+            const sortedPlans = this.sortPlansByLikeAndFavorite(heroPlans);
+            
+            // 格式化时间
+            const formattedPlans = sortedPlans.map((plan: any) => ({
+              ...plan,
+              createTime: this.formatTime(plan.createTime)
+            }));
+            
+            this.setData({
+              plans: formattedPlans,
+              page: 1,
+              hasMore: false, // 缓存数据通常是一页完整的
+              loading: false
+            });
+            
+            log('成功使用统一全局缓存数据，避免调用云函数');
+            return;
+          } else {
+            log(`统一缓存中未找到${this.data.hero}的方案，尝试recommendPlan页面缓存`);
+          }
+        } else {
+          log('统一全局缓存不存在，尝试recommendPlan页面缓存');
+        }
+        
+        // 如果统一缓存中没有找到，则尝试recommendPlan页面的旧缓存格式（向后兼容）
+        log('检查recommendPlan页面的旧缓存格式');
         const recommendPlanCacheKey = `timi:plan:data:herolist_hot:v1`;
         const cachedData = cacheManager.get<{
           heroCategories: any[];

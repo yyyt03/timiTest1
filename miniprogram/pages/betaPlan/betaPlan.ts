@@ -83,6 +83,12 @@ Page({
   onLoad() {
     console.log('体验服方案页面 onLoad 触发');
     
+    // 调试：检查全局缓存状态
+    console.log('[DEBUG] onLoad时检查全局缓存状态');
+    console.log('[DEBUG] 缓存键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+    const debugCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+    console.log('[DEBUG] 缓存状态:', debugCache ? `找到缓存，数量: ${debugCache.length}` : '未找到缓存');
+    
     // 初始化时间状态，避免时间判断错误
     const now = Date.now();
     this.setData({
@@ -244,7 +250,8 @@ Page({
         return;
       }
       
-      // 如果缓存中已有数据且未过期，直接使用
+      // 首先检查是否有最新的全局缓存数据
+      const globalAllPlansCache = cacheManager.get<any[]>(CACHE_KEYS.ALL_PLANS_CACHE_KEY);
       const cacheKey = CACHE_KEYS.HERO_LIST_MODE(`beta_${mode}`);
       const cachedData = cacheManager.get<{
         heroCategories: any[];
@@ -252,22 +259,77 @@ Page({
         total: number;
       }>(cacheKey);
       
-      if (cachedData && cachedData.heroCategories && cachedData.heroCategories.length > 0) {
+      // 优先使用全局缓存，确保数据是最新的
+      if (globalAllPlansCache && globalAllPlansCache.length > 0) {
+        console.log(`使用全局缓存数据初始化${mode}模式英雄分类，总方案数: ${globalAllPlansCache.length}`);
+        
+        // 再次检查请求是否已被取消
+        if (requestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过全局缓存数据使用，请求ID:', requestId);
+          return;
+        }
+        
+        // 从全局缓存中筛选体验服方案
+        let filteredPlans = globalAllPlansCache.filter((plan: any) => plan.isBetaPlan === true);
+        
+        // 根据模式进一步筛选
+        if (mode === 'recommended') {
+          filteredPlans = filteredPlans.filter((plan: any) => plan.isRecommended === true);
+        }
+        
+        // 处理头像
+        const processedAllPlans = await this.processPlansWithAvatars(filteredPlans);
+        const cleanHeroCategories = await this.generateHeroCategoriesFromPlans(processedAllPlans);
+        
+        const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
+        modeCache.heroCategories = cleanHeroCategories;
+        modeCache.allPlans = processedAllPlans;
+        
+        this.setData({
+          heroCategories: cleanHeroCategories,
+          modeDataCache: this.data.modeDataCache
+        });
+        
+        // 更新特定模式缓存，确保一致性
+        cacheManager.set(cacheKey, {
+          heroCategories: cleanHeroCategories,
+          allPlans: processedAllPlans,
+          total: processedAllPlans.length,
+          timestamp: Date.now()
+        }, 30 * 60 * 1000);
+        
+        console.log(`${mode}模式全局缓存初始化完成，英雄数量: ${cleanHeroCategories.length}，方案数: ${processedAllPlans.length}`);
+        return;
+      }
+      // 如果没有全局缓存，则使用特定模式缓存
+      else if (cachedData && cachedData.heroCategories && cachedData.heroCategories.length > 0) {
         // 再次检查请求是否已被取消
         if (requestId !== this.data.currentRequestId) {
           console.log('请求已被取消，跳过缓存数据使用，请求ID:', requestId);
           return;
         }
         
+        console.log(`使用${mode}模式缓存数据，但重新生成英雄分类确保数据独立性`);
+        // 不直接使用缓存的heroCategories，因为可能被其他页面污染
+        // heroCategories: cachedData.heroCategories, // ❌ 直接使用可能被污染的缓存
+        const allPlans = cachedData.allPlans || [];
+        
+        // 重要：基于完整数据重新生成heroCategories，确保包含体验服实际的英雄
+        // 不直接使用缓存中的heroCategories，避免被recommendPlan等页面污染
+        const processedAllPlans = await this.processPlansWithAvatars(allPlans);
+        const cleanHeroCategories = await this.generateHeroCategoriesFromPlans(processedAllPlans);
+        
         const modeCache = this.data.modeDataCache[mode as keyof typeof this.data.modeDataCache];
-        modeCache.heroCategories = cachedData.heroCategories;
-        modeCache.allPlans = cachedData.allPlans;
-        modeCache.total = cachedData.total;
+        modeCache.heroCategories = cleanHeroCategories; // 使用重新生成的干净数据
+        modeCache.allPlans = processedAllPlans;
+        modeCache.total = processedAllPlans.length;
+        
+        console.log(`使用缓存的${mode}模式数据，重新生成英雄数量:`, cleanHeroCategories.length, '，方案数:', processedAllPlans.length);
         
         this.setData({
-          heroCategories: cachedData.heroCategories,
-          allBetaPlans: cachedData.allPlans,
-          total: cachedData.total,
+          heroCategories: cleanHeroCategories, // 使用重新生成的干净数据
+          allBetaPlans: processedAllPlans, // 使用处理过头像的数据
+          total: processedAllPlans.length,
           [`modeDataCache.${mode}`]: modeCache
         });
         return;
@@ -378,12 +440,75 @@ Page({
         lastModeSwitchTime: Date.now() // 记录模式切换时间
       });
       
-      console.log('模式切换完成，开始初始化英雄分类，请求ID:', requestId);
+      console.log('模式切换完成，开始加载数据，请求ID:', requestId);
       
-      // 优化：优先使用缓存数据，避免重复调用云函数
-      const modeCache = this.data.modeDataCache[type as keyof typeof this.data.modeDataCache];
-      if (modeCache && modeCache.allPlans && modeCache.allPlans.length > 0) {
-        console.log('使用缓存数据，避免重复调用云函数，请求ID:', requestId);
+      // 优化：优先检查是否已有加载的数据，如果有则直接复用，避免重复调用云函数
+      if (this.data.isDataLoaded && this.data.allBetaPlans.length > 0) {
+        console.log('[switchFilter] 可以复用已有数据，模式切换:', this.data.currentMode, '->', type);
+        
+        // 检查请求是否已被取消
+        if (requestId !== this.data.currentRequestId) {
+          console.log('请求已被取消，跳过数据复用，请求ID:', requestId);
+          return;
+        }
+        
+        // 从现有数据中根据模式筛选和排序
+        let filteredPlans = [...this.data.allBetaPlans];
+        
+        if (type === 'recommended') {
+          filteredPlans = filteredPlans.filter((plan: any) => plan.isRecommended === true);
+        }
+        
+        // 根据模式排序
+        if (type === 'hot') {
+          filteredPlans.sort((a: any, b: any) => {
+            const aScore = (a.likeCount || 0) + (a.favoriteCount || 0);
+            const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
+            return bScore - aScore;
+          });
+        } else if (type === 'latest') {
+          filteredPlans.sort((a: any, b: any) => this.getDateTimestamp(b.createTime) - this.getDateTimestamp(a.createTime));
+        }
+        
+        // 格式化时间
+        const formattedPlans = filteredPlans.map((plan: any) => ({
+          ...plan,
+          createTime: this.formatTime(plan.createTime)
+        }));
+        
+        // 更新显示数据
+        this.setData({
+          currentMode: type,
+          betaPlans: formattedPlans,
+          total: formattedPlans.length,
+          isDataLoaded: true,
+          lastLoadTime: Date.now()
+        });
+        
+        console.log(`[switchFilter] 模式切换完成，已复用缓存数据，模式: ${type}，方案数: ${formattedPlans.length}`);
+        
+        // 强制重新计算布局，确保页面比例正确
+        setTimeout(() => {
+          try {
+            this.setData({
+              _layoutUpdate: Date.now()
+            });
+          } catch (layoutError) {
+            console.warn('布局重新计算失败，但不影响主要功能:', layoutError);
+          }
+        }, 100);
+        
+        return; // 直接返回，不需要调用云函数
+      }
+      
+      // 如果没有已加载的数据，再检查全局缓存
+      console.log('[switchFilter] 没有已加载数据，检查全局缓存');
+      console.log('[switchFilter] 缓存键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+      const allPlansCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+      console.log('[switchFilter] 缓存检查结果:', allPlansCache ? `找到缓存，数量: ${allPlansCache.length}` : '未找到缓存');
+      
+      if (allPlansCache) { // 只要有全局缓存就使用，即使体验服方案为空
+        console.log('[switchFilter] 使用全局缓存数据进行本地筛选，总缓存数量:', allPlansCache.length);
         
         // 检查请求是否已被取消
         if (requestId !== this.data.currentRequestId) {
@@ -391,12 +516,32 @@ Page({
           return;
         }
         
-        // 直接使用缓存数据
+        // 根据当前模式筛选数据
+        let filteredPlans = allPlansCache.filter((plan: any) => plan.isBetaPlan);
+        
+        if (type === 'hot') {
+          filteredPlans = filteredPlans.sort((a: any, b: any) => (b.likes || 0) - (a.likes || 0));
+        } else if (type === 'latest') {
+          filteredPlans = filteredPlans.sort((a: any, b: any) => 
+            this.getDateTimestamp(b.createTime) - this.getDateTimestamp(a.createTime)
+          );
+        } else if (type === 'recommended') {
+          filteredPlans = filteredPlans.filter((plan: any) => plan.isRecommended);
+        }
+        
+        // 处理方案数据，添加英雄头像
+        const processedPlans = filteredPlans.length > 0 ? await this.processPlansWithAvatars(filteredPlans) : [];
+        
+        // 提取英雄分类
+        const allBetaPlans = allPlansCache.filter((plan: any) => plan.isBetaPlan);
+        const heroCategories = allBetaPlans.length > 0 ? await this.generateHeroCategoriesFromPlans(allBetaPlans) : [];
+        
+        // 设置数据
         this.setData({
-          heroCategories: modeCache.heroCategories,
-          allBetaPlans: modeCache.allPlans,
-          total: modeCache.total,
-          betaPlans: modeCache.allPlans, // 显示全部方案
+          heroCategories: heroCategories,
+          allBetaPlans: processedPlans,
+          total: processedPlans.length,
+          betaPlans: processedPlans,
           isDataLoaded: true,
           lastLoadTime: Date.now()
         });
@@ -412,8 +557,11 @@ Page({
           }
         }, 100);
         
+        console.log(`[switchFilter] 使用缓存完成，模式: ${type}，方案数: ${processedPlans.length}`);
         return; // 直接返回，不需要调用云函数
       }
+      
+      console.log('[switchFilter] 全局缓存不可用，继续使用传统方法');
       
       // 如果缓存中没有数据，才调用云函数
       await this.initModeHeroList(type, requestId);
@@ -576,6 +724,15 @@ Page({
         });
       } else {
         console.log('筛选指定英雄的方案:', selectedHero);
+        // 添加调试信息：检查实际的方案数据
+        allBetaPlans.forEach((plan, index) => {
+          console.log(`体验服方案 ${index + 1}:`, {
+            id: plan._id,
+            heroName: plan.heroName,
+            heroId: plan.heroId,
+            title: plan.title
+          });
+        });
         // 筛选指定英雄的体验服方案，根据当前模式使用不同的排序逻辑
         const filteredPlans = allBetaPlans.filter(plan => plan.heroName === selectedHero);
         console.log('筛选结果:', {
@@ -636,7 +793,7 @@ Page({
   },
 
   // 加载体验服方案数据
-  async loadBetaPlans(isLoadMore = false, requestId?: number) {
+  async loadBetaPlans(isLoadMore = false, requestId?: number, forceRefresh = false) {
     // 如果没有提供requestId，使用当前请求ID
     const currentRequestId = requestId || this.data.currentRequestId;
     
@@ -650,8 +807,105 @@ Page({
     }
 
     try {
-      // 如果不是加载更多，先尝试从缓存获取数据
-      if (!isLoadMore) {
+      // 优先检查全局缓存，避免重复调用云函数
+      // 如果强制刷新，跳过所有缓存检查
+      if (!isLoadMore && !forceRefresh) {
+        console.log('[loadBetaPlans] 检查全局缓存是否可用');
+        console.log('[loadBetaPlans] 缓存键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+        const allPlansCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+        console.log('[loadBetaPlans] 缓存检查结果:', allPlansCache ? `找到缓存，数量: ${allPlansCache.length}` : '未找到缓存');
+        
+        if (allPlansCache) { // 只要有全局缓存就使用，即使体验服方案为空
+          console.log(`[loadBetaPlans] 使用全局缓存数据进行本地筛选，模式: ${this.data.currentMode}，总缓存数量: ${allPlansCache.length}`);
+          
+          // 从全局缓存中筛选体验服方案
+          let filteredPlans = allPlansCache.filter((plan: any) => plan.isBetaPlan === true);
+          console.log(`[loadBetaPlans] 筛选出体验服方案数量: ${filteredPlans.length}`);
+          
+          // 根据模式进一步筛选
+          if (this.data.currentMode === 'recommended') {
+            filteredPlans = filteredPlans.filter((plan: any) => plan.isRecommended === true);
+          }
+          
+          // 根据模式排序
+          if (this.data.currentMode === 'hot') {
+            filteredPlans.sort((a: any, b: any) => {
+              const aScore = (a.likeCount || 0) + (a.favoriteCount || 0);
+              const bScore = (b.likeCount || 0) + (b.favoriteCount || 0);
+              return bScore - aScore;
+            });
+          } else if (this.data.currentMode === 'latest') {
+            filteredPlans.sort((a: any, b: any) => this.getDateTimestamp(b.createTime) - this.getDateTimestamp(a.createTime));
+          }
+          
+          // 根据英雄筛选
+          if (this.data.selectedHero !== 'all') {
+            filteredPlans = filteredPlans.filter((plan: any) => plan.heroName === this.data.selectedHero);
+          }
+          
+          console.log(`[loadBetaPlans] 本地筛选完成，${this.data.currentMode}模式方案数量: ${filteredPlans.length}`);
+          
+          // 即使筛选结果为空，也使用缓存数据，避免调用云函数
+          // 处理方案数据，添加英雄头像
+          const processedPlans = filteredPlans.length > 0 ? await this.processPlansWithAvatars(filteredPlans) : [];
+          
+          // 生成英雄分类列表（使用所有体验服方案）
+          const allBetaPlans = allPlansCache.filter((plan: any) => plan.isBetaPlan === true);
+          const heroCategories = allBetaPlans.length > 0 ? await this.generateHeroCategoriesFromPlans(allBetaPlans) : [];
+          
+          // 检查请求是否已被取消
+          if (currentRequestId !== this.data.currentRequestId) {
+            return;
+          }
+          
+          // 客户端分页处理
+          const pageSize = this.data.pageSize;
+          const currentPage = 1;
+          const startIndex = 0;
+          const endIndex = pageSize;
+          const paginatedPlans = processedPlans.slice(startIndex, endIndex);
+          const hasMore = endIndex < processedPlans.length;
+          
+          // 格式化时间
+          const formattedPlans = paginatedPlans.map((plan: any) => ({
+            ...plan,
+            createTime: this.formatTime(plan.createTime)
+          }));
+
+          this.setData({
+            betaPlans: formattedPlans,
+            page: currentPage,
+            hasMore: hasMore,
+            loading: false,
+            loadingMore: false,
+            isDataLoaded: true,
+            lastLoadTime: Date.now(),
+            heroCategories: heroCategories,
+            allBetaPlans: processedPlans,
+            total: processedPlans.length
+          });
+
+          // 重要：设置heroPlan页面需要的缓存键，实现跨页面缓存共享
+          // 使用全局缓存的完整数据，而不是只使用体验服方案数据
+          const heroListCacheKey = `timi:plan:data:herolist_${this.data.currentMode}:v1`;
+          const heroListCacheData = {
+            heroCategories: heroCategories,
+            allPlans: allPlansCache, // 使用全局缓存的完整数据，包含所有方案
+            total: allPlansCache.length,
+            mode: this.data.currentMode,
+            isRecommended: this.data.currentMode === 'recommended',
+            timestamp: Date.now()
+          };
+          cacheManager.set(heroListCacheKey, heroListCacheData, 30 * 60 * 1000); // 30分钟TTL
+          console.log(`[loadBetaPlans] 已设置heroPlan页面缓存: ${heroListCacheKey}，完整数据量: ${allPlansCache.length}`);
+
+          console.log(`[loadBetaPlans] 使用缓存数据加载完成，模式: ${this.data.currentMode}，方案数: ${formattedPlans.length}，总数: ${processedPlans.length}`);
+          return;
+        }
+      }
+      
+      // 如果不是加载更多且不是强制刷新，先尝试从缓存获取数据
+      if (!isLoadMore && !forceRefresh) {
         const cacheKey = CACHE_KEYS.PLAN_RECOMMEND_MODE(`beta_${this.data.currentMode}`, this.data.selectedHero);
         const cachedData = cacheManager.get<any>(cacheKey);
         
@@ -679,10 +933,10 @@ Page({
       // 使用 planService 获取数据，它内部会处理缓存
       let plans;
       if (this.data.selectedHero === 'all') {
-        plans = await planService.getBetaPlans(this.data.currentMode);
+        plans = await planService.getBetaPlans(this.data.currentMode, forceRefresh);
       } else {
-        const allPlans = await planService.getBetaPlans(this.data.currentMode);
-        plans = allPlans.filter(plan => plan.heroId === this.data.selectedHero);
+        const allPlans = await planService.getBetaPlans(this.data.currentMode, forceRefresh);
+        plans = allPlans.filter(plan => plan.heroName === this.data.selectedHero);
       }
       
       // 检查请求是否已被取消
@@ -738,6 +992,23 @@ Page({
 
         // 如果不是加载更多，则缓存数据
         if (!isLoadMore) {
+          // planService.getBetaPlans()内部已经调用getAllPlans()并设置了全局缓存
+          // 这里不需要重复调用，避免多次调用云函数
+          console.log(`[betaPlan] planService已处理全局缓存设置，跳过重复操作`);
+          
+          /*
+          // 重要：betaPlan不应该设置全局缓存，因为它获取的是筛选过的数据，不是全部数据
+          // ALL_PLANS_CACHE_KEY应该只由获取全部数据的页面设置（如recommendPlan）
+          // 这里我们通过planService.getAllPlans()来获取并设置完整的全局缓存
+          try {
+            const allCompleteData = await planService.getAllPlans(forceRefresh);
+            cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, allCompleteData, 30 * 60 * 1000); // 30分钟TTL
+            console.log(`[betaPlan] 已设置完整的统一全局缓存: ${CACHE_KEYS.ALL_PLANS_CACHE_KEY}，完整数据量: ${allCompleteData.length}${forceRefresh ? ' (强制刷新)' : ''}`);
+          } catch (error) {
+            console.error(`[betaPlan] 设置完整全局缓存失败:`, error);
+          }
+          */
+          
           // 缓存当前筛选结果，延长TTL到10分钟
           const cacheKey = CACHE_KEYS.PLAN_RECOMMEND_MODE(`beta_${this.data.currentMode}`, this.data.selectedHero);
           const cacheData = {
@@ -749,6 +1020,51 @@ Page({
             heroId: this.data.selectedHero
           };
           cacheManager.set(cacheKey, cacheData, 10 * 60 * 1000); // 10分钟TTL
+          
+          // 重要：设置heroPlan页面需要的缓存键，实现跨页面缓存共享
+          // 从全局缓存获取完整数据来设置heroPlan缓存
+          const globalCache = cacheManager.get<any[]>(CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+          if (globalCache && globalCache.length > 0) {
+            const heroListCacheKey = `timi:plan:data:herolist_${this.data.currentMode}:v1`;
+            // 重新生成干净的heroCategories，避免页面特有状态污染
+            const cleanHeroCategories = await this.generateHeroCategoriesFromPlans(globalCache);
+            const heroListCacheData = {
+              heroCategories: cleanHeroCategories, // 使用重新生成的干净数据
+              allPlans: globalCache, // 使用全局缓存的完整数据
+              total: globalCache.length,
+              mode: this.data.currentMode,
+              isRecommended: this.data.currentMode === 'recommended',
+              timestamp: Date.now()
+            };
+            cacheManager.set(heroListCacheKey, heroListCacheData, 30 * 60 * 1000); // 30分钟TTL
+            console.log(`[betaPlan] 已设置heroPlan页面缓存: ${heroListCacheKey}，完整数据量: ${globalCache.length}，英雄分类: ${cleanHeroCategories.length}`);
+          } else {
+            console.log(`[betaPlan] 全局缓存不可用，但planService.getBetaPlans()应该已经设置了全局缓存`);
+            // planService.getBetaPlans()应该已经调用了getAllPlans()并设置了全局缓存
+            // 这里不再重复调用，避免多次调用云函数
+            console.log(`[betaPlan] 跳过heroPlan缓存设置，避免重复调用云函数`);
+            
+            /*
+            // 如果全局缓存不可用，通过planService获取完整数据
+            try {
+              const allCompleteData = await planService.getAllPlans(forceRefresh);
+              const heroListCacheKey = `timi:plan:data:herolist_${this.data.currentMode}:v1`;
+              const cleanHeroCategories = await this.generateHeroCategoriesFromPlans(allCompleteData);
+              const heroListCacheData = {
+                heroCategories: cleanHeroCategories,
+                allPlans: allCompleteData,
+                total: allCompleteData.length,
+                mode: this.data.currentMode,
+                isRecommended: this.data.currentMode === 'recommended',
+                timestamp: Date.now()
+              };
+              cacheManager.set(heroListCacheKey, heroListCacheData, 30 * 60 * 1000); // 30分钟TTL
+              console.log(`[betaPlan] 已通过planService设置heroPlan页面缓存: ${heroListCacheKey}，完整数据量: ${allCompleteData.length}，英雄分类: ${cleanHeroCategories.length}`);
+            } catch (error) {
+              console.error(`[betaPlan] 通过planService设置heroPlan缓存失败:`, error);
+            }
+            */
+          }
         }
       } else {
         this.setData({
@@ -998,6 +1314,19 @@ Page({
     const minutes = String(date.getMinutes()).padStart(2, '0');
     
     return `${year}-${month}-${day} ${hours}:${minutes}`;
+  },
+
+  // 安全获取日期时间戳，确保iOS兼容性
+  getDateTimestamp(dateInput: any): number {
+    if (!dateInput) return 0;
+    
+    if (typeof dateInput === 'string') {
+      return this.parseDateString(dateInput).getTime();
+    } else if (dateInput instanceof Date) {
+      return dateInput.getTime();
+    } else {
+      return new Date(dateInput).getTime();
+    }
   },
 
   // 解析日期字符串，确保 iOS 兼容性
@@ -1286,7 +1615,7 @@ Page({
       console.log('下拉刷新，已清除体验服方案缓存:', cacheKey);
       
       this.setData({ page: 1 }); // 重置页码
-      await this.loadBetaPlans(false, this.data.currentRequestId);
+      await this.loadBetaPlans(false, this.data.currentRequestId, true); // 强制刷新
     } catch (error) {
       console.error('下拉刷新失败:', error);
     } finally {

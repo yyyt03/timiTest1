@@ -1,7 +1,7 @@
 // 我的方案页面
 import { getHeroByName } from '../../data/localHeroData';
 import cacheManager from '../../utils/cacheManager';
-import { CacheKeyGenerator } from '../../utils/cacheKeys';
+import { CacheKeyGenerator, CACHE_KEYS } from '../../utils/cacheKeys';
 import { avatarCache } from '../../utils/avatarCache';
 
 // 缓存数据接口
@@ -102,18 +102,126 @@ Page({
   },
 
   // 格式化时间显示
-  formatTime(timeString: string) {
-    try {
-      const date = new Date(timeString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}`;
-    } catch (error) {
-      return timeString;
+  // 格式化时间 - iOS兼容版本
+  formatTime(timestamp: any) {
+    if (!timestamp) return '';
+    
+    let date: Date;
+    
+    // 处理不同类型的输入，确保 iOS 兼容性
+    if (typeof timestamp === 'string') {
+      // 处理 MongoDB 的日期格式
+      if (timestamp.includes('$date')) {
+        try {
+          const dateObj = JSON.parse(timestamp);
+          date = new Date(dateObj.$date);
+        } catch (e) {
+          // 如果解析失败，尝试标准化格式
+          date = this.parseDateString(timestamp);
+        }
+      } else {
+        // 标准化字符串格式，确保 iOS 兼容性
+        date = this.parseDateString(timestamp);
+      }
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      // 处理时间戳或其他类型
+      date = new Date(timestamp);
     }
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  },
+
+  // 解析日期字符串，确保iOS兼容性
+  parseDateString(dateString: string): Date {
+    if (!dateString) return new Date();
+    
+    // 移除MongoDB特殊标记和多余字符，只保留日期时间部分
+    let cleanString = dateString.toString()
+      .replace(/ISODate\(["']?/g, '')
+      .replace(/["']\)/g, '')
+      .replace(/\$date/g, '')
+      .replace(/[{}]/g, '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    
+    // 1. 处理时间戳格式
+    if (/^\d{13}$/.test(cleanString)) {
+      return new Date(parseInt(cleanString));
+    }
+    
+    // 2. 处理秒级时间戳
+    if (/^\d{10}$/.test(cleanString)) {
+      return new Date(parseInt(cleanString) * 1000);
+    }
+    
+    // 3. 处理标准ISO格式
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(cleanString)) {
+      const date = new Date(cleanString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 4. 处理 "2025-08-09 18:20:30" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T');
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 5. 处理 "2025-08-09 18:20" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T') + ':00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 6. 处理 "2025/08/09 18:20:30" 格式，转换为 ISO 格式
+    if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(' ', 'T').replace(/\//g, '-');
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 7. 处理 "2025-08-09" 格式，转换为 ISO 格式
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanString)) {
+      const isoString = cleanString + 'T00:00:00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 8. 处理 "2025/08/09" 格式，转换为 ISO 格式
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(cleanString)) {
+      const isoString = cleanString.replace(/\//g, '-') + 'T00:00:00';
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // 如果都不匹配，返回当前时间
+    console.warn('无法解析日期格式:', dateString);
+    return new Date();
   },
 
   // 加载用户方案
@@ -212,7 +320,60 @@ Page({
     // 避免重复加载
     if (this.data.loading && this.data.userPlans.length > 0) return;
 
-    // 先尝试从缓存获取数据
+    // 首先尝试从全局缓存获取完整数据，然后本地筛选
+    console.log('检查全局缓存，键名:', CACHE_KEYS.ALL_PLANS_CACHE_KEY);
+    const globalCache = cacheManager.get(CACHE_KEYS.ALL_PLANS_CACHE_KEY) as any[];
+    console.log('全局缓存状态:', globalCache ? `找到缓存，数量: ${globalCache.length}` : '未找到缓存');
+    
+    if (globalCache && globalCache.length > 0) {
+      console.log('使用全局缓存进行本地筛选，状态:', this.data.adminStatusFilter);
+      
+      // 根据状态筛选数据
+      let filteredPlans = globalCache;
+      if (this.data.adminStatusFilter !== 'all') {
+        filteredPlans = globalCache.filter((plan: any) => {
+          switch (this.data.adminStatusFilter) {
+            case 'pending':
+              return plan.status === 'pending' || plan.status === 'reviewing';
+            case 'published':
+              return plan.status === 'published' || plan.status === 'active';
+            case 'offline':
+              return plan.status === 'offline' || plan.status === 'inactive';
+            case 'rejected':
+              return plan.status === 'rejected';
+            default:
+              return true;
+          }
+        });
+      }
+
+      // 根据英雄筛选
+      if (this.data.selectedHero !== 'all') {
+        filteredPlans = filteredPlans.filter((plan: any) => plan.heroName === this.data.selectedHero);
+      }
+
+      // 处理头像和格式化时间
+      const processedPlans = await this.processPlansWithAvatars(filteredPlans);
+      const formattedPlans = processedPlans.map((plan: any) => ({
+        ...plan,
+        createTime: this.formatTime(plan.createTime)
+      }));
+
+      this.setData({
+        userPlans: formattedPlans,
+        allUserPlans: formattedPlans,
+        total: formattedPlans.length,
+        hasMore: false,
+        loading: false
+      });
+
+      // 生成英雄分类
+      this.generateHeroCategories();
+      console.log(`本地筛选完成，${this.data.adminStatusFilter} 状态方案数: ${formattedPlans.length}`);
+      return;
+    }
+
+    // 如果没有全局缓存，则尝试从特定状态缓存获取数据
     const cacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
     const cachedData = cacheManager.get<PlansCacheData>(cacheKey);
     
@@ -231,6 +392,7 @@ Page({
       return;
     }
 
+    console.log('无可用缓存，调用云函数获取数据');
     this.setData({ loading: true, userPlans: [], allUserPlans: [], total: 0 });
 
     const pageSize = 100; // 提高单页数量，减少请求次数
@@ -282,6 +444,10 @@ Page({
       };
       cacheManager.set(cacheKey, cacheData, 3 * 60 * 1000); // 3分钟TTL，审核数据需要更频繁更新
       console.log('管理员审核方案数据已缓存');
+      
+      // 设置全局缓存，供其他页面使用
+      cacheManager.set(CACHE_KEYS.ALL_PLANS_CACHE_KEY, allPlans, 30 * 60 * 1000); // 30分钟TTL
+      console.log('已设置全局方案缓存，数量:', allPlans.length);
 
       // 生成英雄分类
       await this.generateHeroCategories();
@@ -299,10 +465,8 @@ Page({
     const status = e.currentTarget.dataset.status;
     this.setData({ adminStatusFilter: status });
     
-    // 清除相关缓存
-    const oldCacheKey = CacheKeyGenerator.plan('data', `admin_${this.data.adminStatusFilter}_${this.data.selectedHero}`);
-    cacheManager.delete(oldCacheKey);
-    console.log('切换管理员状态筛选，已清除旧缓存:', oldCacheKey);
+    // 不再清除缓存，直接使用全局缓存进行本地筛选
+    console.log('切换管理员状态筛选到:', status);
     
     if (this.data.isAdminReview) {
       this.loadAllPlansForAdmin();
@@ -738,6 +902,57 @@ Page({
     
     this.setData({
       heroCategories: heroCategoriesWithAvatars
+    });
+  },
+
+  // 处理方案数据，添加英雄头像
+  async processPlansWithAvatars(plans: any[]) {
+    // 收集所有需要处理的头像URL
+    const avatarUrls: string[] = [];
+    const heroMap = new Map();
+    
+    plans.forEach(plan => {
+      const hero = getHeroByName(plan.heroName);
+      if (hero && hero.avatar) {
+        avatarUrls.push(hero.avatar);
+        heroMap.set(plan._id, hero.avatar);
+      }
+    });
+    
+    // 使用新的头像缓存管理器批量获取临时URL
+    let avatarUrlMap: Record<string, string> = {};
+    if (avatarUrls.length > 0) {
+      try {
+        avatarUrlMap = await avatarCache.getAvatarUrls(avatarUrls);
+      } catch (error) {
+        console.error('获取头像临时URL失败:', error);
+        // 如果获取失败，使用原始URL
+        avatarUrls.forEach(url => {
+          avatarUrlMap[url] = url;
+        });
+      }
+    }
+    
+    // 获取当前用户的交互状态
+    const favoritePlans = wx.getStorageSync('user_favorite_plans') || [];
+    const likedPlans = wx.getStorageSync('user_liked_plans') || [];
+    
+    // 处理方案数据
+    return plans.map(plan => {
+      const hero = getHeroByName(plan.heroName);
+      const originalAvatar = hero ? hero.avatar : '';
+      const heroAvatar = avatarUrlMap[originalAvatar] || originalAvatar;
+      
+      // 初始化交互状态
+      const isFavorite = favoritePlans.includes(plan._id);
+      const isLiked = likedPlans.includes(plan._id);
+      
+      return {
+        ...plan,
+        heroAvatar: heroAvatar,
+        isFavorite: plan.isFavorite !== undefined ? plan.isFavorite : isFavorite,
+        isLiked: plan.isLiked !== undefined ? plan.isLiked : isLiked
+      };
     });
   },
 

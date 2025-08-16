@@ -1041,7 +1041,7 @@ Page({
         }));
 
         this.setData({
-          betaPlans: isLoadMore ? [...this.data.betaPlans, ...formattedPlans] : formattedPlans,
+          betaPlans: isLoadMore ? this.deduplicatePlans(this.data.betaPlans, formattedPlans) : formattedPlans,
           page: currentPage,
           hasMore: hasMore,
           loading: false,
@@ -1281,6 +1281,15 @@ Page({
     this.setData({
       heroCategories: updatedCategories
     });
+  },
+
+  // 去重函数：基于_id去重，确保wx:key唯一性，避免渲染警告
+  deduplicatePlans(existingPlans: any[], newPlans: any[]): any[] {
+    console.log('执行体验服数据去重，现有数据量:', existingPlans.length, '新增数据量:', newPlans.length);
+    const existingIds = new Set(existingPlans.map((plan: any) => plan._id));
+    const uniqueNewPlans = newPlans.filter((plan: any) => !existingIds.has(plan._id));
+    console.log('去重完成，实际新增数据量:', uniqueNewPlans.length);
+    return [...existingPlans, ...uniqueNewPlans];
   },
 
   // 处理方案数据，添加英雄头像

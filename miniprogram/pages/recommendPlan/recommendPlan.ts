@@ -455,7 +455,7 @@ Page({
         
         this.setData({
           heroCategories,
-          allRecommendPlans: processedReusableData.slice(0, this.data.pageSize),
+          allRecommendPlans: processedReusableData, // 保存完整数据，用于英雄筛选
           originalAllPlans: processedReusableData,
           total: processedReusableData.length,
           recommendPlans: processedReusableData.slice(0, this.data.pageSize),
@@ -518,7 +518,7 @@ Page({
         this.setData({
           heroCategories: heroCategories,
           originalAllPlans: processedAllPlans,
-          allRecommendPlans: processedAllPlans.slice(0, this.data.pageSize),
+          allRecommendPlans: processedAllPlans, // 保存完整数据，用于英雄筛选
           recommendPlans: processedAllPlans.slice(0, this.data.pageSize),
           total: processedAllPlans.length,
           page: 1,
@@ -558,7 +558,7 @@ Page({
         this.setData({
           heroCategories: heroCategories,
           originalAllPlans: processedAllPlans, // 使用处理过头像的数据
-          allRecommendPlans: processedAllPlans.slice(0, this.data.pageSize), // 使用处理过头像的数据
+          allRecommendPlans: processedAllPlans, // 保存完整数据，用于英雄筛选
           recommendPlans: processedAllPlans.slice(0, this.data.pageSize), // 使用处理过头像的数据
           total: processedAllPlans.length,
           page: 1, // 重置页码
@@ -1929,8 +1929,8 @@ Page({
       
       // 更新数据
       if (isLoadMore) {
-        // 加载更多：追加到现有数据
-        const newPlans = [...this.data.recommendPlans, ...formattedPlans];
+        // 加载更多：追加到现有数据，使用去重确保wx:key唯一性
+        const newPlans = this.deduplicatePlans(this.data.recommendPlans, formattedPlans);
         this.setData({
           recommendPlans: newPlans,
           page: this.data.page + 1,
@@ -1984,6 +1984,15 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  // 去重函数：基于_id去重，确保wx:key唯一性，避免渲染警告
+  deduplicatePlans(existingPlans: any[], newPlans: any[]): any[] {
+    console.log('执行数据去重，现有数据量:', existingPlans.length, '新增数据量:', newPlans.length);
+    const existingIds = new Set(existingPlans.map((plan: any) => plan._id));
+    const uniqueNewPlans = newPlans.filter((plan: any) => !existingIds.has(plan._id));
+    console.log('去重完成，实际新增数据量:', uniqueNewPlans.length);
+    return [...existingPlans, ...uniqueNewPlans];
   },
 
   // 处理方案数据，添加英雄头像
@@ -2177,12 +2186,14 @@ Page({
       const nextPageData = dataSource.slice(currentLength, currentLength + this.data.pageSize);
       
       if (nextPageData.length > 0) {
+        // 使用去重函数确保wx:key唯一性
+        const newPlans = this.deduplicatePlans(this.data.recommendPlans, nextPageData);
         this.setData({
-          recommendPlans: [...this.data.recommendPlans, ...nextPageData],
+          recommendPlans: newPlans,
           page: this.data.page + 1,
           hasMore: currentLength + nextPageData.length < dataSource.length
         });
-        console.log('本地加载更多完成，当前显示数量:', this.data.recommendPlans.length);
+        console.log('本地加载更多完成，当前显示数量:', newPlans.length);
         return;
       }
     }
